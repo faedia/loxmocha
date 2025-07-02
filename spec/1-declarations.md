@@ -36,7 +36,10 @@ header-includes:
 
 # Declarations {#declarations}
 
-A declaration is anything that introduces a new name into the current lexical scope for that declaration. Type declarations declare their names in the current type local scope. Function and variable declarations declare their names in the current value lexical scope. see [Scope](5-scope.md) for more details.
+A declaration is anything that introduces a new name into the current lexical scope for that declaration.
+Type declarations declare their names in the current type local scope.
+Function and variable declarations declare their names in the current value lexical scope.
+See [Scope](5-scope.md) for more details.
 
 ```grammar
 declaration ->
@@ -51,9 +54,17 @@ declaration ->
 typeDeclaration -> "type" identifier "is" typeExpression
 ```
 
-Any type expression can be given a name using a type declaration. The type declaration creates a new strongly typed type with the given name. It being strongly typed means that two declared types with different names, but with the same type expression (type structure), cannot be implicitly cast between.
-Instead to cast between you will have to use the [as expression](2-expressions.md#type-cast-expression) to explicitly cast a value with same structural type to another strongly typed type.
-Type expressions are always type-checked structurally, this allows for literals to be used with ease and for anonymous types, consider array types, to be cast between each other, or cast to a "strong" type with the same structural type.
+Any [type expression](3-types.md#types) can be given a name using a type declaration.
+The type declaration creates a new name in the current type local scope.
+Types with names are type checked nominally.
+This means two expressions are compatible only if they are declared with the exact same name type.
+Anonymous types, or literal expressions are type checked structurally.
+This means two anonymous types are compatible if and only if their underlying structures are identical.
+For example, two anonymous array types are compatible if and only if their element types are compatible and have the same number of elements.
+Expressions with anonymous types are automatically coerced to a named type when required, as long as the named type and anonymous type share the same structural type.
+Named types will not be automatically coerced due to their nominal type checking.
+Instead, to convert from one named type to another, an explicit cast using the [as expression](2-expressions.md#type-cast-expression) must be used.
+This is only permitted if the types are structurally compatible.
 
 for example:
 
@@ -61,24 +72,25 @@ for example:
 type int1 is u32;
 type int2 is u32;
 
+// OK: `a` can be assigned to as literals always are type checked structurally.
 let a : int1 = 5;
-// TYPE ERROR: They are not the "strong" type.
+// TYPE ERROR: `a` and `b` are both nominal types, but not the same nominal type.
 let b : int2 = a;
 // OK: `a` is explicitly cast to int2 and they both have the same structural type.
 let c : int2 = a as int2;
 
-// This is a strong array type.
+// This is a nominal array type.
 type arr_ints1 is u32[5];
-// This is another strong array type.
+// This is another nominal array type.
 type arr_ints2 is u32[5];
 
 let arr_a : u32[5] = [1, 2, 3, 4, 5];
 // OK: both array types here are anonymous, so they are structurally type checked.
 let arr_b : u32[5] = arr_a;
-// OK: even though arr_ints1 is a "strong" type, because arr_b is anonymous it can
-// be implicitly cast to arr_ints1 because they have the same structural type.
+// OK: even though arr_ints1 is a nominal type, because arr_b is anonymous it
+// can be implicitly cast to arr_ints1 because they have the same structural type.
 let arr_c : arr_ints1 = arr_b;
-// TYPE ERROR: both types are "strong" types they cannot be implicitly cast
+// TYPE ERROR: both types are nominal types they cannot be implicitly coerced
 // between.
 let arr_d : arr_ints2 = arr_c;
 // OK: `arr_c` is explicitly cast to arr_ints2 and they both have the same
@@ -89,9 +101,40 @@ let arr_e : arr_ints2 = arr_c as arr_ints2;
 ## Function Declaration {#function-declaration}
 
 ```grammar
-functionDeclaration -> 
-    "fun" identifier "(" parameters ")" ":" typeExpression body
+functionDeclaration -> "fun" identifier "(" parameters ")" ":" typeExpression body
 parameter -> (itemDeclaration ("," itemDeclaration)*)?
+```
+
+Function declarations create a new name in the current value local scope.
+Then a new value scope is created, where the names declared by the parameters are declared.
+
+Functions act as values, and they have types.
+When a function is declared it is automatically given a new anonymous [function type](3-types.md#function-type) matching the type expressions of the functions parameters and return type.
+The names of functions can also be declared to variables that have types that are compatible with the type of the function declaration.
+
+For example:
+
+```loxm
+fun add(a: u32, b: u32): u32 -> a + b;
+```
+
+The function `add` has an anonymous type that is structurally equivalent to `fun(u32, u32): u32`.
+
+And can be interacted with like a variable in the following ways:
+
+```loxm
+// A simple function.
+fun add(a: u32, b: u32): u32 -> a + b;
+
+// A function that takes a function and its parameters as input and executes it.
+fun do_function(f: fun(u32, u32): u32, a: u32, b: u32): u32 -> f(a, b);
+
+// Assign add to a variable.
+let f: fun(u32, u32): u32 = add;
+// Pass add as a parameter.
+do_function(add, 1, 2);
+// Pass the function variable as a parameter.
+do_function(f, 1, 2);
 ```
 
 ## Variable Declaration {#variable-declaration}

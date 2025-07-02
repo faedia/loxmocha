@@ -59,3 +59,6 @@ CMakeUserPresets.json
 
 # Ignore doc output directories
 build/
+
+# VS Code
+.vscode/

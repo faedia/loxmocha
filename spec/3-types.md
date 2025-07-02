@@ -1,4 +1,4 @@
-# Types
+# Types {#types}
 
 ```grammar
 typeExpression ->
@@ -34,6 +34,8 @@ taggedType -> identifier typeExpression? ("|" identifier typeExpression?)*
 ```grammar
 referenceType -> "&" typeExpression
 ```
+
+## Function Type {#function-type}
 
 ```grammar
 functionType -> "fun" "(" (typeExpression ("," typeExpression)*)? ")" ":" typeExpression
