@@ -33,7 +33,7 @@ operatorExpression ->
     | booleanExpression
     | comparisonExpression
     | arithmeticExpression
-    | negationExpresssion
+    | negationExpression
     | assignExpression
     | typeMemberExpression
     | typeCastExpression
@@ -127,7 +127,7 @@ argument -> (identifier ":")? expression
 ```
 
 ```grammar
-ifExpression -> "if" expression body ("else" (expression | ifExpression))?`
+ifExpression -> "if" expression body ("else" (expression | ifExpression))?
 ```
 
 ```grammar

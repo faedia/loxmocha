@@ -1,7 +1,7 @@
 # Patterns
 
 ```grammar
-pattern -> identifierPattern
+pattern -> identifierPattern | constructorPattern
 ```
 
 ```grammar

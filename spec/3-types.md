@@ -8,7 +8,7 @@ typeExpression ->
     | recordType
     | referenceType
     | taggedType
-    | funtionType
+    | functionType
     | mutableType
     | identifier
 ```
