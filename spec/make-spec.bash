@@ -14,9 +14,7 @@ mkdir -p "$OUTPUT_DIR" "$TEMP_DIR"
 
 # Process markdown files to fix cross-references
 echo "Removing filenames from links..."
-OIFS=$IFS
-IFS=$'\n'
-for file in $(find "$SPEC_DIR" -name "*.md" | sort -V); do
+find "$SPEC_DIR" -name "*.md" | sort -V | while IFS= read -r file; do
     basename=$(basename "$file")
     echo "    Processing $basename"
 
@@ -24,13 +22,10 @@ for file in $(find "$SPEC_DIR" -name "*.md" | sort -V); do
     # Convert [text](file.md#anchor) -> [text](#anchor)
     sed 's/\[\([^]]*\)\](\([^)]*\)\.md#\([^)]*\))/[\1](#\3)/g' "$file" > "$TEMP_DIR/$basename"
 done
-IFS=$OIFS
 
 # Combine all files
 echo "Combining files..."
-OIFS=$IFS
-IFS=$'\n'
-for file in $(find "$TEMP_DIR" -name "*.md" | sort -V); do
+find "$TEMP_DIR" -name "*.md" | sort -V | while IFS= read -r file; do
     echo "    Adding $file"
     
     # Append file content to combined markdown file
@@ -38,7 +33,6 @@ for file in $(find "$TEMP_DIR" -name "*.md" | sort -V); do
     # Add newlines between files
     echo -e "\n\n" >> "$TEMP_DIR/combined.md"
 done
-IFS=$OIFS
 
 # Generate LaTeX file
 echo "Generating LaTeX file..."
