@@ -40,10 +40,19 @@ jobs:
           build-essential \
           cmake \
           ninja-build \
-          gcc \
-          g++ \
           clang-tidy \
-          cppcheck
+          cppcheck \
+          software-properties-common
+
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt update
+        sudo apt install -y gcc-14 g++-14
+
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+
+        gcc --version
+        g++ --version
     
     - name: Configure CMake
       run: cmake --preset ${{ matrix.preset }}
