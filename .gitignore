@@ -62,3 +62,7 @@ build/
 
 # VS Code
 .vscode/
+
+# Ignore clangd config
+.clangd
+.cache

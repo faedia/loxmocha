@@ -1,0 +1,19 @@
+---
+Checks: > 
+    -*,
+    bugprone-*,
+    -bugprone-exception-escape,
+    cert-*,
+    clang-analyzer-*,
+    cppcoreguidelines-*,
+    hicpp-*,
+    misc-*,
+    modernize-*,
+    performance-*,
+    portability-*,
+    readability-*,
+
+FormatStyle: none
+WarningsAsErrors: ''
+HeaderFilterRegex: 'src|test'
+
