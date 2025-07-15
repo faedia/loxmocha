@@ -4,7 +4,7 @@
 
 TEST(LexerTest, InitialTest)
 {
-    lexer();
+    loxmocha::lexer();
 
     EXPECT_EQ(1, 1);
 }

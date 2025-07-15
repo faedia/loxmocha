@@ -4,6 +4,6 @@
 auto main() -> int
 {
     std::println("loxmc: Hello world from the LoxMocha compiler!");
-    lexer();
+    loxmocha::lexer();
     return 0;
 }

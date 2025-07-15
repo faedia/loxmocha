@@ -39,7 +39,11 @@ function(loxmocha_add_test name)
     set(target_name loxmocha_${name}_test)
     set(alias_name loxmocha::${name}_test)
     add_executable(${target_name} ${ARGN})
-    target_link_libraries(${target_name} GTest::gtest_main loxmocha_${name})
+    target_link_libraries(${target_name}
+        PRIVATE
+        GTest::gtest_main
+        loxmocha::${name}
+    )
     loxmocha_target_common(${target_name})
 
     gtest_discover_tests(${target_name})
