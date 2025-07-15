@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install clang-format
+      run: sudo apt update && sudo apt install -y clang-format
+
+    - name: Check formatting
+      run: |
+        find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" | \
+        xargs clang-format --dry-run -Werror
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        preset:
+          - linux-gcc-debug
+          - linux-gcc-release
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          gcc \
+          g++ \
+          clang-tidy \
+          cppcheck
+    
+    - name: Configure CMake
+      run: cmake --preset ${{ matrix.preset }}
+
+    - name: Build
+      run: cmake --build --preset ${{ matrix.preset }} -j
+
+    - name: Run Tests
+      run: ctest --preset ${{ matrix.preset }} --output-on-failure
+
