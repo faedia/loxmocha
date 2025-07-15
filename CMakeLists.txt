@@ -7,7 +7,7 @@ project(
     LANGUAGES CXX
 )
 
-set(loxmocha_CXX_STANDARD 23)
+set(loxmocha_CXX_STANDARD 23 CACHE STRING "C++ standard for LoxMocha Language")
 
 include(FetchContent)
 

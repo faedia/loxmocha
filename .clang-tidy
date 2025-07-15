@@ -15,5 +15,5 @@ Checks: >
 
 FormatStyle: none
 WarningsAsErrors: ''
-HeaderFilterRegex: ''
+HeaderFilterRegex: 'src|test'
 
