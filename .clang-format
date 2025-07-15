@@ -1,5 +1,4 @@
-﻿---
-AccessModifierOffset: '0'
+﻿AccessModifierOffset: '0'
 AlignAfterOpenBracket: Align
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: 'true'
@@ -68,5 +67,3 @@ SpacesInSquareBrackets: 'false'
 Standard: Auto
 TabWidth: '4'
 UseTab: Never
-
-...
