@@ -1,0 +1,83 @@
+
+#ifndef LOXMOCHA_TOKEN
+#define LOXMOCHA_TOKEN(name, example, value)
+#endif
+
+#ifndef LOXMOCHA_KEYWORD
+#define LOXMOCHA_KEYWORD(name, example, value) LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+#endif
+
+#ifndef LOXMOCHA_LITERAL
+#define LOXMOCHA_LITERAL(name, example, value) LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+#endif
+
+#ifndef LOXMOCHA_FAKE_TOKEN
+#define LOXMOCHA_FAKE_TOKEN(name, example, value) LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+#endif
+
+
+LOXMOCHA_TOKEN(p_left_paren, "(", 1)
+LOXMOCHA_TOKEN(p_right_paren, ")", 2)
+LOXMOCHA_TOKEN(p_left_square, "[", 3)
+LOXMOCHA_TOKEN(p_right_square, "]", 4)
+LOXMOCHA_TOKEN(p_left_brace, "{", 5)
+LOXMOCHA_TOKEN(p_right_brace, "}", 6)
+LOXMOCHA_TOKEN(p_colon, ":", 7)
+LOXMOCHA_TOKEN(p_comma, ",", 8)
+LOXMOCHA_TOKEN(p_period, ".", 9)
+LOXMOCHA_TOKEN(p_assign, "=", 10)
+LOXMOCHA_TOKEN(p_equal, "==", 11)
+LOXMOCHA_TOKEN(p_not_equal, "!=", 12)
+LOXMOCHA_TOKEN(p_arrow, "=>", 13)
+LOXMOCHA_TOKEN(p_greater, ">", 14)
+LOXMOCHA_TOKEN(p_greater_equal, ">=", 15)
+LOXMOCHA_TOKEN(p_right_shift, ">>", 16)
+LOXMOCHA_TOKEN(p_less, "<", 17)
+LOXMOCHA_TOKEN(p_less_equal, "<=", 18)
+LOXMOCHA_TOKEN(p_left_shift, "<<", 19)
+LOXMOCHA_TOKEN(p_and, "&", 20)
+LOXMOCHA_TOKEN(p_and_and, "&&", 21)
+LOXMOCHA_TOKEN(p_pipe, "|", 22)
+LOXMOCHA_TOKEN(p_pipe_pipe, "||", 23) 
+LOXMOCHA_TOKEN(p_plus, "+", 24)
+LOXMOCHA_TOKEN(p_minus, "-", 25)
+LOXMOCHA_TOKEN(p_asterisk, "*", 26)
+LOXMOCHA_TOKEN(p_slash, "/", 27)
+LOXMOCHA_TOKEN(p_percent, "%", 28)
+LOXMOCHA_TOKEN(p_caret, "^", 29)
+LOXMOCHA_TOKEN(p_tilde, "~", 30)
+LOXMOCHA_TOKEN(p_bang, "!", 31)
+
+LOXMOCHA_KEYWORD(k_as, "as", 101)
+LOXMOCHA_KEYWORD(k_begin, "begin", 102)
+LOXMOCHA_KEYWORD(k_else, "else", 103)
+LOXMOCHA_KEYWORD(k_end, "end", 104)
+LOXMOCHA_KEYWORD(k_false, "false", 105)
+LOXMOCHA_KEYWORD(k_for, "for", 106)
+LOXMOCHA_KEYWORD(k_fun, "fun", 107)
+LOXMOCHA_KEYWORD(k_if, "if", 108)
+LOXMOCHA_KEYWORD(k_in, "in", 109)
+LOXMOCHA_KEYWORD(k_is, "is", 110)
+LOXMOCHA_KEYWORD(k_let, "let", 111)
+LOXMOCHA_KEYWORD(k_mut, "mut", 112)
+LOXMOCHA_KEYWORD(k_rec, "rec", 113)
+LOXMOCHA_KEYWORD(k_true, "true", 114)
+LOXMOCHA_KEYWORD(k_type, "type", 115)
+LOXMOCHA_KEYWORD(k_var, "var", 116)
+LOXMOCHA_KEYWORD(k_while, "while", 117)
+
+LOXMOCHA_TOKEN(c_line_comment, "// This is a comment", 200)
+LOXMOCHA_TOKEN(c_block_comment, "/* This is \n a block comment*/", 201)
+
+LOXMOCHA_TOKEN(k_identifier, "my_identifier", 199)
+
+LOXMOCHA_LITERAL(l_integer, "12345", 210)
+LOXMOCHA_LITERAL(l_char, "'c'", 230)
+LOXMOCHA_LITERAL(l_string, "\"This is a string\"", 221)
+
+LOXMOCHA_FAKE_TOKEN(s_eof, "EOF", 0)
+
+#undef LOXMOCHA_TOKEN
+#undef LOXMOCHA_KEYWORD
+#undef LOXMOCHA_LITERAL
+#undef LOXMOCHA_FAKE_TOKEN

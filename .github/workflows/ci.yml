@@ -19,7 +19,7 @@ jobs:
 
     - name: Check formatting
       run: |
-        find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" | \
+        find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" -o -name ".def" | \
         xargs clang-format --dry-run -Werror
 
   build-and-test:
