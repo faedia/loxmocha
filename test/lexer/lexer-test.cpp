@@ -224,4 +224,7 @@ INSTANTIATE_TEST_SUITE_P(MultiTokenTest,
                                                                                 token_t::k_identifier("x"),
                                                                                 token_t::p_right_brace("}"),
                                                                                 token_t::s_eof("")},
-                                                           "multi_token_if_statement")));
+                                                           "multi_token_if_statement")),
+                         [](const testing::TestParamInfo<LexerMultiTokenTest::ParamType>& info) -> std::string {
+                             return std::get<2>(info.param);
+                         });

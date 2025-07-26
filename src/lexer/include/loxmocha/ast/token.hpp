@@ -68,13 +68,6 @@ public:
      */
     [[nodiscard]] constexpr static auto keyword_or_ident(std::string_view ident) -> token_t
     {
-        static const std::unordered_map<std::string_view, kind_e> keyword_kind = {
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define LOXMOCHA_KEYWORD(name, example, value) {example, kind_e::name},
-#include "loxmocha/ast/token.def"
-
-        };
-
         auto iter = keyword_kind.find(ident);
         if (iter != keyword_kind.end()) {
             return {iter->second, ident};
@@ -93,6 +86,13 @@ private:
 
     kind_e           kind_; // The kind of the token.
     std::string_view span_; // The span of the token in the input stream.
+
+    // NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const std::unordered_map<std::string_view, kind_e> keyword_kind = {
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_KEYWORD(name, example, value) {example, kind_e::name},
+#include "loxmocha/ast/token.def"
+    };
 };
 
 inline auto operator<<(std::ostream& stream, token_t::kind_e kind) -> std::ostream&
