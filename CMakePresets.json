@@ -38,6 +38,29 @@
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo"
             }
+        },
+        {
+            "name": "clang-coverage-common",
+            "description": "Common settings for Clang coverage presets",
+            "hidden": true,
+            "inherits": "common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_C_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
+                "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
+                "CMAKE_EXE_LINKER_FLAGS": "-fprofile-instr-generate",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fprofile-instr-generate"
+            }
+        },
+        {
+            "name": "clang-coverage-debug",
+            "displayName": "Clang Coverage Debug",
+            "description": "Targets Clang with coverage in debug mode",
+            "inherits": "clang-coverage-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
         }
     ],
     "buildPresets": [
@@ -48,6 +71,10 @@
         {
             "name": "linux-gcc-release",
             "configurePreset": "linux-gcc-release"
+        },
+        {
+            "name": "clang-coverage-debug",
+            "configurePreset": "clang-coverage-debug"
         }
     ],
     "testPresets": [
@@ -61,6 +88,13 @@
         {
             "name": "linux-gcc-release",
             "configurePreset": "linux-gcc-release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "clang-coverage-debug",
+            "configurePreset": "clang-coverage-debug",
             "output": {
                 "outputOnFailure": true
             }

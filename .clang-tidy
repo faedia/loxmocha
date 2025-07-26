@@ -3,6 +3,7 @@ Checks: >
     -*,
     bugprone-*,
     -bugprone-exception-escape,
+    -bugprone-easily-swappable-parameters,
     cert-*,
     clang-analyzer-*,
     cppcoreguidelines-*,
@@ -12,6 +13,8 @@ Checks: >
     performance-*,
     portability-*,
     readability-*,
+    -readability-function-cognitive-complexity,
+    -readability-identifier-length,
 
 FormatStyle: none
 WarningsAsErrors: ''
