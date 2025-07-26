@@ -1,1 +1,1 @@
-loxmocha_add_test(lexer test.cpp)
+loxmocha_add_test(lexer lexer-test.cpp)

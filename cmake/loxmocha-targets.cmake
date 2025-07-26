@@ -41,7 +41,7 @@ function(loxmocha_add_test name)
     add_executable(${target_name} ${ARGN})
     target_link_libraries(${target_name}
         PRIVATE
-        GTest::gtest_main
+        GTest::gmock_main
         loxmocha::${name}
     )
     loxmocha_target_common(${target_name})

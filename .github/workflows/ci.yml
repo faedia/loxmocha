@@ -19,7 +19,7 @@ jobs:
 
     - name: Check formatting
       run: |
-        find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" | \
+        find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" -o -name "*.def" | \
         xargs clang-format --dry-run -Werror
 
   build-and-test:
@@ -40,19 +40,33 @@ jobs:
           build-essential \
           cmake \
           ninja-build \
-          clang-tidy \
+          clang-tidy-19 \
           cppcheck \
           software-properties-common
 
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
-        sudo apt install -y gcc-14 g++-14
+        sudo apt install -y gcc-14 g++-14 libstdc++-14-dev
 
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+        sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 60
+        sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-19
 
         gcc --version
         g++ --version
+        clang-tidy --version
+        clang-tidy-19 --version
+
+        which clang-tidy
+        which clang-tidy-19
+        sudo update-alternatives --config clang-tidy
+
+
+        sudo ldconfig
+
+        sudo apt update
+        sudo apt upgrade -y
     
     - name: Configure CMake
       run: cmake --preset ${{ matrix.preset }}
