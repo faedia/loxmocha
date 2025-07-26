@@ -4,18 +4,18 @@
 #endif
 
 #ifndef LOXMOCHA_KEYWORD
-#define LOXMOCHA_KEYWORD(name, example, value) \
-    LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_KEYWORD(name, example, value) LOXMOCHA_TOKEN(name, example, value)
 #endif
 
 #ifndef LOXMOCHA_LITERAL
-#define LOXMOCHA_LITERAL(name, example, value) \
-    LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_LITERAL(name, example, value) LOXMOCHA_TOKEN(name, example, value)
 #endif
 
 #ifndef LOXMOCHA_FAKE_TOKEN
-#define LOXMOCHA_FAKE_TOKEN(name, example, value) \
-    LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_FAKE_TOKEN(name, example, value) LOXMOCHA_TOKEN(name, example, value)
 #endif
 
 LOXMOCHA_TOKEN(p_left_paren, "(", 1)

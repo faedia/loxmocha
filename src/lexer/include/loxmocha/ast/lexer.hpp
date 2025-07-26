@@ -263,7 +263,7 @@ private:
             return lex_string({token_begin, input.end()});
         }
         default: {
-            if (std::isdigit(*iter)) {
+            if (std::isdigit(*iter) != 0) {
                 return lex_integer({token_begin, input.end()});
             }
             return lex_ident({token_begin, input.end()});
