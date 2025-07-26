@@ -1,6 +1,7 @@
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/token.hpp"
 
+#include "gmock/gmock.h"
 #include <gtest/gtest.h>
 #include <string>
 #include <string_view>
@@ -116,7 +117,7 @@ const std::vector<std::tuple<std::string_view, lex_error_t::reason_e, source_loc
                         lex_error_t::reason_e::unknown_token_error,
                         source_location_t{"unknown_file", 1, 1},
                         "?",
-                        "unknown_token_eror"),
+                        "unknown_token_error"),
 
         // EOF after char literal openning quote.
         std::make_tuple(
@@ -174,3 +175,53 @@ INSTANTIATE_TEST_SUITE_P(SingleTokenErrorTest,
                          [](const testing::TestParamInfo<LexerErrorTest::ParamType>& info) -> std::string {
                              return std::get<4>(info.param);
                          });
+
+class LexerMultiTokenTest
+    : public ::testing::TestWithParam<std::tuple<std::string_view, std::vector<token_t>, std::string>> {};
+
+TEST_P(LexerMultiTokenTest, MultiTokenTest)
+{
+    const auto& [input, expected_tokens, _] = GetParam();
+
+    // Lex the input string.
+    auto lexer = lexer_t{input};
+
+    std::vector<token_t> tokens{};
+
+    while (tokens.empty() || tokens.back().kind() != token_t::kind_e::s_eof) {
+        auto token = lexer.next_token();
+
+        ASSERT_TRUE(token.has_value()) << "Failed to lex token: " << token.error().message();
+
+        tokens.push_back(token.value());
+    }
+
+    EXPECT_THAT(tokens,
+                ::testing::Pointwise(::testing::Truly([](const auto& pair) {
+                                         return std::get<0>(pair).kind() == std::get<1>(pair).kind()
+                                                && std::get<0>(pair).span() == std::get<1>(pair).span();
+                                     }),
+                                     expected_tokens));
+}
+
+INSTANTIATE_TEST_SUITE_P(MultiTokenTest,
+                         LexerMultiTokenTest,
+                         ::testing::Values(std::make_tuple("1 + 2",
+                                                           std::vector<token_t>{token_t::l_integer("1"),
+                                                                                token_t::p_plus("+"),
+                                                                                token_t::l_integer("2"),
+                                                                                token_t::s_eof("")},
+                                                           "multi_token_basic"),
+
+                                           std::make_tuple("if (x > 0) { x }",
+                                                           std::vector<token_t>{token_t::k_if("if"),
+                                                                                token_t::p_left_paren("("),
+                                                                                token_t::k_identifier("x"),
+                                                                                token_t::p_greater(">"),
+                                                                                token_t::l_integer("0"),
+                                                                                token_t::p_right_paren(")"),
+                                                                                token_t::p_left_brace("{"),
+                                                                                token_t::k_identifier("x"),
+                                                                                token_t::p_right_brace("}"),
+                                                                                token_t::s_eof("")},
+                                                           "multi_token_if_statement")));

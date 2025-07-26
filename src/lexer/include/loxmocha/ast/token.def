@@ -4,17 +4,19 @@
 #endif
 
 #ifndef LOXMOCHA_KEYWORD
-#define LOXMOCHA_KEYWORD(name, example, value) LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_KEYWORD(name, example, value) \
+    LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 #ifndef LOXMOCHA_LITERAL
-#define LOXMOCHA_LITERAL(name, example, value) LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_LITERAL(name, example, value) \
+    LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 #ifndef LOXMOCHA_FAKE_TOKEN
-#define LOXMOCHA_FAKE_TOKEN(name, example, value) LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_FAKE_TOKEN(name, example, value) \
+    LOXMOCHA_TOKEN(name, example, value) // NOLINT(cppcoreguidelines-macro-usage)
 #endif
-
 
 LOXMOCHA_TOKEN(p_left_paren, "(", 1)
 LOXMOCHA_TOKEN(p_right_paren, ")", 2)
@@ -38,7 +40,7 @@ LOXMOCHA_TOKEN(p_left_shift, "<<", 19)
 LOXMOCHA_TOKEN(p_and, "&", 20)
 LOXMOCHA_TOKEN(p_and_and, "&&", 21)
 LOXMOCHA_TOKEN(p_pipe, "|", 22)
-LOXMOCHA_TOKEN(p_pipe_pipe, "||", 23) 
+LOXMOCHA_TOKEN(p_pipe_pipe, "||", 23)
 LOXMOCHA_TOKEN(p_plus, "+", 24)
 LOXMOCHA_TOKEN(p_minus, "-", 25)
 LOXMOCHA_TOKEN(p_asterisk, "*", 26)

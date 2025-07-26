@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <format>
 #include <ostream>
-#include <print>
 #include <string_view>
 #include <unordered_map>
 
@@ -59,7 +58,6 @@ public:
 #include "loxmocha/ast/token.def"
         default: return "unknown";
         }
-        return "";
     }
 
     /**

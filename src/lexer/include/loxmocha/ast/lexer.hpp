@@ -143,7 +143,7 @@ public:
             return token_t::s_eof({current_iter_, current_iter_});
         }
 
-        auto token = lex(input_);
+        auto token = lex({current_iter_, input_.end()});
         if (token) {
             current_iter_ = token->span().end();
         } else {
@@ -263,7 +263,7 @@ private:
             return lex_string({token_begin, input.end()});
         }
         default: {
-            if ('0' <= *iter && *iter <= '9') {
+            if (std::isdigit(*iter)) {
                 return lex_integer({token_begin, input.end()});
             }
             return lex_ident({token_begin, input.end()});
