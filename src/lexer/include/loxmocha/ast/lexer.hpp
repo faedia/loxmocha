@@ -97,13 +97,13 @@ public:
                                location_.column(),
                                span_);
         case reason_e::eof_error:
-            return std::format("{}:{}:{} Unexpected end of file while processing '{}'",
+            return std::format("{}:{}:{}: Unexpected end of file while processing '{}'",
                                location_.file(),
                                location_.line(),
                                location_.column(),
                                span_);
         default:
-            return std::format("{}:{}:{} Unknown lex error with input '{}'",
+            return std::format("{}:{}:{}: Unknown lex error with input '{}'",
                                location_.file(),
                                location_.line(),
                                location_.column(),
@@ -130,7 +130,7 @@ public:
      * @brief Get the next token from the input stream, and advance the lexer's current position on both success and
      * failure.
      *
-     * If the lexer fails to lex a token, then the lexer return s a lexer_error_t and the next call to next_token() will
+     * If the lexer fails to lex a token, then the lexer returns a lexer_error_t and the next call to next_token() will
      * continue lexing from the position after the error.
      *
      * @return std::expected<token_t, lex_error_t> The next token from the input stream, or a lexical error if an error
