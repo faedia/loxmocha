@@ -21,8 +21,6 @@ SPEC_FILES=(
     "${SPEC_DIR}/patterns.md"
 )
 
-echo $SPEC_FILES
-
 # Process markdown files to fix cross-references
 echo "Removing filenames from links..."
 

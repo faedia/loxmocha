@@ -1,6 +1,6 @@
 # Tokens
 
-`LoxMocha` has a distinct set of tokens that are futher categorised into different groups.
+`LoxMocha` has a distinct set of tokens that are further categorised into different groups.
 
 ```grammar
 token ->
@@ -121,7 +121,7 @@ string -> '"' ([^"] | escapeSequence)* '"'
 
 ### Escape Sequence
 
-An escape sequence is a backslash followed by a seqeuence of characters that may represent a special character.
+An escape sequence is a backslash followed by a sequence of characters that may represent a special character.
 
 ```grammar
 escapeSequence -> "\\" ("n" | "t" | "r" | "\\" | "'" | "\"" | "0" | "x" [0-9a-fA-F]{2})
