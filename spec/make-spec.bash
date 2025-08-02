@@ -12,9 +12,21 @@ DEBUG=false  # Set to true to enable debug output
 # Create directories
 mkdir -p "$OUTPUT_DIR" "$TEMP_DIR"
 
+SPEC_FILES=(
+    "${SPEC_DIR}/introduction.md"
+    "${SPEC_DIR}/lexical-grammar.md"
+    "${SPEC_DIR}/declarations.md"
+    "${SPEC_DIR}/expressions.md"
+    "${SPEC_DIR}/types.md"
+    "${SPEC_DIR}/patterns.md"
+)
+
+echo $SPEC_FILES
+
 # Process markdown files to fix cross-references
 echo "Removing filenames from links..."
-find "$SPEC_DIR" -name "*.md" | sort -V | while IFS= read -r file; do
+
+printf '%s\n' "${SPEC_FILES[@]}" | while IFS= read -r file; do
     basename=$(basename "$file")
     echo "    Processing $basename"
 
@@ -25,7 +37,7 @@ done
 
 # Combine all files
 echo "Combining files..."
-find "$TEMP_DIR" -name "*.md" | sort -V | while IFS= read -r file; do
+printf '%s\n' "${SPEC_FILES[@]}" | while IFS= read -r file; do
     echo "    Adding $file"
     
     # Append file content to combined markdown file
