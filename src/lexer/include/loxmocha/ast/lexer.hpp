@@ -192,12 +192,12 @@ private:
         case '=': {
             iter = std::next(iter);
             if (match('=', iter, input.end())) {
-                return token_t::p_equal({token_begin, std::next(iter)});
+                return token_t::p_equal_equal({token_begin, std::next(iter)});
             }
             if (match('>', iter, input.end())) {
                 return token_t::p_arrow({token_begin, std::next(iter)});
             }
-            return token_t::p_assign({token_begin, iter});
+            return token_t::p_equal({token_begin, iter});
         }
         case '>': {
             iter = std::next(iter);
@@ -354,6 +354,7 @@ private:
         const auto* iter        = input.begin();
         const auto* token_begin = iter;
 
+        // If the first character is not a valid identifier start then we have a lexical error.
         if (!is_ident_start(*iter)) {
             return std::unexpected(lex_error_t{
                 lex_error_t::reason_e::unknown_token_error, {iter, std::next(iter)}, source_location(iter)});
