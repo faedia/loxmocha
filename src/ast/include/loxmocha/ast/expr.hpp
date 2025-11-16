@@ -320,7 +320,7 @@ public:
     [[nodiscard]] auto named_args() -> std::vector<std::pair<token_t, expr_t>>& { return named_args_; }
 
 private:
-    safe_ptr<expr_t> callee_;
+    safe_ptr<expr_t>                        callee_;
     std::vector<expr_t>                     positional_args_;
     std::vector<std::pair<token_t, expr_t>> named_args_;
 };

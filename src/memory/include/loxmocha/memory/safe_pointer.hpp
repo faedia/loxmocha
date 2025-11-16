@@ -39,7 +39,7 @@ public:
     [[nodiscard]] auto get() -> T* { return ptr_.get(); }
     [[nodiscard]] auto get() const -> const T* { return ptr_.get(); }
 
-    explicit operator bool() const { return satic_cast<bool>(ptr_); }
+    explicit operator bool() const { return static_cast<bool>(ptr_); }
 
     void reset() { ptr_.reset(); }
     void reset(T* p) { ptr_.reset(p); }

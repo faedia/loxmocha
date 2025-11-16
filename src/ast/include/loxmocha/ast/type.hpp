@@ -149,7 +149,7 @@ public:
     auto operator=(const function_t&) -> function_t&     = delete;
     auto operator=(function_t&&) noexcept -> function_t& = default;
 
-    inline function_t(std::vector<std::pair<token_t, type_t>>&& parameters, safe_ptr<type_t>&& return_type);
+    inline function_t(std::vector<type_t>&& parameters, safe_ptr<type_t>&& return_type);
 
     [[nodiscard]] auto parameters() const -> const std::vector<type_t>& { return parameters_; }
     [[nodiscard]] auto parameters() -> std::vector<type_t>& { return parameters_; }
