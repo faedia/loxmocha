@@ -498,7 +498,7 @@ private:
                  binary_t,
                  unary_t,
                  array_t,
-                 // TODO: Fix type handling and recusive issues...
+                 // TODO: Fix type handling and recursive issues...
                  // is_t,
                  // cast_t,
                  tuple_t,
