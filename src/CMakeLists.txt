@@ -1,2 +1,5 @@
+add_subdirectory(ast)
 add_subdirectory(loxmc)
 add_subdirectory(lexer)
+add_subdirectory(memory)
+add_subdirectory(parser)

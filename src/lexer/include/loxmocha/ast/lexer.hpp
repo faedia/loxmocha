@@ -138,12 +138,7 @@ public:
      */
     [[nodiscard]] auto next_token() -> std::expected<token_t, lex_error_t>
     {
-        if (current_iter_ == input_.end()) {
-            // If the current iterator is at the end of the input stream, return an EOF token.
-            return token_t::s_eof({current_iter_, current_iter_});
-        }
-
-        auto token = lex({current_iter_, input_.end()});
+        auto token = peek_token();
         if (token) {
             current_iter_ = token->span().end();
         } else {
@@ -152,6 +147,20 @@ public:
         }
         return token;
     }
+
+    [[nodiscard]] constexpr auto peek_token() -> std::expected<token_t, lex_error_t>
+    {
+        if (current_iter_ == input_.end()) {
+            // If the current iterator is at the end of the input stream, return an EOF token.
+            return token_t::s_eof({current_iter_, current_iter_});
+        }
+
+        return lex({current_iter_, input_.end()});
+    }
+
+    void consume_token() { [[maybe_unused]] auto token = next_token(); }
+
+    void reset_token(const token_t& token) { current_iter_ = token.span().begin(); }
 
 private:
     std::string_view           input_;        // The input string to be lexed.
@@ -187,6 +196,7 @@ private:
         case '{': return token_t::p_left_brace({token_begin, std::next(iter)});
         case '}': return token_t::p_right_brace({token_begin, std::next(iter)});
         case ':': return token_t::p_colon({token_begin, std::next(iter)});
+        case ';': return token_t::p_semicolon({token_begin, std::next(iter)});
         case ',': return token_t::p_comma({token_begin, std::next(iter)});
         case '.': return token_t::p_period({token_begin, std::next(iter)});
         case '=': {
