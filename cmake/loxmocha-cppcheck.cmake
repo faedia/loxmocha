@@ -6,6 +6,7 @@ if(loxmocha_CPPCHECK)
             --enable=warning,style,performance,portability
             --std=c++${loxmocha_CXX_STANDARD}
             --check-level=exhaustive
+            --inline-suppr
             --error-exitcode=2
         )
         set_target_properties(${target_name} PROPERTIES CXX_CPPCHECK "${loxmocha_CPPCHECK};${loxmocha_CPPCHECK_OPTIONS}")

@@ -8,5 +8,6 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 add_subdirectory(lexer)
+add_subdirectory(ast)
 
 

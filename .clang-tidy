@@ -15,6 +15,7 @@ Checks: >
     readability-*,
     -readability-function-cognitive-complexity,
     -readability-identifier-length,
+    -misc-no-recursion,
 
 FormatStyle: none
 WarningsAsErrors: ''
