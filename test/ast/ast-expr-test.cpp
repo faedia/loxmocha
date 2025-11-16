@@ -6,7 +6,6 @@
 
 #include "gtest/gtest.h"
 #include <cstddef>
-#include <cstdint>
 #include <print>
 #include <string>
 #include <utility>
@@ -27,23 +26,15 @@ class SimplePrettyPrinter {
 public:
     [[nodiscard]] static auto create_indent(const std::vector<bool>& lastChildPath) -> std::string
     {
-        std::string indent;
-
-        for (std::uint32_t i = 0; i < lastChildPath.size(); ++i) {
-            if (i == lastChildPath.size() - 1) {
-                if (lastChildPath[i]) {
-                    indent += "└─";
-                } else {
-                    indent += "├─";
-                }
-            } else {
-                if (lastChildPath[i]) {
-                    indent += "  ";
-                } else {
-                    indent += "│ ";
-                }
-            }
+        if (lastChildPath.empty()) {
+            return "";
         }
+
+        std::string indent;
+        for (size_t i = 0; i < lastChildPath.size() - 1; ++i) {
+            indent += lastChildPath[i] ? "  " : "│ ";
+        }
+        indent += lastChildPath.back() ? "└─" : "├─";
         return indent;
     }
 

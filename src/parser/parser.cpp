@@ -31,16 +31,12 @@ namespace {
         }
 
     private:
-        template<token_t::kind_e kind, token_t::kind_e... Kinds>
+        template<token_t::kind_e... Kinds>
         auto match(token_t token) -> bool
         {
-            if (token.kind() == kind) {
-                return true;
-            }
-            if constexpr (sizeof...(Kinds) > 0) {
-                return match<Kinds...>(token);
-            }
-            return false;
+            static_assert(sizeof...(Kinds) > 0, "At least one kind must be provided");
+            // cppcheck-suppress internalAstError
+            return ((token.kind() == Kinds) || ...);
         }
 
         // NOLINTNEXTLINE(misc-no-recursion)
@@ -289,10 +285,7 @@ auto parse_stmt([[maybe_unused]] lexer_t& lexer) -> parser_result_t<stmt::stmt_t
     return parser_result_t<stmt::stmt_t>{std::move(stmt), false, {}};
 }
 
-auto parse_expr([[maybe_unused]] lexer_t& lexer) -> parser_result_t<expr::expr_t>
-{
-    return parser_t{lexer}.parse_expr();
-}
+auto parse_expr(lexer_t& lexer) -> parser_result_t<expr::expr_t> { return parser_t{lexer}.parse_expr(); }
 
 auto parse_type([[maybe_unused]] lexer_t& lexer) -> parser_result_t<type::type_t>
 {

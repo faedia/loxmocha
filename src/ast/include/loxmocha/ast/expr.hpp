@@ -492,6 +492,13 @@ public:
                           expr_);
     }
 
+    template<typename Visitor, typename... Args>
+    auto visit(Visitor&& visitor, Args&&... args)
+    {
+        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
+                          expr_);
+    }
+
 private:
     std::variant<literal_t,
                  identifier_t,
