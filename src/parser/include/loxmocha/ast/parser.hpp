@@ -44,6 +44,7 @@ auto parse_type(lexer_t& lexer) -> parser_result_t<type::type_t>;
 // TODO: Something I'm not sure about is whether the parser should be
 // free functions or a class with state. Having the state makes it easier to manage
 // These top level functions could create a parser object and call internal methods on it?
-// And then at the end of parsing, the parse result is created and the parser destroyed, for example, the parse result moves out the parsed AST and diagnostics into a parse result.
+// And then at the end of parsing, the parse result is created and the parser destroyed, for example, the parse result
+// moves out the parsed AST and diagnostics into a parse result.
 
 } // namespace loxmocha
