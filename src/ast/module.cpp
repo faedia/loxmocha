@@ -1,4 +1,5 @@
 #include "loxmocha/ast/module.hpp"
+
 #include "loxmocha/ast/decl.hpp"
 
 #include <utility>
