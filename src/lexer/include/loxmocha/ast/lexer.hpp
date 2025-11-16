@@ -148,7 +148,7 @@ public:
         return token;
     }
 
-    [[nodiscard]] constexpr auto peek_token() -> std::expected<token_t, lex_error_t>
+    [[nodiscard]] constexpr auto peek_token() const -> std::expected<token_t, lex_error_t>
     {
         if (current_iter_ == input_.end()) {
             // If the current iterator is at the end of the input stream, return an EOF token.
@@ -173,7 +173,7 @@ private:
      *
      * @return std::expected<token_t, lex_error_t> The next token from the input string, or a lexical error if an error.
      */
-    [[nodiscard]] constexpr auto lex(std::string_view input) -> std::expected<token_t, lex_error_t>
+    [[nodiscard]] constexpr auto lex(std::string_view input) const -> std::expected<token_t, lex_error_t>
     {
         const auto* iter = input.begin();
 
@@ -287,7 +287,7 @@ private:
      * @param iter Iterator to get the source location for.
      * @return source_location_t The source location of the character in the input stream.
      */
-    [[nodiscard]] constexpr auto source_location(std::string_view::iterator iter) -> source_location_t
+    [[nodiscard]] constexpr auto source_location(std::string_view::iterator iter) const -> source_location_t
     {
         auto        last_new_line = std::string_view{input_.begin(), iter}.find_last_of('\n');
         const auto* start_of_line =
@@ -359,7 +359,7 @@ private:
      * @return std::expected<token_t, lex_error_t> A token representing the identifier or keyword, or a lexical error if
      * not.
      */
-    [[nodiscard]] constexpr auto lex_ident(std::string_view input) -> std::expected<token_t, lex_error_t>
+    [[nodiscard]] constexpr auto lex_ident(std::string_view input) const -> std::expected<token_t, lex_error_t>
     {
         const auto* iter        = input.begin();
         const auto* token_begin = iter;
@@ -382,7 +382,7 @@ private:
      * @param input The input string to lex a character from.
      * @return std::expected<token_t, lex_error_t> A token representing the character, or a lexical error if not.
      */
-    [[nodiscard]] constexpr auto lex_char(std::string_view input) -> std::expected<token_t, lex_error_t>
+    [[nodiscard]] constexpr auto lex_char(std::string_view input) const -> std::expected<token_t, lex_error_t>
     {
         assert(!input.empty());
         assert(input.starts_with('\''));
@@ -426,7 +426,7 @@ private:
      * @param input The input string to lex a string from.
      * @return std::expected<token_t, lex_error_t> A token representing the string, or a lexical error if not.
      */
-    [[nodiscard]] constexpr auto lex_string(std::string_view input) -> std::expected<token_t, lex_error_t>
+    [[nodiscard]] constexpr auto lex_string(std::string_view input) const -> std::expected<token_t, lex_error_t>
     {
         assert(!input.empty());
         assert(input.starts_with('"'));

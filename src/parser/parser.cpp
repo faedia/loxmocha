@@ -11,6 +11,7 @@
 
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace loxmocha {
@@ -123,78 +124,106 @@ namespace {
             return access_expr();
         }
 
+        auto field_access_expr(expr::expr_t&& base_expr) -> expr::expr_t
+        {
+            auto field = lexer_.peek_token();
+            if (!field || !match<token_t::kind_e::k_identifier>(*field)) {
+                diagnostics_.emplace_back("Expected identifier after '.'");
+                has_error_ = true;
+                return expr::error_t{};
+            }
+            lexer_.consume_token();
+            return expr::field_t{safe_ptr<expr::expr_t>::make(std::move(base_expr)), *field};
+        }
+
+        auto index_expr(expr::expr_t&& base_expr) -> expr::expr_t
+        {
+            auto index_expr = equality_expr();
+            auto end_square = lexer_.peek_token();
+            if (!end_square || !match<token_t::kind_e::p_right_square>(*end_square)) {
+                diagnostics_.emplace_back("Expected ']' after index expression");
+                has_error_ = true;
+                return expr::error_t{};
+            }
+            lexer_.consume_token();
+            return expr::index_t{safe_ptr<expr::expr_t>::make(std::move(base_expr)),
+                                 safe_ptr<expr::expr_t>::make(std::move(index_expr))};
+        }
+
+        auto named_arg() -> std::variant<expr::expr_t, std::pair<token_t, expr::expr_t>>
+        {
+            auto name = *lexer_.next_token();
+            if (auto colon = lexer_.peek_token(); colon && match<token_t::kind_e::p_colon>(*colon)) {
+                lexer_.consume_token();
+                return std::make_pair(name, equality_expr());
+            }
+            lexer_.reset_token(name);
+            return equality_expr();
+        }
+
+        auto call_expr(expr::expr_t&& callee_expr) -> expr::expr_t
+        {
+            std::vector<expr::expr_t>                     positional_args{};
+            std::vector<std::pair<token_t, expr::expr_t>> named_args{};
+
+            for (;;) {
+                auto argument = lexer_.peek_token();
+                if (!argument || match<token_t::kind_e::p_right_paren>(*argument)) {
+                    break;
+                }
+
+                if (match<token_t::kind_e::k_identifier>(*argument)) {
+                    auto result = named_arg();
+                    if (std::holds_alternative<expr::expr_t>(result)) {
+                        positional_args.emplace_back(std::move(std::get<expr::expr_t>(result)));
+                    } else {
+                        named_args.emplace_back(std::move(std::get<std::pair<token_t, expr::expr_t>>(result)));
+                    }
+                } else {
+                    positional_args.emplace_back(equality_expr());
+                }
+
+                auto comma = lexer_.peek_token();
+                if (comma && match<token_t::kind_e::p_comma>(*comma)) {
+                    lexer_.consume_token();
+                } else {
+                    break;
+                }
+            }
+
+            auto end_paren = lexer_.peek_token();
+            if (!end_paren || !match<token_t::kind_e::p_right_paren>(*end_paren)) {
+                diagnostics_.emplace_back("Expected ')' after arguments");
+                has_error_ = true;
+                return expr::error_t{};
+            }
+            lexer_.consume_token();
+            return expr::call_t{safe_ptr<expr::expr_t>::make(std::move(callee_expr)),
+                                std::move(positional_args),
+                                std::move(named_args)};
+        }
+
         // NOLINTNEXTLINE(misc-no-recursion)
         auto access_expr() -> expr::expr_t
         {
             auto base_expr = primary_expr();
 
-            auto next = lexer_.peek_token();
-
-            while (next
-                   && match<token_t::kind_e::p_period, token_t::kind_e::p_left_square, token_t::kind_e::p_left_paren>(
-                       *next)) {
-                lexer_.consume_token();
-
-                if (match<token_t::kind_e::p_period>(*next)) {
-                    next = lexer_.peek_token();
-                    if (!next || !match<token_t::kind_e::k_identifier>(*next)) {
-                        diagnostics_.emplace_back("Expected identifier after '.'");
-                        has_error_ = true;
-                        return expr::error_t{};
-                    }
-                    base_expr = expr::field_t{safe_ptr<expr::expr_t>::make(std::move(base_expr)), *next};
-                } else if (match<token_t::kind_e::p_left_square>(*next)) {
-                    auto index_expr = equality_expr();
-                    next            = lexer_.peek_token();
-                    if (!next || !match<token_t::kind_e::p_right_square>(*next)) {
-                        diagnostics_.emplace_back("Expected ']' after index expression");
-                        has_error_ = true;
-                        return expr::error_t{};
-                    }
-                    base_expr = expr::index_t{safe_ptr<expr::expr_t>::make(std::move(base_expr)),
-                                              safe_ptr<expr::expr_t>::make(std::move(index_expr))};
-
-                } else if (match<token_t::kind_e::p_left_paren>(*next)) {
-                    std::vector<expr::expr_t>                     positional_args{};
-                    std::vector<std::pair<token_t, expr::expr_t>> named_args{};
-
-                    next = lexer_.peek_token();
-                    while (next && !match<token_t::kind_e::p_right_paren>(*next)) {
-                        if (match<token_t::kind_e::k_identifier>(*next)) {
-                            auto name = *next;
-                            lexer_.consume_token();
-                            next = lexer_.peek_token();
-                            if (next && match<token_t::kind_e::p_colon>(*next)) {
-                                lexer_.consume_token();
-                                named_args.emplace_back(name, equality_expr());
-                            } else {
-                                lexer_.reset_token(name);
-                                positional_args.emplace_back(equality_expr());
-                            }
-                        } else {
-                            positional_args.emplace_back(equality_expr());
-                        }
-
-                        next = lexer_.peek_token();
-                        if (next && match<token_t::kind_e::p_comma>(*next)) {
-                            lexer_.consume_token();
-                            next = lexer_.peek_token();
-                        } else {
-                            break;
-                        }
-                    }
-
-                    if (!next || !match<token_t::kind_e::p_right_paren>(*next)) {
-                        diagnostics_.emplace_back("Expected ')' after arguments");
-                        has_error_ = true;
-                        return expr::error_t{};
-                    }
-                    base_expr = expr::call_t{safe_ptr<expr::expr_t>::make(std::move(base_expr)),
-                                             std::move(positional_args),
-                                             std::move(named_args)};
+            for (;;) {
+                auto access_token = lexer_.peek_token();
+                if (!access_token
+                    || !match<token_t::kind_e::p_period, token_t::kind_e::p_left_square, token_t::kind_e::p_left_paren>(
+                        *access_token)) {
+                    break;
                 }
                 lexer_.consume_token();
-                next = lexer_.peek_token();
+
+                if (match<token_t::kind_e::p_period>(*access_token)) {
+                    base_expr = field_access_expr(std::move(base_expr));
+                } else if (match<token_t::kind_e::p_left_square>(*access_token)) {
+                    base_expr = index_expr(std::move(base_expr));
+                } else if (match<token_t::kind_e::p_left_paren>(*access_token)) {
+                    base_expr = call_expr(std::move(base_expr));
+                }
             }
 
             return base_expr;

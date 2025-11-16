@@ -122,7 +122,7 @@ public:
     auto operator=(const is_t&) -> is_t&     = delete;
     auto operator=(is_t&&) noexcept -> is_t& = default;
 
-    inline is_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type, const token_t& is_token);
+    inline is_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type);
 
     [[nodiscard]] auto expr() const -> const safe_ptr<expr_t>& { return expr_; }
     [[nodiscard]] auto expr() -> safe_ptr<expr_t>& { return expr_; }
@@ -167,7 +167,7 @@ public:
     array_t(array_t&&) noexcept = default;
     ~array_t()                  = default;
 
-    auto operator=(const array_t&) -> array_t&     = default;
+    auto operator=(const array_t&) -> array_t&     = delete;
     auto operator=(array_t&&) noexcept -> array_t& = default;
 
     inline array_t(std::vector<expr_t>&& elements, const token_t& open_bracket, const token_t& close_bracket);
@@ -498,6 +498,9 @@ private:
                  binary_t,
                  unary_t,
                  array_t,
+                 // TODO: Fix type handling and recusive issues...
+                 // is_t,
+                 // cast_t,
                  tuple_t,
                  record_t,
                  index_t,
