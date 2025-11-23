@@ -1,6 +1,8 @@
 #include "loxmocha/ast/decl.hpp"
 
+#include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/token.hpp"
+#include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 
 #include <utility>

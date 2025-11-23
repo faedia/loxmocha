@@ -5,6 +5,8 @@
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace loxmocha::expr {

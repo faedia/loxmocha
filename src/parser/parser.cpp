@@ -146,12 +146,12 @@ namespace {
                                  safe_ptr<expr::expr_t>::make(std::move(index_expr))};
         }
 
-        auto named_arg() -> std::variant<expr::expr_t, std::pair<token_t, expr::expr_t>>
+        auto named_arg() -> std::variant<expr::expr_t, expr::call_t::named_arg_t>
         {
             auto name = *lexer_.next_token();
             if (auto colon = lexer_.peek_token(); colon && match<token_t::kind_e::p_colon>(*colon)) {
                 lexer_.consume_token();
-                return std::make_pair(name, equality_expr());
+                return expr::call_t::named_arg_t{.name = name, .value = equality_expr()};
             }
             lexer_.reset_token(name);
             return equality_expr();
@@ -159,8 +159,8 @@ namespace {
 
         auto call_expr(expr::expr_t&& callee_expr) -> expr::expr_t
         {
-            std::vector<expr::expr_t>                     positional_args{};
-            std::vector<std::pair<token_t, expr::expr_t>> named_args{};
+            std::vector<expr::expr_t>              positional_args{};
+            std::vector<expr::call_t::named_arg_t> named_args{};
 
             for (;;) {
                 auto argument = lexer_.peek_token();
@@ -173,7 +173,7 @@ namespace {
                     if (std::holds_alternative<expr::expr_t>(result)) {
                         positional_args.emplace_back(std::move(std::get<expr::expr_t>(result)));
                     } else {
-                        named_args.emplace_back(std::move(std::get<std::pair<token_t, expr::expr_t>>(result)));
+                        named_args.emplace_back(std::move(std::get<expr::call_t::named_arg_t>(result)));
                     }
                 } else {
                     positional_args.emplace_back(equality_expr());
