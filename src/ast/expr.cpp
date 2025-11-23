@@ -29,7 +29,7 @@ array_t::array_t(std::vector<expr_t>&& elements) : elements_(std::move(elements)
 
 tuple_t::tuple_t(std::vector<expr_t>&& elements) : elements_(std::move(elements)) {}
 
-record_t::record_t(std::vector<Field>&& fields) : fields_(std::move(fields)) {}
+record_t::record_t(std::vector<field_t>&& fields) : fields_(std::move(fields)) {}
 
 index_t::index_t(safe_ptr<expr_t>&& base, safe_ptr<expr_t>&& index) : base_(std::move(base)), index_(std::move(index))
 {

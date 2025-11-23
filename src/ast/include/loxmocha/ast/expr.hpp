@@ -396,27 +396,27 @@ public:
     /**
      * @brief Struct representing a field in the record.
      */
-    struct Field;
+    struct field_t;
 
     /**
      * @brief Constructs a record expression with the given fields.
      * @param fields The fields of the record.
      */
-    explicit record_t(std::vector<Field>&& fields);
+    explicit record_t(std::vector<field_t>&& fields);
 
     /**
      * @brief Get the fields of the record expression.
      * @return const std::vector<Field>& The fields of the record expression.
      */
-    [[nodiscard]] auto fields() const -> const std::vector<Field>& { return fields_; }
+    [[nodiscard]] auto fields() const -> const std::vector<field_t>& { return fields_; }
     /**
      * @brief Get the fields of the record expression.
      * @return std::vector<Field>& The fields of the record expression.
      */
-    [[nodiscard]] auto fields() -> std::vector<Field>& { return fields_; }
+    [[nodiscard]] auto fields() -> std::vector<field_t>& { return fields_; }
 
 private:
-    std::vector<Field> fields_;
+    std::vector<field_t> fields_;
 };
 
 /**
@@ -845,7 +845,7 @@ public:
     using node_t::node_t;
 };
 
-struct record_t::Field {
+struct record_t::field_t {
     token_t name_;
     expr_t  value_;
 };

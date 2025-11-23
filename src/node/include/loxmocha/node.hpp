@@ -29,7 +29,7 @@ public:
     template<typename T>
     auto operator=(const T& value) -> node_t&
     {
-        node_ = std::forward<T>(value);
+        node_ = value;
         return *this;
     }
 
@@ -62,7 +62,7 @@ public:
     /**
      * @brief Constructs a node from a specific kind.
      *
-     * @param T The specific kind to construct the node from.
+     * @tparam T The specific kind to construct the node from.
      * @param value The specific kind value.
      */
     template<typename T>
