@@ -74,9 +74,9 @@ public:
 
         for (size_t i = 0; i < call.named_args().size(); ++i) {
             lastChildPath.back() = (i == call.named_args().size() - 1);
-            std::print("{}┬Named Arg: {}\n", create_indent(lastChildPath), call.named_args()[i].first.span());
+            std::print("{}┬Named Arg: {}\n", create_indent(lastChildPath), call.named_args()[i].name.span());
             lastChildPath.push_back(true);
-            call.named_args()[i].second.visit(*this, lastChildPath);
+            call.named_args()[i].value.visit(*this, lastChildPath);
             lastChildPath.pop_back();
         }
     }

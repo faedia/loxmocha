@@ -74,6 +74,8 @@ public:
     [[nodiscard]] auto get() -> T* { return ptr_.get(); }
     [[nodiscard]] auto get() const -> const T* { return ptr_.get(); }
 
+    [[nodiscard]] auto to_nullable() && -> nullable_ptr<T> { return nullable_ptr<T>(ptr_.release()); }
+
     template<typename... Args>
     [[nodiscard]] static auto make(Args&&... args) -> safe_ptr<T>
     {

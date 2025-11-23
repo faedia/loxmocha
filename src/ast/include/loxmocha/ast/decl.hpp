@@ -4,7 +4,10 @@
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
+#include "loxmocha/node.hpp"
 
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace loxmocha::expr {
@@ -19,6 +22,10 @@ namespace loxmocha::decl {
 
 class decl_t;
 
+/**
+ * @class type_t
+ * @brief represents a type declaration
+ */
 class type_t {
 public:
     type_t() = delete;
@@ -30,12 +37,34 @@ public:
     auto operator=(const type_t&) -> type_t&     = delete;
     auto operator=(type_t&&) noexcept -> type_t& = default;
 
-    explicit type_t(safe_ptr<type::type_t>&& type);
+    /**
+     * @brief Constructs a type declaration from an identifier and a type.
+     *
+     * @param identifier The identifier of the type.
+     * @param type The type associated with the identifier.
+     */
+    explicit type_t(token_t identifier, safe_ptr<type::type_t>&& type);
 
+    /**
+     * @brief Get the identifier of the type declaration.
+     * @return const token_t& The identifier of the type declaration.
+     */
     [[nodiscard]] auto identifier() const -> const token_t& { return identifier_; }
+    /**
+     * @brief Get the identifier of the type declaration.
+     * @return token_t& The identifier of the type declaration.
+     */
     [[nodiscard]] auto identifier() -> token_t& { return identifier_; }
 
+    /**
+     * @brief Get the type associated with the type declaration.
+     * @return const safe_ptr<type::type_t>& The type associated with the type declaration.
+     */
     [[nodiscard]] auto type() const -> const safe_ptr<type::type_t>& { return type_; }
+    /**
+     * @brief Get the type associated with the type declaration.
+     * @return safe_ptr<type::type_t>& The type associated with the type declaration.
+     */
     [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
 
 private:
@@ -43,6 +72,10 @@ private:
     safe_ptr<type::type_t> type_;
 };
 
+/**
+ * @class function_t
+ * @brief represents a function declaration
+ */
 class function_t {
 public:
     function_t() = delete;
@@ -54,26 +87,69 @@ public:
     auto operator=(const function_t&) -> function_t&     = delete;
     auto operator=(function_t&&) noexcept -> function_t& = default;
 
+    /**
+     * @brief Struct representing a function parameter.
+     */
     struct parameter_t {
         token_t                name;
         safe_ptr<type::type_t> type;
     };
 
+    /**
+     * @brief Constructs a function declaration from an identifier, parameters, return type, and body.
+     *
+     * @param identifier The identifier of the function.
+     * @param parameters The parameters of the function.
+     * @param return_type The return type of the function.
+     * @param body The body of the function.
+     */
     explicit function_t(token_t                    identifier,
                         std::vector<parameter_t>&& parameters,
                         safe_ptr<type::type_t>&&   return_type,
                         safe_ptr<expr::expr_t>&&   body);
 
+    /**
+     * @brief Get the identifier of the function declaration.
+     * @return const token_t& The identifier of the function declaration.
+     */
     [[nodiscard]] auto identifier() const -> const token_t& { return identifier_; }
+    /**
+     * @brief Get the identifier of the function declaration.
+     * @return token_t& The identifier of the function declaration.
+     */
     [[nodiscard]] auto identifier() -> token_t& { return identifier_; }
 
+    /**
+     * @brief Get the parameters of the function declaration.
+     * @return const std::vector<parameter_t>& The parameters of the function declaration.
+     */
     [[nodiscard]] auto parameters() const -> const std::vector<parameter_t>& { return parameters_; }
+    /**
+     * @brief Get the parameters of the function declaration.
+     * @return std::vector<parameter_t>& The parameters of the function declaration.
+     */
     [[nodiscard]] auto parameters() -> std::vector<parameter_t>& { return parameters_; }
 
+    /**
+     * @brief Get the return type of the function declaration.
+     * @return const safe_ptr<type::type_t>& The return type of the function declaration.
+     */
     [[nodiscard]] auto return_type() const -> const safe_ptr<type::type_t>& { return return_type_; }
+    /**
+     * @brief Get the return type of the function declaration.
+     * @return safe_ptr<type::type_t>& The return type of the function declaration.
+     */
     [[nodiscard]] auto return_type() -> safe_ptr<type::type_t>& { return return_type_; }
 
+    /**
+     * @brief Get the body of the function declaration.
+     * @return const safe_ptr<expr::expr_t>& The body of the function declaration.
+     */
     [[nodiscard]] auto body() const -> const safe_ptr<expr::expr_t>& { return body_; }
+    /**
+     * @brief Get the body of the function declaration.
+     * @return safe_ptr<expr::expr_t>& The body of the function declaration.
+     */
     [[nodiscard]] auto body() -> safe_ptr<expr::expr_t>& { return body_; }
 
 private:
@@ -83,6 +159,10 @@ private:
     safe_ptr<expr::expr_t>   body_;
 };
 
+/**
+ * @class variable_t
+ * @brief represents a variable declaration
+ */
 class variable_t {
 public:
     variable_t() = delete;
@@ -94,12 +174,34 @@ public:
     auto operator=(const variable_t&) -> variable_t&     = delete;
     auto operator=(variable_t&&) noexcept -> variable_t& = default;
 
+    /**
+     * @brief Constructs a variable declaration from an identifier and a type.
+     *
+     * @param identifier The identifier of the variable.
+     * @param type The type of the variable.
+     */
     explicit variable_t(token_t identifier, safe_ptr<type::type_t>&& type);
 
+    /**
+     * @brief Get the identifier of the variable declaration.
+     * @return const token_t& The identifier of the variable declaration.
+     */
     [[nodiscard]] auto identifier() const -> const token_t& { return identifier_; }
+    /**
+     * @brief Get the identifier of the variable declaration.
+     * @return token_t& The identifier of the variable declaration.
+     */
     [[nodiscard]] auto identifier() -> token_t& { return identifier_; }
 
+    /**
+     * @brief Get the type of the variable declaration.
+     * @return const safe_ptr<type::type_t>& The type of the variable declaration.
+     */
     [[nodiscard]] auto type() const -> const safe_ptr<type::type_t>& { return type_; }
+    /**
+     * @brief Get the type of the variable declaration.
+     * @return safe_ptr<type::type_t>& The type of the variable declaration.
+     */
     [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
 
 private:
@@ -107,82 +209,50 @@ private:
     safe_ptr<type::type_t> type_;
 };
 
+/**
+ * @class error_t
+ * @brief represents an error in a declaration
+ */
 class error_t {
 public:
     error_t() = delete;
 
-    error_t(const error_t&)     = delete;
+    error_t(const error_t&)     = default;
     error_t(error_t&&) noexcept = default;
     ~error_t()                  = default;
 
-    auto operator=(const error_t&) -> error_t&     = delete;
+    auto operator=(const error_t&) -> error_t&     = default;
     auto operator=(error_t&&) noexcept -> error_t& = default;
 
+    /**
+     * @brief Constructs an error declaration with a message.
+     *
+     * @param message The error message.
+     */
     explicit error_t(std::string message) : message_(std::move(message)) {}
 
+    /**
+     * @brief Get the error message.
+     * @return const std::string& The error message.
+     */
     [[nodiscard]] auto message() const -> const std::string& { return message_; }
+    /**
+     * @brief Get the error message.
+     * @return std::string& The error message.
+     */
     [[nodiscard]] auto message() -> std::string& { return message_; }
 
 private:
     std::string message_;
 };
 
-class decl_t {
+/**
+ * @class decl_t
+ * @brief represents a declaration
+ */
+class decl_t : public node_t<type_t, function_t, variable_t, error_t> {
 public:
-    decl_t() = delete;
-
-    decl_t(const decl_t&)     = delete;
-    decl_t(decl_t&&) noexcept = default;
-    ~decl_t()                 = default;
-
-    auto operator=(const decl_t&) -> decl_t&     = delete;
-    auto operator=(decl_t&&) noexcept -> decl_t& = default;
-    template<typename T>
-    auto operator=(T&& other) noexcept -> decl_t&
-    {
-        decl_ = std::forward<T>(other);
-        return *this;
-    }
-
-    template<typename T>
-    // cppcheck-suppress noExplicitConstructor
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload,hicpp-explicit-conversions)
-    decl_t(T&& value) noexcept : decl_(std::forward<T>(value))
-    {
-    }
-
-    template<typename T, typename... Args>
-    // NOLINTNEXTLINE(readability-named-parameter,hicpp-named-parameter)
-    explicit decl_t(std::in_place_type_t<T>, Args&&... args) : decl_(std::in_place_type<T>, std::forward<Args>(args)...)
-    {
-    }
-
-    template<typename T>
-    [[nodiscard]] auto is() const -> bool
-    {
-        return std::holds_alternative<T>(decl_);
-    }
-
-    template<typename T>
-    [[nodiscard]] auto as() -> T&
-    {
-        return std::get<T>(decl_);
-    }
-
-    template<typename T>
-    [[nodiscard]] auto as() const -> const T&
-    {
-        return std::get<T>(decl_);
-    }
-
-    template<typename Visitor>
-    [[nodiscard]] auto visit(Visitor&& visitor) -> decltype(auto)
-    {
-        return std::visit(std::forward<Visitor>(visitor), decl_);
-    }
-
-private:
-    std::variant<type_t, function_t, variable_t, error_t> decl_;
+    using node_t::node_t;
 };
 
 } // namespace loxmocha::decl
