@@ -3,6 +3,7 @@
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
+#include "loxmocha/node.hpp"
 
 #include <utility>
 #include <variant>
@@ -819,134 +820,29 @@ public:
  * @class expr_t
  * @brief represents an expression.
  */
-class expr_t {
+class expr_t
+    : public node_t<literal_t,
+                    identifier_t,
+                    binary_t,
+                    unary_t,
+                    array_t,
+                    // TODO: Fix type handling and recursive issues...
+                    is_t,
+                    cast_t,
+                    tuple_t,
+                    record_t,
+                    index_t,
+                    field_t,
+                    // closure_t,
+                    call_t,
+                    if_t,
+                    // for_t,
+                    while_t,
+                    block_t,
+                    grouping_t,
+                    error_t> {
 public:
-    expr_t() = delete;
-
-    expr_t(const expr_t&)     = delete;
-    expr_t(expr_t&&) noexcept = default;
-    ~expr_t()                 = default;
-
-    auto operator=(const expr_t&) -> expr_t&     = delete;
-    auto operator=(expr_t&&) noexcept -> expr_t& = default;
-    template<typename T>
-    auto operator=(T&& value) noexcept -> expr_t&
-    {
-        expr_ = std::forward<T>(value);
-        return *this;
-    }
-
-    /**
-     * @brief Constructs an expression from a specific expression kind.
-     *
-     * @tparam T The specific expression kind.
-     * @param value The specific expression kind to construct from.
-     */
-    template<typename T>
-    // cppcheck-suppress noExplicitConstructor
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload,hicpp-explicit-conversions)
-    expr_t(T&& value) noexcept : expr_(std::forward<T>(value))
-    {
-    }
-
-    /**
-     * @brief Constructs a expression in-place from the specified kind and arguments.
-     *
-     * @tparam T The specific expression kind.
-     * @tparam Args The types of the arguments to construct the expression.
-     * @param args The arguments to construct the expression.
-     */
-    template<typename T, typename... Args>
-    // NOLINTNEXTLINE(readability-named-parameter,hicpp-named-parameter)
-    explicit expr_t(std::in_place_type_t<T>, Args&&... args) : expr_(std::in_place_type<T>, std::forward<Args>(args)...)
-    {
-    }
-
-    /**
-     * @brief Check if the expression holds a specific expression kind.
-     *
-     * @tparam T The expression kind to check.
-     * @return true if the expression holds the specified kind, false otherwise.
-     */
-    template<typename T>
-    [[nodiscard]] auto is() const -> bool
-    {
-        return std::holds_alternative<T>(expr_);
-    }
-
-    /**
-     * @brief Get the expression as a specific expression kind.
-     *
-     * @tparam T The expression kind to get.
-     * @return T& The expression as the specified kind.
-     */
-    template<typename T>
-    [[nodiscard]] auto as() -> T&
-    {
-        return std::get<T>(expr_);
-    }
-
-    /**
-     * @brief Get the expression as a specific expression kind.
-     * @tparam T The expression kind to get.
-     * @return const T& The expression as the specified kind.
-     */
-    template<typename T>
-    [[nodiscard]] auto as() const -> const T&
-    {
-        return std::get<T>(expr_);
-    }
-
-    /**
-     * @brief Visit the expression with a visitor.
-     *
-     * @tparam Visitor The type of the visitor.
-     * @param visitor The visitor to apply to the expression.
-     * @return decltype(auto) The result of applying the visitor to the expression.
-     */
-    template<typename Visitor, typename... Args>
-    auto visit(Visitor&& visitor, Args&&... args) const
-    {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          expr_);
-    }
-
-    /**
-     * @brief Visit the expression with a visitor.
-     *
-     * @tparam Visitor The type of the visitor.
-     * @param visitor The visitor to apply to the expression.
-     * @return decltype(auto) The result of applying the visitor to the expression.
-     */
-    template<typename Visitor, typename... Args>
-    auto visit(Visitor&& visitor, Args&&... args)
-    {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          expr_);
-    }
-
-private:
-    std::variant<literal_t,
-                 identifier_t,
-                 binary_t,
-                 unary_t,
-                 array_t,
-                 // TODO: Fix type handling and recursive issues...
-                 is_t,
-                 cast_t,
-                 tuple_t,
-                 record_t,
-                 index_t,
-                 field_t,
-                 // closure_t,
-                 call_t,
-                 if_t,
-                 // for_t,
-                 while_t,
-                 block_t,
-                 grouping_t,
-                 error_t>
-        expr_;
+    using node_t::node_t;
 };
 
 struct record_t::Field {

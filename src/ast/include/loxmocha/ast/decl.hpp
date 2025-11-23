@@ -4,6 +4,7 @@
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
+#include "loxmocha/node.hpp"
 
 #include <utility>
 #include <variant>
@@ -249,114 +250,9 @@ private:
  * @class decl_t
  * @brief represents a declaration
  */
-class decl_t {
+class decl_t : public node_t<type_t, function_t, variable_t, error_t> {
 public:
-    decl_t() = delete;
-
-    decl_t(const decl_t&)     = delete;
-    decl_t(decl_t&&) noexcept = default;
-    ~decl_t()                 = default;
-
-    auto operator=(const decl_t&) -> decl_t&     = delete;
-    auto operator=(decl_t&&) noexcept -> decl_t& = default;
-    template<typename T>
-    auto operator=(T&& other) noexcept -> decl_t&
-    {
-        decl_ = std::forward<T>(other);
-        return *this;
-    }
-
-    /**
-     * @brief Constructs a declaration from a specific declaration kind.
-     *
-     * @tparam T The specific declaration kind.
-     * @param value The specific declaration kind to construct from.
-     */
-    template<typename T>
-    // cppcheck-suppress noExplicitConstructor
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload,hicpp-explicit-conversions)
-    decl_t(T&& value) noexcept : decl_(std::forward<T>(value))
-    {
-    }
-
-    /**
-     * @brief Constructs a declaration in-place from the specified kind and arguments.
-     *
-     * @tparam T The specific declaration kind.
-     * @tparam Args The types of the arguments to construct the declaration.
-     * @param args The arguments to construct the declaration.
-     */
-    template<typename T, typename... Args>
-    // NOLINTNEXTLINE(readability-named-parameter,hicpp-named-parameter)
-    explicit decl_t(std::in_place_type_t<T>, Args&&... args) : decl_(std::in_place_type<T>, std::forward<Args>(args)...)
-    {
-    }
-
-    /**
-     * @brief Check if the declaration holds a specific declaration kind.
-     *
-     * @tparam T The declaration kind to check.
-     * @return true if the declaration holds the specified kind, false otherwise.
-     */
-    template<typename T>
-    [[nodiscard]] auto is() const -> bool
-    {
-        return std::holds_alternative<T>(decl_);
-    }
-
-    /**
-     * @brief Get the declaration as a specific declaration kind.
-     *
-     * @tparam T The declaration kind to get.
-     * @return T& The declaration as the specified kind.
-     */
-    template<typename T>
-    [[nodiscard]] auto as() -> T&
-    {
-        return std::get<T>(decl_);
-    }
-
-    /**
-     * @brief Get the declaration as a specific declaration kind.
-     * @tparam T The declaration kind to get.
-     * @return const T& The declaration as the specified kind.
-     */
-    template<typename T>
-    [[nodiscard]] auto as() const -> const T&
-    {
-        return std::get<T>(decl_);
-    }
-
-    /**
-     * @brief Visit the declaration with a visitor.
-     *
-     * @tparam Visitor The type of the visitor.
-     * @param visitor The visitor to apply to the declaration.
-     * @return decltype(auto) The result of applying the visitor to the declaration.
-     */
-    template<typename Visitor, typename... Args>
-    auto visit(Visitor&& visitor, Args&&... args) const
-    {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          decl_);
-    }
-
-    /**
-     * @brief Visit the declaration with a visitor.
-     *
-     * @tparam Visitor The type of the visitor.
-     * @param visitor The visitor to apply to the declaration.
-     * @return decltype(auto) The result of applying the visitor to the declaration.
-     */
-    template<typename Visitor, typename... Args>
-    auto visit(Visitor&& visitor, Args&&... args)
-    {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          decl_);
-    }
-
-private:
-    std::variant<type_t, function_t, variable_t, error_t> decl_;
+    using node_t::node_t;
 };
 
 } // namespace loxmocha::decl

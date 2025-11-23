@@ -4,4 +4,5 @@ target_link_libraries(loxmocha_ast
     PUBLIC
     loxmocha::lexer
     loxmocha::memory
+    loxmocha::node
 )

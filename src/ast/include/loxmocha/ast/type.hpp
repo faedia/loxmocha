@@ -2,6 +2,7 @@
 
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
+#include "loxmocha/node.hpp"
 
 #include <variant>
 #include <vector>
@@ -345,114 +346,9 @@ private:
  * @class type_t
  * @brief represents a type expression.
  */
-class type_t {
+class type_t : public node_t<identifier_t, array_t, tuple_t, record_t, tagged_t, reference_t, function_t, mutable_t> {
 public:
-    type_t() = delete;
-
-    type_t(const type_t&)     = delete;
-    type_t(type_t&&) noexcept = default;
-    ~type_t()                 = default;
-
-    auto operator=(const type_t&) -> type_t&     = delete;
-    auto operator=(type_t&&) noexcept -> type_t& = default;
-    template<typename T>
-    auto operator=(T&& value) noexcept -> type_t&
-    {
-        type_ = std::forward<T>(value);
-        return *this;
-    }
-
-    /**
-     * @brief Constructs an type from a specific type kind.
-     *
-     * @tparam T The specific type kind.
-     * @param value The specific type kind to construct from.
-     */
-    template<typename T>
-    // cppcheck-suppress noExplicitConstructor
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload,hicpp-explicit-conversions)
-    type_t(T&& value) noexcept : type_(std::forward<T>(value))
-    {
-    }
-
-    /**
-     * @brief Constructs a type in-place from the specified kind and arguments.
-     *
-     * @tparam T The specific type kind.
-     * @tparam Args The types of the arguments to construct the type.
-     * @param args The arguments to construct the type.
-     */
-    template<typename T, typename... Args>
-    // NOLINTNEXTLINE(readability-named-parameter,hicpp-named-parameter)
-    explicit type_t(std::in_place_type_t<T>, Args&&... args) : type_(std::in_place_type<T>, std::forward<Args>(args)...)
-    {
-    }
-
-    /**
-     * @brief Check if the type holds a specific type kind.
-     *
-     * @tparam T The type kind to check.
-     * @return true if the type holds the specified kind, false otherwise.
-     */
-    template<typename T>
-    [[nodiscard]] auto is() const -> bool
-    {
-        return std::holds_alternative<T>(type_);
-    }
-
-    /**
-     * @brief Get the type as a specific type kind.
-     *
-     * @tparam T The type kind to get.
-     * @return T& The type as the specified kind.
-     */
-    template<typename T>
-    [[nodiscard]] auto as() -> T&
-    {
-        return std::get<T>(type_);
-    }
-
-    /**
-     * @brief Get the type as a specific type kind.
-     * @tparam T The type kind to get.
-     * @return const T& The type as the specified kind.
-     */
-    template<typename T>
-    [[nodiscard]] auto as() const -> const T&
-    {
-        return std::get<T>(type_);
-    }
-
-    /**
-     * @brief Visit the type with a visitor.
-     *
-     * @tparam Visitor The type of the visitor.
-     * @param visitor The visitor to apply to the type.
-     * @return decltype(auto) The result of applying the visitor to the type.
-     */
-    template<typename Visitor, typename... Args>
-    auto visit(Visitor&& visitor, Args&&... args) const
-    {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          type_);
-    }
-
-    /**
-     * @brief Visit the type with a visitor.
-     *
-     * @tparam Visitor The type of the visitor.
-     * @param visitor The visitor to apply to the type.
-     * @return decltype(auto) The result of applying the visitor to the type.
-     */
-    template<typename Visitor, typename... Args>
-    auto visit(Visitor&& visitor, Args&&... args)
-    {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          type_);
-    }
-
-private:
-    std::variant<identifier_t, array_t, tuple_t, record_t, tagged_t, reference_t, function_t, mutable_t> type_;
+    using node_t::node_t;
 };
 
 struct record_t::field_t {
