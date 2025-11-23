@@ -22,4 +22,4 @@ function_t::function_t(std::vector<type_t>&& parameters, safe_ptr<type_t>&& retu
 
 mutable_t::mutable_t(safe_ptr<type_t>&& base_type) : base_type_(std::move(base_type)) {}
 
-}
+} // namespace loxmocha::type
