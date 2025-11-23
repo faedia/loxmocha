@@ -815,6 +815,10 @@ public:
     auto operator=(error_t&&) noexcept -> error_t& = default;
 };
 
+/**
+ * @class expr_t
+ * @brief represents an expression.
+ */
 class expr_t {
 public:
     expr_t() = delete;
@@ -907,6 +911,13 @@ public:
                           expr_);
     }
 
+    /**
+     * @brief Visit the expression with a visitor.
+     *
+     * @tparam Visitor The type of the visitor.
+     * @param visitor The visitor to apply to the expression.
+     * @return decltype(auto) The result of applying the visitor to the expression.
+     */
     template<typename Visitor, typename... Args>
     auto visit(Visitor&& visitor, Args&&... args)
     {

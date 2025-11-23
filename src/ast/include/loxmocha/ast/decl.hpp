@@ -334,10 +334,25 @@ public:
      * @param visitor The visitor to apply to the declaration.
      * @return decltype(auto) The result of applying the visitor to the declaration.
      */
-    template<typename Visitor>
-    [[nodiscard]] auto visit(Visitor&& visitor) -> decltype(auto)
+    template<typename Visitor, typename... Args>
+    auto visit(Visitor&& visitor, Args&&... args) const
     {
-        return std::visit(std::forward<Visitor>(visitor), decl_);
+        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
+                          decl_);
+    }
+
+    /**
+     * @brief Visit the declaration with a visitor.
+     *
+     * @tparam Visitor The type of the visitor.
+     * @param visitor The visitor to apply to the declaration.
+     * @return decltype(auto) The result of applying the visitor to the declaration.
+     */
+    template<typename Visitor, typename... Args>
+    auto visit(Visitor&& visitor, Args&&... args)
+    {
+        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
+                          decl_);
     }
 
 private:
