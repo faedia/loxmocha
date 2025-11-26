@@ -826,7 +826,6 @@ class expr_t
                     binary_t,
                     unary_t,
                     array_t,
-                    // TODO: Fix type handling and recursive issues...
                     is_t,
                     cast_t,
                     tuple_t,
@@ -846,8 +845,8 @@ public:
 };
 
 struct record_t::field_t {
-    token_t name_;
-    expr_t  value_;
+    token_t name;
+    expr_t  value;
 };
 
 struct call_t::named_arg_t {
