@@ -5,8 +5,10 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <cstddef>
 #include <print>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -185,39 +187,40 @@ public:
 
     void operator()(const loxmocha::expr::literal_t& actual, const loxmocha::expr::literal_t& expected)
     {
-        ASSERT_TRUE(actual.value().kind() == loxmocha::token_t::kind_e::l_integer
+        EXPECT_TRUE(actual.value().kind() == loxmocha::token_t::kind_e::l_integer
                     || actual.value().kind() == loxmocha::token_t::kind_e::l_char
                     || actual.value().kind() == loxmocha::token_t::kind_e::l_string);
 
-        ASSERT_EQ(actual.value().kind(), expected.value().kind());
-        ASSERT_EQ(actual.value().span(), expected.value().span());
+        EXPECT_EQ(actual.value().kind(), expected.value().kind());
+        EXPECT_EQ(actual.value().span(), expected.value().span());
     }
 
     void operator()(const loxmocha::expr::identifier_t& actual, const loxmocha::expr::identifier_t& expected)
     {
-        ASSERT_EQ(actual.name().kind(), expected.name().kind());
-        ASSERT_EQ(actual.name().kind(), expected.name().kind());
-        ASSERT_EQ(actual.name().span(), expected.name().span());
+        EXPECT_EQ(actual.name().kind(), expected.name().kind());
+        EXPECT_EQ(actual.name().kind(), expected.name().kind());
+        EXPECT_EQ(actual.name().span(), expected.name().span());
     }
 
     void operator()(const loxmocha::expr::binary_t& actual, const loxmocha::expr::binary_t& expected)
     {
-        ASSERT_EQ(actual.op().kind(), expected.op().kind());
+        EXPECT_EQ(actual.op().kind(), expected.op().kind());
         actual.left()->visit(*this, *expected.left());
         actual.right()->visit(*this, *expected.right());
     }
 
     void operator()(const loxmocha::expr::unary_t& actual, const loxmocha::expr::unary_t& expected)
     {
-        ASSERT_EQ(actual.op().kind(), expected.op().kind());
+        EXPECT_EQ(actual.op().kind(), expected.op().kind());
         actual.operand()->visit(*this, *expected.operand());
     }
 
     void operator()(const loxmocha::expr::array_t& actual, const loxmocha::expr::array_t& expected)
     {
         ASSERT_EQ(actual.elements().size(), expected.elements().size());
-        for (size_t i = 0; i < actual.elements().size(); ++i) {
-            actual.elements()[i].visit(*this, expected.elements()[i]);
+
+        for (const auto& [a_elem, e_elem] : std::views::zip(actual.elements(), expected.elements())) {
+            a_elem.visit(*this, e_elem);
         }
     }
 
@@ -236,19 +239,21 @@ public:
     void operator()(const loxmocha::expr::tuple_t& actual, const loxmocha::expr::tuple_t& expected)
     {
         ASSERT_EQ(actual.elements().size(), expected.elements().size());
-        for (size_t i = 0; i < actual.elements().size(); ++i) {
-            actual.elements()[i].visit(*this, expected.elements()[i]);
+
+        for (const auto& [a_elem, e_elem] : std::views::zip(actual.elements(), expected.elements())) {
+            a_elem.visit(*this, e_elem);
         }
     }
 
     void operator()(const loxmocha::expr::record_t& actual, const loxmocha::expr::record_t& expected)
     {
         ASSERT_EQ(actual.fields().size(), expected.fields().size());
-        for (size_t i = 0; i < actual.fields().size(); ++i) {
-            ASSERT_EQ(actual.fields()[i].name.kind(), loxmocha::token_t::kind_e::k_identifier);
-            ASSERT_EQ(actual.fields()[i].name.kind(), expected.fields()[i].name.kind());
-            ASSERT_EQ(actual.fields()[i].name.span(), expected.fields()[i].name.span());
-            actual.fields()[i].value.visit(*this, expected.fields()[i].value);
+
+        for (const auto& [a_field, e_field] : std::views::zip(actual.fields(), expected.fields())) {
+            EXPECT_EQ(a_field.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_field.name.kind(), e_field.name.kind());
+            EXPECT_EQ(a_field.name.span(), e_field.name.span());
+            a_field.value.visit(*this, e_field.value);
         }
     }
 
@@ -260,9 +265,9 @@ public:
 
     void operator()(const loxmocha::expr::field_t& actual, const loxmocha::expr::field_t& expected)
     {
-        ASSERT_EQ(actual.field_name().kind(), loxmocha::token_t::kind_e::k_identifier);
-        ASSERT_EQ(actual.field_name().kind(), expected.field_name().kind());
-        ASSERT_EQ(actual.field_name().span(), expected.field_name().span());
+        EXPECT_EQ(actual.field_name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.field_name().kind(), expected.field_name().kind());
+        EXPECT_EQ(actual.field_name().span(), expected.field_name().span());
         actual.base()->visit(*this, *expected.base());
     }
 
@@ -271,16 +276,17 @@ public:
         actual.callee()->visit(*this, expected.callee());
 
         ASSERT_EQ(actual.positional_args().size(), expected.positional_args().size());
-        for (size_t i = 0; i < actual.positional_args().size(); ++i) {
-            actual.positional_args()[i].visit(*this, expected.positional_args()[i]);
+
+        for (const auto& [a_arg, e_arg] : std::views::zip(actual.positional_args(), expected.positional_args())) {
+            a_arg.visit(*this, e_arg);
         }
 
         ASSERT_EQ(actual.named_args().size(), expected.named_args().size());
-        for (size_t i = 0; i < actual.named_args().size(); ++i) {
-            ASSERT_EQ(actual.named_args()[i].name.kind(), loxmocha::token_t::kind_e::k_identifier);
-            ASSERT_EQ(actual.named_args()[i].name.kind(), expected.named_args()[i].name.kind());
-            ASSERT_EQ(actual.named_args()[i].name.span(), expected.named_args()[i].name.span());
-            actual.named_args()[i].value.visit(*this, expected.named_args()[i].value);
+        for (const auto& [a_arg, e_arg] : std::views::zip(actual.named_args(), expected.named_args())) {
+            EXPECT_EQ(a_arg.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_arg.name.kind(), e_arg.name.kind());
+            EXPECT_EQ(a_arg.name.span(), e_arg.name.span());
+            a_arg.value.visit(*this, e_arg.value);
         }
     }
 
@@ -291,7 +297,7 @@ public:
         if (actual.else_branch() && expected.else_branch()) {
             actual.else_branch()->visit(*this, *expected.else_branch());
         } else {
-            ASSERT_EQ(!!actual.else_branch(), !!expected.else_branch());
+            EXPECT_EQ(!!actual.else_branch(), !!expected.else_branch());
         }
     }
 
@@ -304,8 +310,9 @@ public:
     void operator()(const loxmocha::expr::block_t& actual, const loxmocha::expr::block_t& expected)
     {
         ASSERT_EQ(actual.statements().size(), expected.statements().size());
-        for (size_t i = 0; i < actual.statements().size(); ++i) {
-            actual.statements()[i].visit(*this, expected.statements()[i]);
+
+        for (const auto& [a_stmt, e_stmt] : std::views::zip(actual.statements(), expected.statements())) {
+            a_stmt.visit(*this, e_stmt);
         }
     }
 
@@ -316,7 +323,7 @@ public:
 };
 
 namespace {
-auto make_expr(loxmocha::expr::expr_t&& expr) -> loxmocha::safe_ptr<loxmocha::expr::expr_t>
+auto e(loxmocha::expr::expr_t&& expr) -> loxmocha::safe_ptr<loxmocha::expr::expr_t>
 {
     return loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(std::move(expr));
 }
@@ -345,13 +352,12 @@ TEST(ExprTest, ParserBinaryExprPrecedenceTest)
     result.result().visit(
         expr_assert_visitor{},
         expr::binary_t{token_t::p_minus("-"),
-                       make_expr(expr::binary_t{
-                           token_t::p_plus("+"),
-                           make_expr(expr::identifier_t{token_t::k_identifier("a")}),
-                           make_expr(expr::binary_t{token_t::p_asterisk("*"),
-                                                    make_expr(expr::identifier_t{token_t::k_identifier("b")}),
-                                                    make_expr(expr::identifier_t{token_t::k_identifier("c")})})}),
-                       make_expr(expr::binary_t{token_t::p_slash("/"),
-                                                make_expr(expr::identifier_t{token_t::k_identifier("d")}),
-                                                make_expr(expr::identifier_t{token_t::k_identifier("e")})})});
+                       e(expr::binary_t{token_t::p_plus("+"),
+                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                        e(expr::binary_t{token_t::p_asterisk("*"),
+                                                         e(expr::identifier_t{token_t::k_identifier("b")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("c")})})}),
+                       e(expr::binary_t{token_t::p_slash("/"),
+                                        e(expr::identifier_t{token_t::k_identifier("d")}),
+                                        e(expr::identifier_t{token_t::k_identifier("e")})})});
 }
