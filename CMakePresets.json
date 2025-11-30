@@ -40,26 +40,24 @@
             }
         },
         {
-            "name": "clang-coverage-common",
-            "description": "Common settings for Clang coverage presets",
-            "hidden": true,
+            "name": "linux-clang-debug",
+            "displayName": "Linux Clang Debug",
+            "description": "Targets Linux with clang building with debug",
             "inherits": "common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_C_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
-                "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
-                "CMAKE_EXE_LINKER_FLAGS": "-fprofile-instr-generate",
-                "CMAKE_SHARED_LINKER_FLAGS": "-fprofile-instr-generate"
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "clang-coverage-debug",
-            "displayName": "Clang Coverage Debug",
-            "description": "Targets Clang with coverage in debug mode",
-            "inherits": "clang-coverage-common",
+            "name": "linux-clang-debug-coverage",
+            "displayName": "Linux Clang Debug with Coverage",
+            "description": "Targets Linux with clang building with debug and coverage",
+            "inherits": "linux-clang-debug",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "loxmocha_COVERAGE_COMPILE_FLAGS": "-fprofile-instr-generate;-fcoverage-mapping",
+                "loxmocha_COVERAGE_LINKER_FLAGS": "-fprofile-instr-generate"
             }
         }
     ],
@@ -73,8 +71,8 @@
             "configurePreset": "linux-gcc-release"
         },
         {
-            "name": "clang-coverage-debug",
-            "configurePreset": "clang-coverage-debug"
+            "name": "linux-clang-debug-coverage",
+            "configurePreset": "linux-clang-debug-coverage"
         }
     ],
     "testPresets": [
@@ -93,8 +91,8 @@
             }
         },
         {
-            "name": "clang-coverage-debug",
-            "configurePreset": "clang-coverage-debug",
+            "name": "linux-clang-debug-coverage",
+            "configurePreset": "linux-clang-debug-coverage",
             "output": {
                 "outputOnFailure": true
             }

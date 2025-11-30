@@ -2,11 +2,17 @@ include(cmake/loxmocha-warnings.cmake)
 include(cmake/loxmocha-clang-tidy.cmake)
 include(cmake/loxmocha-cppcheck.cmake)
 
+function(loxmocha_add_coverage target_name)
+    target_compile_options(${target_name} PRIVATE ${loxmocha_COVERAGE_COMPILE_FLAGS})
+    target_link_options(${target_name} PRIVATE ${loxmocha_COVERAGE_LINKER_FLAGS})
+endfunction()
+
 function(loxmocha_target_common target_name)
     target_compile_features(${target_name} PUBLIC cxx_std_${loxmocha_CXX_STANDARD})
     loxmocha_set_warnings(${target_name})
     loxmocha_add_clang_tidy(${target_name})
     loxmocha_add_cppcheck(${target_name})
+    loxmocha_add_coverage(${target_name})
 endfunction()
 
 function(loxmocha_add_executable name)
