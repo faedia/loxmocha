@@ -719,3 +719,45 @@ TEST(ParserTest, ParserInvalidTokenTest)
         EXPECT_EQ(result.diagnostics().back(), "Unexpected end of input");
     }
 }
+
+TEST(ParserTest, ParserIsTest) { FAIL() << "Not yet implemented"; }
+
+TEST(ParserTest, ParserCastTest) { FAIL() << "Not yet implemented"; }
+
+TEST(ParserTest, ParserArrayTest) { FAIL() << "Not yet implemented"; }
+
+TEST(ParserTest, ParserRecordTest) { FAIL() << "Not yet implemented"; }
+
+TEST(ParserTest, ParserTupleTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfElseIfTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfElseTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfElseIfElseTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfBlockTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfElseMixedBlockTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfValueTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserIfPrecedenceTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserWhileTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserWhileBlockTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserWhileValueTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserWhilePrecedenceTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserBlockTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserBlockValueTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserBlockEmptyTest) { FAIL() << "Not implemented yet"; }
+
+TEST(ParserTest, ParserBlockPrecendenceTest) { FAIL() << "Not implemented yet"; }
