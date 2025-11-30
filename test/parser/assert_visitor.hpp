@@ -1,7 +1,9 @@
 #pragma once
 
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
+#include "loxmocha/ast/type.hpp"
 
 #include "gtest/gtest.h"
 #include <ranges>
@@ -63,7 +65,7 @@ public:
     void operator()(const loxmocha::expr::is_t& actual, const loxmocha::expr::is_t& expected)
     {
         actual.expr()->visit(*this, *expected.expr());
-        actual.type()->visit(*this, *expected.type());
+        actual.pattern()->visit(*this, *expected.pattern());
     }
 
     void operator()(const loxmocha::expr::cast_t& actual, const loxmocha::expr::cast_t& expected)
@@ -158,4 +160,4 @@ public:
     }
 };
 
-}
+} // namespace loxmocha::test

@@ -1,5 +1,6 @@
 #include "loxmocha/ast/expr.hpp"
 
+#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
@@ -17,7 +18,10 @@ binary_t::binary_t(const token_t& op, safe_ptr<expr_t>&& left, safe_ptr<expr_t>&
 
 unary_t::unary_t(const token_t& op, safe_ptr<expr_t>&& operand) : op_(op), operand_(std::move(operand)) {}
 
-is_t::is_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type) : expr_(std::move(expr)), type_(std::move(type)) {}
+is_t::is_t(safe_ptr<expr_t>&& expr, safe_ptr<pattern::pattern_t>&& pattern)
+    : expr_(std::move(expr)), pattern_(std::move(pattern))
+{
+}
 is_t::~is_t() = default;
 
 cast_t::cast_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type) : expr_(std::move(expr)), type_(std::move(type))

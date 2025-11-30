@@ -1,7 +1,6 @@
 #pragma once
 
 #include "loxmocha/ast/token.hpp"
-#include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
@@ -15,6 +14,10 @@ class stmt_t;
 
 namespace loxmocha::type {
 class type_t;
+}
+
+namespace loxmocha::pattern {
+class pattern_t;
 }
 
 namespace loxmocha::expr {
@@ -224,12 +227,12 @@ public:
     auto operator=(is_t&&) noexcept -> is_t& = default;
 
     /**
-     * @brief Constructs an "is" type check expression with the given expression and type.
+     * @brief Constructs an "is" type check expression with the given expression and pattern.
      *
      * @param expr The expression to check.
-     * @param type The type to check against.
+     * @param pattern The pattern to check against.
      */
-    is_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type);
+    is_t(safe_ptr<expr_t>&& expr, safe_ptr<pattern::pattern_t>&& pattern);
 
     /**
      * @brief Get the expression being checked.
@@ -243,19 +246,19 @@ public:
     [[nodiscard]] auto expr() -> safe_ptr<expr_t>& { return expr_; }
 
     /**
-     * @brief Get the type being checked against.
-     * @return const safe_ptr<type::type_t>& The type being checked against.
+     * @brief Get the pattern being checked against.
+     * @return const safe_ptr<pattern::pattern_t>& The pattern being checked against.
      */
-    [[nodiscard]] auto type() const -> const safe_ptr<type::type_t>& { return type_; }
+    [[nodiscard]] auto pattern() const -> const safe_ptr<pattern::pattern_t>& { return pattern_; }
     /**
-     * @brief Get the type being checked against.
-     * @return safe_ptr<type::type_t>& The type being checked against.
+     * @brief Get the pattern being checked against.
+     * @return safe_ptr<pattern::pattern_t>& The pattern being checked against.
      */
-    [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
+    [[nodiscard]] auto pattern() -> safe_ptr<pattern::pattern_t>& { return pattern_; }
 
 private:
-    safe_ptr<expr_t>       expr_;
-    safe_ptr<type::type_t> type_;
+    safe_ptr<expr_t>             expr_;
+    safe_ptr<pattern::pattern_t> pattern_;
 };
 
 /**
@@ -824,21 +827,21 @@ class expr_t
     : public node_t<literal_t,
                     identifier_t,
                     binary_t,
-                    unary_t,
-                    array_t,
                     is_t,
                     cast_t,
-                    tuple_t,
-                    record_t,
+                    unary_t,
                     index_t,
                     field_t,
                     // closure_t,
                     call_t,
+                    array_t,
+                    record_t,
+                    tuple_t,
+                    grouping_t,
                     if_t,
                     // for_t,
                     while_t,
                     block_t,
-                    grouping_t,
                     error_t> {
 public:
     using node_t::node_t;

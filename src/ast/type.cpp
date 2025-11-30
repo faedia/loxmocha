@@ -1,11 +1,19 @@
 #include "loxmocha/ast/type.hpp"
 
+#include "loxmocha/ast/expr.hpp"
+#include "loxmocha/memory/safe_pointer.hpp"
+
+#include <utility>
+#include <vector>
+
 namespace loxmocha::type {
 
 array_t::array_t(safe_ptr<type_t>&& element_type, safe_ptr<expr::expr_t>&& size_expr)
     : element_type_(std::move(element_type)), size_expr_(std::move(size_expr))
 {
 }
+
+array_t::~array_t() = default;
 
 tuple_t::tuple_t(std::vector<type_t>&& element_types) : element_types_(std::move(element_types)) {}
 

@@ -3,6 +3,7 @@
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/token.hpp"
+#include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 
 #include "gtest/gtest.h"
@@ -59,6 +60,25 @@ TEST(ParserTest, ParserIdentifierTest)
     auto    result = parse_expr(lexer);
 
     result.result().visit(test::assert_visitor{}, expr::identifier_t{token_t::k_identifier("my_variable")});
+}
+
+TEST(ParserTest, ParserLiteralBooleanTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"true"};
+        auto    result = parse_expr(lexer);
+
+        result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::k_true("true")});
+    }
+
+    {
+        lexer_t lexer{"false"};
+        auto    result = parse_expr(lexer);
+
+        result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::k_false("false")});
+    }
 }
 
 TEST(ParserTest, ParserEqualityTest)

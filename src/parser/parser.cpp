@@ -4,6 +4,7 @@
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/module.hpp"
+#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"

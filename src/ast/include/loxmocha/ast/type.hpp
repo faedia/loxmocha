@@ -62,7 +62,7 @@ public:
 
     array_t(const array_t&)     = delete;
     array_t(array_t&&) noexcept = default;
-    ~array_t()                  = default;
+    ~array_t();
 
     auto operator=(const array_t&) -> array_t&     = delete;
     auto operator=(array_t&&) noexcept -> array_t& = default;
@@ -349,6 +349,14 @@ private:
 class type_t : public node_t<identifier_t, array_t, tuple_t, record_t, tagged_t, reference_t, function_t, mutable_t> {
 public:
     using node_t::node_t;
+
+    type_t(const type_t&)     = delete;
+    type_t(type_t&&) noexcept = default;
+
+    ~type_t() = default;
+
+    auto operator=(const type_t&) -> type_t&     = delete;
+    auto operator=(type_t&&) noexcept -> type_t& = default;
 };
 
 struct record_t::field_t {
