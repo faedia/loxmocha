@@ -9,6 +9,10 @@ namespace loxmocha::expr {
 class expr_t;
 }
 
+namespace loxmocha::decl {
+class decl_t;
+}
+
 namespace loxmocha::stmt {
 
 /**
@@ -45,6 +49,91 @@ public:
 
 private:
     safe_ptr<expr::expr_t> expr_;
+};
+
+/**
+ * @brief Represents an assignment statement.
+ */
+class assign_t {
+public:
+    assign_t() = delete;
+
+    assign_t(const assign_t&)     = delete;
+    assign_t(assign_t&&) noexcept = default;
+    ~assign_t()                   = default;
+
+    auto operator=(const assign_t&) -> assign_t&     = delete;
+    auto operator=(assign_t&&) noexcept -> assign_t& = default;
+
+    /**
+     * @brief Constructs an assignment statement with the given target and value expressions.
+     *
+     * @param target The target expression to assign to.
+     * @param value The value expression to assign.
+     */
+    explicit assign_t(safe_ptr<expr::expr_t>&& target, safe_ptr<expr::expr_t>&& value);
+
+    /**
+     * @brief Get the target expression of the assignment.
+     * @return const safe_ptr<expr::expr_t>& The target expression of the assignment.
+     */
+    [[nodiscard]] auto target() const -> const safe_ptr<expr::expr_t>& { return target_; }
+    /**
+     * @brief Get the target expression of the assignment.
+     * @return safe_ptr<expr::expr_t>& The target expression of the assignment.
+     */
+    [[nodiscard]] auto target() -> safe_ptr<expr::expr_t>& { return target_; }
+
+    /**
+     * @brief Get the value expression of the assignment.
+     * @return const safe_ptr<expr::expr_t>& The value expression of the assignment.
+     */
+    [[nodiscard]] auto value() const -> const safe_ptr<expr::expr_t>& { return value_; }
+    /**
+     * @brief Get the value expression of the assignment.
+     * @return safe_ptr<expr::expr_t>& The value expression of the assignment.
+     */
+    [[nodiscard]] auto value() -> safe_ptr<expr::expr_t>& { return value_; }
+
+private:
+    safe_ptr<expr::expr_t> target_;
+    safe_ptr<expr::expr_t> value_;
+};
+
+/**
+ * @brief Represents a declaration statement.
+ */
+class decl_t {
+public:
+    decl_t() = delete;
+
+    decl_t(const decl_t&)     = delete;
+    decl_t(decl_t&&) noexcept = default;
+    ~decl_t()                 = default;
+
+    auto operator=(const decl_t&) -> decl_t&     = delete;
+    auto operator=(decl_t&&) noexcept -> decl_t& = default;
+
+    /**
+     * @brief Constructs a declaration statement from a declaration.
+     *
+     * @param declaration The declaration to wrap in the statement.
+     */
+    explicit decl_t(safe_ptr<decl::decl_t>&& declaration);
+
+    /**
+     * @brief Get the declaration contained in the statement.
+     * @return const safe_ptr<decl::decl_t>& The declaration contained in the statement.
+     */
+    [[nodiscard]] auto declaration() const -> const safe_ptr<decl::decl_t>& { return declaration_; }
+    /**
+     * @brief Get the declaration contained in the statement.
+     * @return safe_ptr<decl::decl_t>& The declaration contained in the statement.
+     */
+    [[nodiscard]] auto declaration() -> safe_ptr<decl::decl_t>& { return declaration_; }
+
+private:
+    safe_ptr<decl::decl_t> declaration_;
 };
 
 /**
