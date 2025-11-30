@@ -11,7 +11,6 @@
 
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace loxmocha {
@@ -146,38 +145,62 @@ namespace {
                                  safe_ptr<expr::expr_t>::make(std::move(index_expr))};
         }
 
-        auto named_arg() -> std::variant<expr::expr_t, expr::call_t::named_arg_t>
+        auto positional_args() -> std::vector<expr::expr_t>
         {
-            auto name = *lexer_.next_token();
-            if (auto colon = lexer_.peek_token(); colon && match<token_t::kind_e::p_colon>(*colon)) {
-                lexer_.consume_token();
-                return expr::call_t::named_arg_t{.name = name, .value = equality_expr()};
-            }
-            lexer_.reset_token(name);
-            return equality_expr();
-        }
-
-        auto call_expr(expr::expr_t&& callee_expr) -> expr::expr_t
-        {
-            std::vector<expr::expr_t>              positional_args{};
-            std::vector<expr::call_t::named_arg_t> named_args{};
-
+            std::vector<expr::expr_t> args{};
             for (;;) {
                 auto argument = lexer_.peek_token();
+
                 if (!argument || match<token_t::kind_e::p_right_paren>(*argument)) {
                     break;
                 }
-
                 if (match<token_t::kind_e::k_identifier>(*argument)) {
-                    auto result = named_arg();
-                    if (std::holds_alternative<expr::expr_t>(result)) {
-                        positional_args.emplace_back(std::move(std::get<expr::expr_t>(result)));
-                    } else {
-                        named_args.emplace_back(std::move(std::get<expr::call_t::named_arg_t>(result)));
+                    auto name = *lexer_.next_token();
+                    if (auto colon = lexer_.peek_token(); colon && match<token_t::kind_e::p_colon>(*colon)) {
+                        lexer_.reset_token(name);
+                        break;
                     }
-                } else {
-                    positional_args.emplace_back(equality_expr());
+                    lexer_.reset_token(name);
                 }
+                args.emplace_back(equality_expr());
+
+                auto comma = lexer_.peek_token();
+                if (comma && match<token_t::kind_e::p_comma>(*comma)) {
+                    lexer_.consume_token();
+                } else {
+                    break;
+                }
+            }
+            return args;
+        }
+
+        auto named_args() -> std::vector<expr::call_t::named_arg_t>
+        {
+            std::vector<expr::call_t::named_arg_t> args{};
+
+            for (;;) {
+                auto name = lexer_.peek_token();
+                if (!name || match<token_t::kind_e::p_right_paren>(*name)) {
+                    break;
+                }
+                if (!match<token_t::kind_e::k_identifier>(*name)) {
+                    diagnostics_.emplace_back("Expected identifier for named argument");
+                    has_error_ = true;
+                    return args;
+                }
+
+                lexer_.consume_token();
+
+                auto colon = lexer_.peek_token();
+                if (!colon || !match<token_t::kind_e::p_colon>(*colon)) {
+                    diagnostics_.emplace_back("Expected ':' after named argument identifier");
+                    has_error_ = true;
+                    return args;
+                }
+
+                lexer_.consume_token();
+
+                args.emplace_back(*name, equality_expr());
 
                 auto comma = lexer_.peek_token();
                 if (comma && match<token_t::kind_e::p_comma>(*comma)) {
@@ -187,6 +210,14 @@ namespace {
                 }
             }
 
+            return args;
+        }
+
+        auto call_expr(expr::expr_t&& callee_expr) -> expr::expr_t
+        {
+            auto positional = positional_args();
+            auto named      = named_args();
+
             auto end_paren = lexer_.peek_token();
             if (!end_paren || !match<token_t::kind_e::p_right_paren>(*end_paren)) {
                 diagnostics_.emplace_back("Expected ')' after arguments");
@@ -194,9 +225,8 @@ namespace {
                 return expr::error_t{};
             }
             lexer_.consume_token();
-            return expr::call_t{safe_ptr<expr::expr_t>::make(std::move(callee_expr)),
-                                std::move(positional_args),
-                                std::move(named_args)};
+            return expr::call_t{
+                safe_ptr<expr::expr_t>::make(std::move(callee_expr)), std::move(positional), std::move(named)};
         }
 
         // NOLINTNEXTLINE(misc-no-recursion)
@@ -228,7 +258,7 @@ namespace {
         // NOLINTNEXTLINE(misc-no-recursion)
         auto primary_expr() -> expr::expr_t
         {
-            if (!lexer_.peek_token()) {
+            if (!lexer_.peek_token() || lexer_.peek_token()->kind() == token_t::kind_e::s_eof) {
                 diagnostics_.emplace_back("Unexpected end of input");
                 has_error_ = true;
                 return expr::error_t{};

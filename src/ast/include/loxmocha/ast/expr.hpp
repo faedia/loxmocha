@@ -842,6 +842,14 @@ class expr_t
                     error_t> {
 public:
     using node_t::node_t;
+
+    expr_t(const expr_t&)     = delete;
+    expr_t(expr_t&&) noexcept = default;
+
+    ~expr_t() = default;
+
+    auto operator=(const expr_t&) -> expr_t&     = delete;
+    auto operator=(expr_t&&) noexcept -> expr_t& = default;
 };
 
 struct record_t::field_t {

@@ -5,172 +5,9 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 
 #include "gtest/gtest.h"
-#include <algorithm>
-#include <cstddef>
-#include <print>
 #include <ranges>
-#include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
-
-TEST(ExprTest, Literal)
-{
-    loxmocha::expr::literal_t literal{loxmocha::token_t::l_integer("42")};
-
-    loxmocha::expr::expr_t expr = literal;
-
-    ASSERT_TRUE(expr.is<loxmocha::expr::literal_t>());
-    auto& lit = expr.as<loxmocha::expr::literal_t>();
-    ASSERT_EQ(lit.value().kind(), loxmocha::token_t::kind_e::l_integer);
-}
-
-class SimplePrettyPrinter {
-public:
-    [[nodiscard]] static auto create_indent(const std::vector<bool>& lastChildPath) -> std::string
-    {
-        if (lastChildPath.empty()) {
-            return "";
-        }
-
-        std::string indent;
-        for (size_t i = 0; i < lastChildPath.size() - 1; ++i) {
-            indent += lastChildPath[i] ? "  " : "│ ";
-        }
-        indent += lastChildPath.back() ? "└─" : "├─";
-        return indent;
-    }
-
-    void operator()([[maybe_unused]] const auto& e, const std::vector<bool>& lastChildPath = {}) const
-    {
-        std::print("{}─Unknown Expr\n", create_indent(lastChildPath));
-    }
-
-    void operator()(const loxmocha::expr::field_t& field, std::vector<bool> lastChildPath = {})
-    {
-        std::print("{}┬Field: {}\n", create_indent(lastChildPath), field.field_name().span());
-        lastChildPath.push_back(true);
-        field.base()->visit(*this, lastChildPath);
-        lastChildPath.pop_back();
-    }
-
-    void operator()(const loxmocha::expr::index_t& index, std::vector<bool> lastChildPath = {})
-    {
-        std::print("{}┬Index:\n", create_indent(lastChildPath));
-        lastChildPath.push_back(false);
-        index.base()->visit(*this, lastChildPath);
-        lastChildPath.back() = true;
-        index.index()->visit(*this, lastChildPath);
-        lastChildPath.pop_back();
-    }
-
-    void operator()(const loxmocha::expr::call_t& call, std::vector<bool> lastChildPath = {})
-    {
-        std::print("{}┬Call:\n", create_indent(lastChildPath));
-        lastChildPath.push_back(call.positional_args().empty() && call.named_args().empty());
-        call.callee()->visit(*this, lastChildPath);
-
-        for (size_t i = 0; i < call.positional_args().size(); ++i) {
-            lastChildPath.back() = (i == call.positional_args().size() - 1) && call.named_args().empty();
-            call.positional_args()[i].visit(*this, lastChildPath);
-        }
-
-        for (size_t i = 0; i < call.named_args().size(); ++i) {
-            lastChildPath.back() = (i == call.named_args().size() - 1);
-            std::print("{}┬Named Arg: {}\n", create_indent(lastChildPath), call.named_args()[i].name.span());
-            lastChildPath.push_back(true);
-            call.named_args()[i].value.visit(*this, lastChildPath);
-            lastChildPath.pop_back();
-        }
-    }
-
-    void operator()(const loxmocha::expr::literal_t& lit, const std::vector<bool>& lastChildPath = {}) const
-    {
-        std::print("{}─Literal: {}\n", create_indent(lastChildPath), lit.value().span());
-    }
-
-    void operator()(const loxmocha::expr::identifier_t& id, const std::vector<bool>& lastChildPath = {}) const
-    {
-        std::print("{}─Identifier: {}\n", create_indent(lastChildPath), id.name().span());
-    }
-
-    void operator()(const loxmocha::expr::binary_t& bin, std::vector<bool> lastChildPath = {})
-    {
-        std::print("{}┬Binary: {}\n", create_indent(lastChildPath), bin.op().kind());
-        lastChildPath.push_back(false);
-        bin.left()->visit(*this, lastChildPath);
-        lastChildPath.back() = true;
-        bin.right()->visit(*this, lastChildPath);
-        lastChildPath.pop_back();
-    }
-
-private:
-};
-
-TEST(ExprTest, BinaryExpr)
-{
-    loxmocha::expr::literal_t left_literal{loxmocha::token_t::l_integer("42")};
-    loxmocha::expr::literal_t right_literal{loxmocha::token_t::l_integer("58")};
-
-    loxmocha::expr::binary_t binary_expr{loxmocha::token_t::p_plus("+"),
-                                         loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(left_literal),
-                                         loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(right_literal)};
-
-    loxmocha::expr::expr_t expr = std::move(binary_expr);
-
-    ASSERT_TRUE(expr.is<loxmocha::expr::binary_t>());
-    auto& bin_expr = expr.as<loxmocha::expr::binary_t>();
-    ASSERT_EQ(bin_expr.op().kind(), loxmocha::token_t::kind_e::p_plus);
-
-    expr.visit(SimplePrettyPrinter{});
-
-    expr.as<loxmocha::expr::binary_t>().left() = loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(
-        loxmocha::expr::binary_t(loxmocha::token_t::p_minus("-"),
-                                 loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(
-                                     loxmocha::expr::literal_t{loxmocha::token_t::l_integer("100")}),
-                                 loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(
-                                     loxmocha::expr::identifier_t{loxmocha::token_t::k_identifier("num")})));
-    expr.visit(SimplePrettyPrinter{});
-}
-
-TEST(ExprTest, ParserTest)
-{
-    const auto*       parse_string = "42 + 58 * ident - num";
-    loxmocha::lexer_t lexer{parse_string};
-    auto              result = loxmocha::parse_expr(lexer);
-
-    std::println("parsing '{}'", parse_string);
-    result.result().visit(SimplePrettyPrinter{});
-    for (const auto& diag : result.diagnostics()) {
-        std::print("Diagnostic: {}", diag);
-    }
-}
-
-TEST(ExprTest, ParserFieldTest)
-{
-    const auto*       parse_string = "a.b.c + 58 * ident - num";
-    loxmocha::lexer_t lexer{parse_string};
-    auto              result = loxmocha::parse_expr(lexer);
-
-    std::println("parsing '{}'", parse_string);
-    result.result().visit(SimplePrettyPrinter{});
-    for (const auto& diag : result.diagnostics()) {
-        std::print("Diagnostic: {}", diag);
-    }
-}
-
-TEST(ExprTest, ParserCallTest)
-{
-    const auto*       parse_string = "func(a, b + c, d * 42, named: a.b.c, other: arr[a+2].f().a)";
-    loxmocha::lexer_t lexer{parse_string};
-    auto              result = loxmocha::parse_expr(lexer);
-
-    std::println("parsing '{}'", parse_string);
-    result.result().visit(SimplePrettyPrinter{});
-    for (const auto& diag : result.diagnostics()) {
-        std::print("Diagnostic: {}", diag);
-    }
-}
 
 class expr_assert_visitor {
 public:
@@ -181,8 +18,9 @@ public:
 
     void operator()(const auto& actual, const loxmocha::expr::expr_t& expected)
     {
-        ASSERT_TRUE(expected.is<std::decay_t<decltype(actual)>>());
-        this->operator()(actual, expected.as<std::decay_t<decltype(actual)>>());
+        expected.visit(
+            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
+            actual);
     }
 
     void operator()(const loxmocha::expr::literal_t& actual, const loxmocha::expr::literal_t& expected)
@@ -273,7 +111,7 @@ public:
 
     void operator()(const loxmocha::expr::call_t& actual, const loxmocha::expr::call_t& expected)
     {
-        actual.callee()->visit(*this, expected.callee());
+        actual.callee()->visit(*this, *expected.callee());
 
         ASSERT_EQ(actual.positional_args().size(), expected.positional_args().size());
 
@@ -327,37 +165,689 @@ auto e(loxmocha::expr::expr_t&& expr) -> loxmocha::safe_ptr<loxmocha::expr::expr
 {
     return loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(std::move(expr));
 }
+
+template<typename T, typename... Args>
+auto make_vector(Args&&... args) -> std::vector<T>
+{
+    std::vector<T> vec;
+    vec.reserve(sizeof...(Args));
+    (vec.emplace_back(std::forward<Args>(args)), ...);
+    return vec;
+}
+
 } // namespace
 
-TEST(ExprTest, ParserBinaryExprPrecedenceTest)
+TEST(ParserTest, ParserLiteralStringTest)
+{
+    using namespace loxmocha;
+    lexer_t lexer{R"("this is a string")"};
+    auto    result = parse_expr(lexer);
+
+    result.result().visit(expr_assert_visitor{}, expr::literal_t{token_t::l_string(R"("this is a string")")});
+}
+
+TEST(ParserTest, ParserLiteralCharTest)
+{
+    using namespace loxmocha;
+    lexer_t lexer{R"('c')"};
+    auto    result = parse_expr(lexer);
+
+    result.result().visit(expr_assert_visitor{}, expr::literal_t{token_t::l_char(R"('c')")});
+}
+
+TEST(ParserTest, ParserLiteralIntegerTest)
+{
+    using namespace loxmocha;
+    lexer_t lexer{"12345"};
+    auto    result = parse_expr(lexer);
+
+    result.result().visit(expr_assert_visitor{}, expr::literal_t{token_t::l_integer("12345")});
+}
+
+TEST(ParserTest, ParserIdentifierTest)
+{
+    using namespace loxmocha;
+    lexer_t lexer{"my_variable"};
+    auto    result = parse_expr(lexer);
+
+    result.result().visit(expr_assert_visitor{}, expr::identifier_t{token_t::k_identifier("my_variable")});
+}
+
+TEST(ParserTest, ParserEqualityTest)
 {
     using namespace loxmocha;
 
-    const auto*       parse_string = "a + b * c - d / e";
-    loxmocha::lexer_t lexer{parse_string};
-    auto              result = loxmocha::parse_expr(lexer);
+    {
+        lexer_t lexer{"a == b"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_equal_equal("=="),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})});
+    }
 
-    ASSERT_TRUE(result);
+    {
+        lexer_t lexer{"x != y"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_not_equal("!="),
+                                                        e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("y")})});
+    }
 
-    // We expect the following AST:
-    // binary p_minus
-    //     binary p_plus
-    //         identifier a
-    //         binary p_asterisk
-    //             identifier b
-    //             identifier c
-    //     binary p_slash
-    //         identifier d
-    //         identifier e
-    result.result().visit(
-        expr_assert_visitor{},
-        expr::binary_t{token_t::p_minus("-"),
-                       e(expr::binary_t{token_t::p_plus("+"),
-                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                        e(expr::binary_t{token_t::p_asterisk("*"),
-                                                         e(expr::identifier_t{token_t::k_identifier("b")}),
-                                                         e(expr::identifier_t{token_t::k_identifier("c")})})}),
-                       e(expr::binary_t{token_t::p_slash("/"),
-                                        e(expr::identifier_t{token_t::k_identifier("d")}),
-                                        e(expr::identifier_t{token_t::k_identifier("e")})})});
+    {
+        lexer_t lexer{"x != y == z"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_equal_equal("=="),
+                           e(expr::binary_t{token_t::p_not_equal("!="),
+                                            e(expr::identifier_t{token_t::k_identifier("x")}),
+                                            e(expr::identifier_t{token_t::k_identifier("y")})}),
+                           e(expr::identifier_t{token_t::k_identifier("z")})});
+    }
+}
+
+TEST(ParserTest, ParserNoRHSEqualityTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a =="};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+}
+
+TEST(ParserTest, ParserComparisonTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a < b"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_less("<"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})});
+    }
+
+    {
+        lexer_t lexer{"x <= y"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_less_equal("<="),
+                                                        e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("y")})});
+    }
+
+    {
+        lexer_t lexer{"x > y >= z"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_greater_equal(">="),
+                           e(expr::binary_t{token_t::p_greater(">"),
+                                            e(expr::identifier_t{token_t::k_identifier("x")}),
+                                            e(expr::identifier_t{token_t::k_identifier("y")})}),
+                           e(expr::identifier_t{token_t::k_identifier("z")})});
+    }
+
+    {
+        lexer_t lexer{"a < b == c > d"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_equal_equal("=="),
+                           e(expr::binary_t{token_t::p_less("<"),
+                                            e(expr::identifier_t{token_t::k_identifier("a")}),
+                                            e(expr::identifier_t{token_t::k_identifier("b")})}),
+                           e(expr::binary_t{token_t::p_greater(">"),
+                                            e(expr::identifier_t{token_t::k_identifier("c")}),
+                                            e(expr::identifier_t{token_t::k_identifier("d")})})});
+    }
+
+    {
+        lexer_t lexer{"a >"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+
+    {
+        lexer_t lexer{"x <"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+}
+
+TEST(ParserTest, ParserNoRHSComparisonTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a >"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+}
+
+TEST(ParserTest, ParserAdditionTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a + b"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_plus("+"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})});
+    }
+
+    {
+        lexer_t lexer{"x - y"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_minus("-"),
+                                                        e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("y")})});
+    }
+
+    {
+        lexer_t lexer{"x - y + z"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_plus("+"),
+                           e(expr::binary_t{token_t::p_minus("-"),
+                                            e(expr::identifier_t{token_t::k_identifier("x")}),
+                                            e(expr::identifier_t{token_t::k_identifier("y")})}),
+                           e(expr::identifier_t{token_t::k_identifier("z")})});
+    }
+
+    {
+        lexer_t lexer{"a + b < c - d"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_less("<"),
+                           e(expr::binary_t{token_t::p_plus("+"),
+                                            e(expr::identifier_t{token_t::k_identifier("a")}),
+                                            e(expr::identifier_t{token_t::k_identifier("b")})}),
+                           e(expr::binary_t{token_t::p_minus("-"),
+                                            e(expr::identifier_t{token_t::k_identifier("c")}),
+                                            e(expr::identifier_t{token_t::k_identifier("d")})})});
+    }
+}
+
+TEST(ParserTest, ParserNoRHSAdditionTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a +"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+}
+
+TEST(ParserTest, ParserMultiplicationTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a * b"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_asterisk("*"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})});
+    }
+
+    {
+        lexer_t lexer{"x / y"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::binary_t{token_t::p_slash("/"),
+                                                        e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("y")})});
+    }
+
+    {
+        lexer_t lexer{"x / y * z"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_asterisk("*"),
+                           e(expr::binary_t{token_t::p_slash("/"),
+                                            e(expr::identifier_t{token_t::k_identifier("x")}),
+                                            e(expr::identifier_t{token_t::k_identifier("y")})}),
+                           e(expr::identifier_t{token_t::k_identifier("z")})});
+    }
+
+    {
+        lexer_t lexer{"a * b + c / d + e * f"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_plus("+"),
+                           e(expr::binary_t{token_t::p_plus("+"),
+                                            e(expr::binary_t{token_t::p_asterisk("*"),
+                                                             e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                             e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                            e(expr::binary_t{token_t::p_slash("/"),
+                                                             e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                             e(expr::identifier_t{token_t::k_identifier("d")})})}),
+                           e(expr::binary_t{token_t::p_asterisk("*"),
+                                            e(expr::identifier_t{token_t::k_identifier("e")}),
+                                            e(expr::identifier_t{token_t::k_identifier("f")})})});
+    }
+}
+
+TEST(ParserTest, ParserNoRHSMultiplicationTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a *"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+}
+
+TEST(ParserTest, ParserUnaryTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"-a"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("a")})});
+    }
+
+    {
+        lexer_t lexer{"!c"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("c")})});
+    }
+
+    {
+        lexer_t lexer{"-!b"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::unary_t{token_t::p_minus("-"),
+                          e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("b")})})});
+    }
+
+    {
+        lexer_t lexer{"!x == y"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_equal_equal("=="),
+                           e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("x")})}),
+                           e(expr::identifier_t{token_t::k_identifier("y")})});
+    }
+
+    {
+        lexer_t lexer{"-a + b * !c + -d / e"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{
+                token_t::p_plus("+"),
+                e(expr::binary_t{
+                    token_t::p_plus("+"),
+                    e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("a")})}),
+                    e(expr::binary_t{
+                        token_t::p_asterisk("*"),
+                        e(expr::identifier_t{token_t::k_identifier("b")}),
+                        e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("c")})})})}),
+                e(expr::binary_t{
+                    token_t::p_slash("/"),
+                    e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("d")})}),
+                    e(expr::identifier_t{token_t::k_identifier("e")})})});
+    }
+}
+
+TEST(ParserTest, ParserFieldAccessTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"a.b"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")});
+    }
+
+    {
+        lexer_t lexer{"a.b.c"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::field_t{
+                e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")}),
+                token_t::k_identifier("c")});
+    }
+
+    {
+        lexer_t lexer{"a.b.c + 2"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_plus("+"),
+                           e(expr::field_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                           token_t::k_identifier("b")}),
+                                           token_t::k_identifier("c")}),
+                           e(expr::literal_t{token_t::l_integer("2")})});
+    }
+}
+
+TEST(ParserTest, ParserFieldAccessNoIdentifierTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"obj."};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Expected identifier after '.'");
+    }
+
+    {
+        lexer_t lexer{"obj.2"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Expected identifier after '.'");
+    }
+
+    {
+        lexer_t lexer{"obj.if"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Expected identifier after '.'");
+    }
+}
+
+TEST(ParserTest, ParserIndexAccessTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"arr[0]"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::index_t{e(expr::identifier_t{token_t::k_identifier("arr")}),
+                                                       e(expr::literal_t{token_t::l_integer("0")})});
+    }
+
+    {
+        lexer_t lexer{"matrix[i][j]"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::index_t{e(expr::index_t{e(expr::identifier_t{token_t::k_identifier("matrix")}),
+                                          e(expr::identifier_t{token_t::k_identifier("i")})}),
+                          e(expr::identifier_t{token_t::k_identifier("j")})});
+    }
+
+    {
+        lexer_t lexer{"arr[i + 2] * 3"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_asterisk("*"),
+                           e(expr::index_t{e(expr::identifier_t{token_t::k_identifier("arr")}),
+                                           e(expr::binary_t{token_t::p_plus("+"),
+                                                            e(expr::identifier_t{token_t::k_identifier("i")}),
+                                                            e(expr::literal_t{token_t::l_integer("2")})})}),
+                           e(expr::literal_t{token_t::l_integer("3")})});
+    }
+}
+
+TEST(ParserTest, ParserIndexAccessNoExpressionTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"arr[2)"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Expected ']' after index expression");
+    }
+}
+
+TEST(ParserTest, ParserCallTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"foo()"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::call_t{e(expr::identifier_t{token_t::k_identifier("foo")}), {}, {}});
+    }
+
+    {
+        lexer_t lexer{"foo(2)"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::call_t{e(expr::identifier_t{token_t::k_identifier("foo")}),
+                         make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("2")}),
+                         {}});
+    }
+
+    {
+        lexer_t lexer{"sum(a, b, 1 + 2, c * 3)"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::call_t{e(expr::identifier_t{token_t::k_identifier("sum")}),
+                         make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("a")},
+                                                   expr::identifier_t{token_t::k_identifier("b")},
+                                                   expr::binary_t{token_t::p_plus("+"),
+                                                                  e(expr::literal_t{token_t::l_integer("1")}),
+                                                                  e(expr::literal_t{token_t::l_integer("2")})},
+                                                   expr::binary_t{token_t::p_asterisk("*"),
+                                                                  e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                                  e(expr::literal_t{token_t::l_integer("3")})}),
+                         {}});
+    }
+
+    {
+        lexer_t lexer{R"(print(message: "Hello", count: 5))"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::call_t{e(expr::identifier_t{token_t::k_identifier("print")}),
+                         {},
+                         make_vector<expr::call_t::named_arg_t>(
+                             expr::call_t::named_arg_t{.name  = token_t::k_identifier("message"),
+                                                       .value = expr::literal_t{token_t::l_string(R"("Hello")")}},
+                             expr::call_t::named_arg_t{.name  = token_t::k_identifier("count"),
+                                                       .value = expr::literal_t{token_t::l_integer("5")}})});
+    }
+
+    {
+        lexer_t lexer{"lerp(a, b, t: 0)"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::call_t{e(expr::identifier_t{token_t::k_identifier("lerp")}),
+                         make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("a")},
+                                                   expr::identifier_t{token_t::k_identifier("b")}),
+                         make_vector<expr::call_t::named_arg_t>(expr::call_t::named_arg_t{
+                             .name = token_t::k_identifier("t"), .value = expr::literal_t{token_t::l_integer("0")}})});
+    }
+}
+
+TEST(ParserTest, ParserPositionalAfterNamedArgsTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"func(arg1: 10, 20)"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 2);
+        ASSERT_EQ(result.diagnostics().front(), "Expected identifier for named argument");
+        ASSERT_EQ(result.diagnostics().back(), "Expected ')' after arguments");
+    }
+
+    {
+        lexer_t lexer("func(a, b: 2, c)");
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        ASSERT_EQ(result.diagnostics().front(), "Expected ':' after named argument identifier");
+    }
+}
+
+TEST(ParserTest, ParserCallNoClosingParenTest)
+{
+    using namespace loxmocha;
+
+    lexer_t lexer{"foo(2, 3]"};
+    auto    result = parse_expr(lexer);
+
+    ASSERT_TRUE(!result);
+    ASSERT_EQ(result.diagnostics().size(), 2);
+    EXPECT_EQ(result.diagnostics().front(), "Expected identifier for named argument");
+    EXPECT_EQ(result.diagnostics().back(), "Expected ')' after arguments");
+}
+
+TEST(ParserTest, ParserMixedAccessTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"obj.field[index](arg1, arg2).anotherField"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::field_t{
+                e(expr::call_t{e(expr::index_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("obj")}),
+                                                               token_t::k_identifier("field")}),
+                                               e(expr::identifier_t{token_t::k_identifier("index")})}),
+                               make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("arg1")},
+                                                         expr::identifier_t{token_t::k_identifier("arg2")}),
+                               {}}),
+                token_t::k_identifier("anotherField")});
+    }
+}
+
+TEST(ParserTest, ParserGroupingTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"(a)"};
+        parse_expr(lexer).result().visit(expr_assert_visitor{},
+                                         expr::grouping_t{e(expr::identifier_t{token_t::k_identifier("a")})});
+    }
+
+    {
+        lexer_t lexer{"(x + y)"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::grouping_t{e(expr::binary_t{token_t::p_plus("+"),
+                                              e(expr::identifier_t{token_t::k_identifier("x")}),
+                                              e(expr::identifier_t{token_t::k_identifier("y")})})});
+    }
+
+    {
+        lexer_t lexer{"(a + b) * (c - d)"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_asterisk("*"),
+                           e(expr::grouping_t{e(expr::binary_t{token_t::p_plus("+"),
+                                                               e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                               e(expr::identifier_t{token_t::k_identifier("b")})})}),
+                           e(expr::grouping_t{e(expr::binary_t{token_t::p_minus("-"),
+                                                               e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                               e(expr::identifier_t{token_t::k_identifier("d")})})})});
+    }
+
+    {
+        lexer_t lexer{"(call(a, b) + 3) / 2"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_slash("/"),
+                           e(expr::grouping_t{e(expr::binary_t{
+                               token_t::p_plus("+"),
+                               e(expr::call_t{e(expr::identifier_t{token_t::k_identifier("call")}),
+                                              make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("a")},
+                                                                        expr::identifier_t{token_t::k_identifier("b")}),
+                                              {}}),
+                               e(expr::literal_t{token_t::l_integer("3")})})}),
+                           e(expr::literal_t{token_t::l_integer("2")})});
+    }
+
+    {
+        lexer_t lexer{"(a + b) * c"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::binary_t{token_t::p_asterisk("*"),
+                           e(expr::grouping_t{e(expr::binary_t{token_t::p_plus("+"),
+                                                               e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                               e(expr::identifier_t{token_t::k_identifier("b")})})}),
+                           e(expr::identifier_t{token_t::k_identifier("c")})});
+    }
+
+    {
+        lexer_t lexer{"-(x + y)"};
+        parse_expr(lexer).result().visit(
+            expr_assert_visitor{},
+            expr::unary_t{token_t::p_minus("-"),
+                          e(expr::grouping_t{e(expr::binary_t{token_t::p_plus("+"),
+                                                              e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                              e(expr::identifier_t{token_t::k_identifier("y")})})})});
+    }
+}
+
+TEST(ParserTest, ParserGroupingNoClosingParenTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"(a + b]"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Expected ')' after expression");
+    }
+}
+
+TEST(ParserTest, ParserEmptyInputTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{""};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 1);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
+    }
+}
+
+TEST(ParserTest, ParserInvalidTokenTest)
+{
+    using namespace loxmocha;
+
+    {
+        lexer_t lexer{"+"};
+        auto    result = parse_expr(lexer);
+
+        ASSERT_TRUE(!result);
+        ASSERT_EQ(result.diagnostics().size(), 2);
+        EXPECT_EQ(result.diagnostics().front(), "Unexpected token: +");
+        EXPECT_EQ(result.diagnostics().back(), "Unexpected end of input");
+    }
 }
