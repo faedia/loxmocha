@@ -11,6 +11,13 @@
 namespace loxmocha::test {
 class assert_visitor {
 public:
+    template<loxmocha::token_t::kind_e... Kinds>
+    static auto expect_token_kind(const loxmocha::token_t& token) -> void
+    {
+        EXPECT_TRUE(((token.kind() == Kinds) || ...))
+            << "Expected token kind to be one of the specified kinds, but got: " << static_cast<int>(token.kind());
+    }
+
     void operator()([[maybe_unused]] const auto& actual, [[maybe_unused]] const auto& expected)
     {
         FAIL() << "Unexpected expression type encountered in assertion visitor.";
@@ -25,9 +32,11 @@ public:
 
     void operator()(const loxmocha::expr::literal_t& actual, const loxmocha::expr::literal_t& expected)
     {
-        EXPECT_TRUE(actual.value().kind() == loxmocha::token_t::kind_e::l_integer
-                    || actual.value().kind() == loxmocha::token_t::kind_e::l_char
-                    || actual.value().kind() == loxmocha::token_t::kind_e::l_string);
+        expect_token_kind<loxmocha::token_t::kind_e::k_true,
+                          loxmocha::token_t::kind_e::k_false,
+                          loxmocha::token_t::kind_e::l_integer,
+                          loxmocha::token_t::kind_e::l_char,
+                          loxmocha::token_t::kind_e::l_string>(actual.value());
 
         EXPECT_EQ(actual.value().kind(), expected.value().kind());
         EXPECT_EQ(actual.value().span(), expected.value().span());

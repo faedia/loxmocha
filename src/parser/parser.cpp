@@ -266,7 +266,11 @@ namespace {
             }
 
             auto token = *lexer_.peek_token();
-            if (match<token_t::kind_e::l_integer, token_t::kind_e::l_string, token_t::kind_e::l_char>(token)) {
+            if (match<token_t::kind_e::l_integer,
+                      token_t::kind_e::l_string,
+                      token_t::kind_e::l_char,
+                      token_t::kind_e::k_true,
+                      token_t::kind_e::k_false>(token)) {
                 lexer_.consume_token();
                 return expr::literal_t{token};
             }
