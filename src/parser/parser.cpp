@@ -26,7 +26,7 @@ namespace {
         {
             diagnostics_.clear();
             has_error_ = false;
-            auto expr  = equality_expr();
+            auto expr  = parse_expr_internal();
             return parser_result_t<expr::expr_t>{std::move(expr), has_error_, std::move(diagnostics_)};
         }
 
@@ -39,76 +39,94 @@ namespace {
             return ((token.kind() == Kinds) || ...);
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
+        auto parse_expr_internal() -> expr::expr_t { return or_expr(); }
+        auto parse_pattern_internal() -> pattern::pattern_t { return tag_pattern(); }
+        auto parse_type_internal() -> type::type_t
+        {
+            diagnostics_.emplace_back("Type parsing not implemented");
+            has_error_ = true;
+            return type::identifier_t{token_t::k_identifier("error")};
+        }
+
+        template<token_t::kind_e... Kinds>
+        auto parse_binary_expr(auto&& parse_lhs, auto&& parse_rhs, auto&& construct_expr) -> expr::expr_t
+        {
+            auto left     = parse_lhs();
+            auto op_token = lexer_.peek_token();
+            while (op_token && match<Kinds...>(*op_token)) {
+                lexer_.consume_token();
+                auto right = parse_rhs();
+                left       = construct_expr(*op_token, std::move(left), std::move(right));
+                op_token   = lexer_.peek_token();
+            }
+            return left;
+        }
+
+        static auto construct_binary_expr(token_t op, expr::expr_t left, expr::expr_t right) -> expr::expr_t
+        {
+            return expr::binary_t{
+                op, safe_ptr<expr::expr_t>::make(std::move(left)), safe_ptr<expr::expr_t>::make(std::move(right))};
+        }
+
+        auto or_expr() -> expr::expr_t
+        {
+            return parse_binary_expr<token_t::kind_e::p_pipe_pipe>([this]() -> expr::expr_t { return and_expr(); },
+                                                                   [this]() -> expr::expr_t { return and_expr(); },
+                                                                   construct_binary_expr);
+        }
+
+        auto and_expr() -> expr::expr_t
+        {
+            return parse_binary_expr<token_t::kind_e::p_and_and>([this]() -> expr::expr_t { return equality_expr(); },
+                                                                 [this]() -> expr::expr_t { return equality_expr(); },
+                                                                 construct_binary_expr);
+        }
+
         auto equality_expr() -> expr::expr_t
         {
-            auto left     = comparison_expr();
-            auto op_token = lexer_.peek_token();
-            while (op_token && match<token_t::kind_e::p_equal_equal, token_t::kind_e::p_not_equal>(*op_token)) {
-                lexer_.consume_token();
-                auto right = comparison_expr();
-                left       = expr::binary_t{*op_token,
-                                      safe_ptr<expr::expr_t>::make(std::move(left)),
-                                      safe_ptr<expr::expr_t>::make(std::move(right))};
-                op_token   = lexer_.peek_token();
-            }
-            return left;
+            return parse_binary_expr<token_t::kind_e::p_equal_equal, token_t::kind_e::p_not_equal>(
+                [this]() -> expr::expr_t { return comparison_expr(); },
+                [this]() -> expr::expr_t { return comparison_expr(); },
+                construct_binary_expr);
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
         auto comparison_expr() -> expr::expr_t
         {
-            auto left     = term_expr();
-            auto op_token = lexer_.peek_token();
-            while (op_token
-                   && match<token_t::kind_e::p_greater,
-                            token_t::kind_e::p_greater_equal,
-                            token_t::kind_e::p_less,
-                            token_t::kind_e::p_less_equal>(*op_token)) {
-                lexer_.consume_token();
-                auto right = term_expr();
-                left       = expr::binary_t{*op_token,
-                                      safe_ptr<expr::expr_t>::make(std::move(left)),
-                                      safe_ptr<expr::expr_t>::make(std::move(right))};
-                op_token   = lexer_.peek_token();
-            }
-
-            return left;
+            return parse_binary_expr<token_t::kind_e::p_greater,
+                                     token_t::kind_e::p_greater_equal,
+                                     token_t::kind_e::p_less,
+                                     token_t::kind_e::p_less_equal>([this]() -> expr::expr_t { return term_expr(); },
+                                                                    [this]() -> expr::expr_t { return term_expr(); },
+                                                                    construct_binary_expr);
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
         auto term_expr() -> expr::expr_t
         {
-            auto left     = factor_expr();
-            auto op_token = lexer_.peek_token();
-            while (op_token && match<token_t::kind_e::p_plus, token_t::kind_e::p_minus>(*op_token)) {
-                lexer_.consume_token();
-                auto right = factor_expr();
-                left       = expr::binary_t{*op_token,
-                                      safe_ptr<expr::expr_t>::make(std::move(left)),
-                                      safe_ptr<expr::expr_t>::make(std::move(right))};
-                op_token   = lexer_.peek_token();
-            }
-            return left;
+            return parse_binary_expr<token_t::kind_e::p_plus, token_t::kind_e::p_minus>(
+                [this]() -> expr::expr_t { return factor_expr(); },
+                [this]() -> expr::expr_t { return factor_expr(); },
+                construct_binary_expr);
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
         auto factor_expr() -> expr::expr_t
         {
-            auto left     = unary_expr();
-            auto op_token = lexer_.peek_token();
-            while (op_token && match<token_t::kind_e::p_asterisk, token_t::kind_e::p_slash>(*op_token)) {
-                lexer_.consume_token();
-                auto right = unary_expr();
-                left       = expr::binary_t{*op_token,
-                                      safe_ptr<expr::expr_t>::make(std::move(left)),
-                                      safe_ptr<expr::expr_t>::make(std::move(right))};
-                op_token   = lexer_.peek_token();
-            }
-            return left;
+            return parse_binary_expr<token_t::kind_e::p_asterisk, token_t::kind_e::p_slash>(
+                [this]() -> expr::expr_t { return is_expr(); },
+                [this]() -> expr::expr_t { return is_expr(); },
+                construct_binary_expr);
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
+        auto is_expr() -> expr::expr_t
+        {
+            return parse_binary_expr<token_t::kind_e::k_is>(
+                [this]() -> expr::expr_t { return unary_expr(); },
+                [this]() -> pattern::pattern_t { return parse_pattern_internal(); },
+                [](token_t, expr::expr_t left, pattern::pattern_t right) -> expr::expr_t {
+                    return expr::is_t{safe_ptr<expr::expr_t>::make(std::move(left)),
+                                      safe_ptr<pattern::pattern_t>::make(std::move(right))};
+                });
+        }
+
         auto unary_expr() -> expr::expr_t
         {
             auto op_token = lexer_.peek_token();
@@ -230,7 +248,6 @@ namespace {
                 safe_ptr<expr::expr_t>::make(std::move(callee_expr)), std::move(positional), std::move(named)};
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
         auto access_expr() -> expr::expr_t
         {
             auto base_expr = primary_expr();
@@ -256,7 +273,6 @@ namespace {
             return base_expr;
         }
 
-        // NOLINTNEXTLINE(misc-no-recursion)
         auto primary_expr() -> expr::expr_t
         {
             if (!lexer_.peek_token() || lexer_.peek_token()->kind() == token_t::kind_e::s_eof) {
@@ -294,6 +310,45 @@ namespace {
             diagnostics_.emplace_back("Unexpected token: " + std::string(token.span()));
             has_error_ = true;
             return expr::error_t{};
+        }
+
+        auto tag_pattern() -> pattern::pattern_t
+        {
+            auto start_token = lexer_.peek_token();
+            auto type        = parse_type_internal();
+
+            auto dot_token  = lexer_.next_token();
+            auto name_token = lexer_.next_token();
+
+            if (dot_token && match<token_t::kind_e::p_period>(*dot_token) && name_token
+                && match<token_t::kind_e::k_identifier>(*name_token)) {
+                auto sub_pattern = primary_pattern();
+                return pattern::tag_t{safe_ptr<type::type_t>::make(std::move(type)),
+                                      *name_token,
+                                      safe_ptr<pattern::pattern_t>::make(std::move(sub_pattern))};
+            }
+
+            lexer_.reset_token(*start_token);
+            return primary_pattern();
+        }
+
+        auto primary_pattern() -> pattern::pattern_t
+        {
+            auto token = lexer_.peek_token();
+            if (!token) {
+                diagnostics_.emplace_back("Unexpected end of input");
+                has_error_ = true;
+                return pattern::error_t{};
+            }
+
+            if (match<token_t::kind_e::k_identifier>(*token)) {
+                lexer_.consume_token();
+                return pattern::identifier_t{*token};
+            }
+
+            diagnostics_.emplace_back("Unexpected token in pattern: " + std::string(token->span()));
+            has_error_ = true;
+            return pattern::error_t{};
         }
 
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)

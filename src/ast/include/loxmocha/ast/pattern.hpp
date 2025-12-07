@@ -112,11 +112,21 @@ private:
     safe_ptr<pattern_t>    pattern_;
 };
 
+class error_t {
+public:
+    error_t()                                      = default;
+    error_t(const error_t&)                        = delete;
+    error_t(error_t&&) noexcept                    = default;
+    ~error_t()                                     = default;
+    auto operator=(const error_t&) -> error_t&     = delete;
+    auto operator=(error_t&&) noexcept -> error_t& = default;
+};
+
 /**
  * @class pattern_t
  * @brief represents a pattern.
  */
-class pattern_t : public node_t<identifier_t, tag_t> {
+class pattern_t : public node_t<identifier_t, tag_t, error_t> {
 public:
     using node_t::node_t;
 
