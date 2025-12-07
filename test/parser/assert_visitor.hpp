@@ -130,8 +130,14 @@ public:
 
     void operator()(const loxmocha::expr::if_t& actual, const loxmocha::expr::if_t& expected)
     {
-        actual.condition()->visit(*this, *expected.condition());
-        actual.then_branch()->visit(*this, *expected.then_branch());
+        ASSERT_EQ(actual.conditional_branches().size(), expected.conditional_branches().size());
+
+        for (const auto& [a_branch, e_branch] :
+             std::views::zip(actual.conditional_branches(), expected.conditional_branches())) {
+            a_branch.condition->visit(*this, *e_branch.condition);
+            a_branch.then_branch->visit(*this, *e_branch.then_branch);
+        }
+
         if (actual.else_branch() && expected.else_branch()) {
             actual.else_branch()->visit(*this, *expected.else_branch());
         } else {

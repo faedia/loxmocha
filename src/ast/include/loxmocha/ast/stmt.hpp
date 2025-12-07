@@ -24,7 +24,7 @@ public:
 
     expr_t(const expr_t&)     = delete;
     expr_t(expr_t&&) noexcept = default;
-    ~expr_t()                 = default;
+    ~expr_t();
 
     /**
      * @brief Constructs an expression statement from an expression.
@@ -60,7 +60,7 @@ public:
 
     assign_t(const assign_t&)     = delete;
     assign_t(assign_t&&) noexcept = default;
-    ~assign_t()                   = default;
+    ~assign_t();
 
     auto operator=(const assign_t&) -> assign_t&     = delete;
     auto operator=(assign_t&&) noexcept -> assign_t& = default;
@@ -109,7 +109,7 @@ public:
 
     decl_t(const decl_t&)     = delete;
     decl_t(decl_t&&) noexcept = default;
-    ~decl_t()                 = default;
+    ~decl_t();
 
     auto operator=(const decl_t&) -> decl_t&     = delete;
     auto operator=(decl_t&&) noexcept -> decl_t& = default;
@@ -140,7 +140,7 @@ private:
  * @class stmt_t
  * @brief represents a statement
  */
-class stmt_t : public node_t<expr_t /*, other statement types */> {
+class stmt_t : public node_t<expr_t, assign_t, decl_t> {
 public:
     using node_t::node_t;
 };

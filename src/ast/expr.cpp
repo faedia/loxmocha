@@ -48,15 +48,13 @@ call_t::call_t(safe_ptr<expr_t>&& callee, std::vector<expr_t>&& positional_args,
 {
 }
 
-if_t::if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch, safe_ptr<expr_t>&& else_branch)
-    : condition_(std::move(condition))
-    , then_branch_(std::move(then_branch))
-    , else_branch_(std::move(else_branch).to_nullable())
+if_t::if_t(std::vector<conditional_branch_t>&& branches, safe_ptr<expr_t>&& else_branch)
+    : conditional_branches_(std::move(branches)), else_branch_(std::move(else_branch).to_nullable())
 {
 }
 
-if_t::if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch)
-    : condition_(std::move(condition)), then_branch_(std::move(then_branch)), else_branch_(nullptr)
+if_t::if_t(std::vector<conditional_branch_t>&& branches)
+    : conditional_branches_(std::move(branches)), else_branch_(nullptr)
 {
 }
 

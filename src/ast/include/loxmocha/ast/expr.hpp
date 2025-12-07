@@ -608,44 +608,38 @@ public:
     auto operator=(if_t&&) noexcept -> if_t& = default;
 
     /**
-     * @brief Constructs an if expression with the given condition, then branch, and an else branch.
+     * @brief Struct representing a conditional branch in the if expression.
+     */
+    struct conditional_branch_t;
+
+    /**
+     * @brief Constructs an if expression with the given conditional branches and else branch.
      *
-     * @param condition The condition expression.
-     * @param then_branch The expression to execute if the condition is true.
-     * @param else_branch The expression to execute if the condition is false.
+     * @param conditional_branches The conditional branches of the if expression.
+     * @param else_branch The else branch expression.
      */
-    if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch, safe_ptr<expr_t>&& else_branch);
+    if_t(std::vector<conditional_branch_t>&& conditional_branches, safe_ptr<expr_t>&& else_branch);
 
     /**
-     * @brief Constructs an if expression with the given condition and then branch (no else branch).
+     * @brief Constructs an if expression with the given conditional branches and no else branch.
      *
-     * @param condition The condition expression.
-     * @param then_branch The expression to execute if the condition is true.
-     * @remark This represents an if expression without an else branch, the else branch is implicitly null.
+     * @param conditional_branches The conditional branches of the if expression.
      */
-    if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch);
+    explicit if_t(std::vector<conditional_branch_t>&& conditional_branches);
 
     /**
-     * @brief Get the condition expression of the if expression.
-     * @return const safe_ptr<expr_t>& The condition expression of the if expression.
+     * @brief Get the conditional branches of the if expression, i.e. all branches following an [else] if.
+     * @return const std::vector<conditional_branch_t>& The conditional branches of the if expression.
      */
-    [[nodiscard]] auto condition() const -> const safe_ptr<expr_t>& { return condition_; }
+    [[nodiscard]] auto conditional_branches() const -> const std::vector<conditional_branch_t>&
+    {
+        return conditional_branches_;
+    }
     /**
-     * @brief Get the condition expression of the if expression.
-     * @return safe_ptr<expr_t>& The condition expression of the if expression.
+     * @brief Get the conditional branches of the if expression, i.e. all branches following an [else] if.
+     * @return const std::vector<conditional_branch_t>& The conditional branches of the if expression.
      */
-    [[nodiscard]] auto condition() -> safe_ptr<expr_t>& { return condition_; }
-
-    /**
-     * @brief Get the then branch expression of the if expression.
-     * @return const safe_ptr<expr_t>& The then branch expression of the if expression.
-     */
-    [[nodiscard]] auto then_branch() const -> const safe_ptr<expr_t>& { return then_branch_; }
-    /**
-     * @brief Get the then branch expression of the if expression.
-     * @return safe_ptr<expr_t>& The then branch expression of the if expression.
-     */
-    [[nodiscard]] auto then_branch() -> safe_ptr<expr_t>& { return then_branch_; }
+    [[nodiscard]] auto conditional_branches() -> std::vector<conditional_branch_t>& { return conditional_branches_; }
 
     /**
      * @brief Get the else branch expression of the if expression.
@@ -659,9 +653,8 @@ public:
     [[nodiscard]] auto else_branch() -> nullable_ptr<expr_t>& { return else_branch_; }
 
 private:
-    safe_ptr<expr_t>     condition_;
-    safe_ptr<expr_t>     then_branch_;
-    nullable_ptr<expr_t> else_branch_;
+    std::vector<conditional_branch_t> conditional_branches_;
+    nullable_ptr<expr_t>              else_branch_;
 };
 
 // TODO: For expression
@@ -863,6 +856,11 @@ struct record_t::field_t {
 struct call_t::named_arg_t {
     token_t name;
     expr_t  value;
+};
+
+struct if_t::conditional_branch_t {
+    safe_ptr<expr_t> condition;
+    safe_ptr<expr_t> then_branch;
 };
 
 } // namespace loxmocha::expr
