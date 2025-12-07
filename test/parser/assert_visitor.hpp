@@ -1,5 +1,6 @@
 #pragma once
 
+#include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
@@ -23,11 +24,72 @@ public:
         FAIL() << "Unexpected expression type encountered in assertion visitor.";
     }
 
+    void operator()(const auto& actual, const loxmocha::decl::decl_t& expected)
+    {
+        expected.visit(
+            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
+            actual);
+    }
+
     void operator()(const auto& actual, const loxmocha::expr::expr_t& expected)
     {
         expected.visit(
             [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
             actual);
+    }
+
+    void operator()(const auto& actual, const loxmocha::pattern::pattern_t& expected)
+    {
+        expected.visit(
+            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
+            actual);
+    }
+
+    void operator()(const auto& actual, const loxmocha::stmt::stmt_t& expected)
+    {
+        expected.visit(
+            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
+            actual);
+    }
+
+    void operator()(const auto& actual, const loxmocha::type::type_t& expected)
+    {
+        expected.visit(
+            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
+            actual);
+    }
+
+    void operator()(const loxmocha::decl::type_t& actual, const loxmocha::decl::type_t& expected)
+    {
+        EXPECT_EQ(actual.identifier().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
+        EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
+        actual.type()->visit(*this, *expected.type());
+    }
+
+    void operator()(const loxmocha::decl::function_t& actual, const loxmocha::decl::function_t& expected)
+    {
+        EXPECT_EQ(actual.identifier().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
+        EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
+
+        ASSERT_EQ(actual.parameters().size(), expected.parameters().size());
+        for (const auto& [a_param, e_param] : std::views::zip(actual.parameters(), expected.parameters())) {
+            a_param.pattern->visit(*this, *e_param.pattern);
+            a_param.type->visit(*this, *e_param.type);
+        }
+
+        actual.return_type()->visit(*this, *expected.return_type());
+        actual.body()->visit(*this, *expected.body());
+    }
+
+    void operator()(const loxmocha::decl::variable_t& actual, const loxmocha::decl::variable_t& expected)
+    {
+        EXPECT_EQ(actual.identifier().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
+        EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
+        actual.type()->visit(*this, *expected.type());
+        actual.initialiser()->visit(*this, *expected.initialiser());
     }
 
     void operator()(const loxmocha::expr::literal_t& actual, const loxmocha::expr::literal_t& expected)
@@ -172,6 +234,106 @@ public:
     void operator()(const loxmocha::expr::grouping_t& actual, const loxmocha::expr::grouping_t& expected)
     {
         actual.expression()->visit(*this, *expected.expression());
+    }
+
+    void operator()(const loxmocha::pattern::identifier_t& actual, const loxmocha::pattern::identifier_t& expected)
+    {
+        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), expected.name().kind());
+        EXPECT_EQ(actual.name().span(), expected.name().span());
+    }
+
+    void operator()(const loxmocha::pattern::tag_t& actual, const loxmocha::pattern::tag_t& expected)
+    {
+        actual.type()->visit(*this, *expected.type());
+
+        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), expected.name().kind());
+        EXPECT_EQ(actual.name().span(), expected.name().span());
+
+        actual.pattern()->visit(*this, *expected.pattern());
+    }
+
+    void operator()(const loxmocha::stmt::expr_t& actual, const loxmocha::stmt::expr_t& expected)
+    {
+        actual.expr()->visit(*this, *expected.expr());
+    }
+
+    void operator()(const loxmocha::stmt::assign_t& actual, const loxmocha::stmt::assign_t& expected)
+    {
+        actual.target()->visit(*this, *expected.target());
+        actual.value()->visit(*this, *expected.value());
+    }
+
+    void operator()(const loxmocha::stmt::decl_t& actual, const loxmocha::stmt::decl_t& expected)
+    {
+        actual.declaration()->visit(*this, *expected.declaration());
+    }
+
+    void operator()(const loxmocha::type::identifier_t& actual, const loxmocha::type::identifier_t& expected)
+    {
+        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), expected.name().kind());
+        EXPECT_EQ(actual.name().span(), expected.name().span());
+    }
+
+    void operator()(const loxmocha::type::array_t& actual, const loxmocha::type::array_t& expected)
+    {
+        actual.element_type()->visit(*this, *expected.element_type());
+    }
+
+    void operator()(const loxmocha::type::tuple_t& actual, const loxmocha::type::tuple_t& expected)
+    {
+        ASSERT_EQ(actual.element_types().size(), expected.element_types().size());
+
+        for (const auto& [a_type, e_type] : std::views::zip(actual.element_types(), expected.element_types())) {
+            a_type.visit(*this, e_type);
+        }
+    }
+
+    void operator()(const loxmocha::type::record_t& actual, const loxmocha::type::record_t& expected)
+    {
+        ASSERT_EQ(actual.fields().size(), expected.fields().size());
+
+        for (const auto& [a_field, e_field] : std::views::zip(actual.fields(), expected.fields())) {
+            EXPECT_EQ(a_field.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_field.name.kind(), e_field.name.kind());
+            EXPECT_EQ(a_field.name.span(), e_field.name.span());
+            a_field.type.visit(*this, e_field.type);
+        }
+    }
+
+    void operator()(const loxmocha::type::tagged_t& actual, const loxmocha::type::tagged_t& expected)
+    {
+        ASSERT_EQ(actual.tags().size(), expected.tags().size());
+
+        for (const auto& [a_tag, e_tag] : std::views::zip(actual.tags(), expected.tags())) {
+            EXPECT_EQ(a_tag.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_tag.name.kind(), e_tag.name.kind());
+            EXPECT_EQ(a_tag.name.span(), e_tag.name.span());
+            a_tag.type.visit(*this, e_tag.type);
+        }
+    }
+
+    void operator()(const loxmocha::type::reference_t& actual, const loxmocha::type::reference_t& expected)
+    {
+        actual.base_type()->visit(*this, *expected.base_type());
+    }
+
+    void operator()(const loxmocha::type::function_t& actual, const loxmocha::type::function_t& expected)
+    {
+        ASSERT_EQ(actual.parameters().size(), expected.parameters().size());
+
+        for (const auto& [a_type, e_type] : std::views::zip(actual.parameters(), expected.parameters())) {
+            a_type.visit(*this, e_type);
+        }
+
+        actual.return_type()->visit(*this, *expected.return_type());
+    }
+
+    void operator()(const loxmocha::type::mutable_t& actual, const loxmocha::type::mutable_t& expected)
+    {
+        actual.base_type()->visit(*this, *expected.base_type());
     }
 };
 
