@@ -23,8 +23,11 @@ function_t::function_t(token_t                                identifier,
 {
 }
 
-variable_t::variable_t(token_t identifier, safe_ptr<type::type_t>&& type)
-    : identifier_(identifier), type_(std::move(type))
+variable_t::variable_t(variable_t::mut_e        mut,
+                       token_t                  identifier,
+                       safe_ptr<type::type_t>&& type,
+                       safe_ptr<expr::expr_t>&& initialiser)
+    : mutability_(mut), identifier_(identifier), type_(std::move(type)), initialiser_(std::move(initialiser))
 {
 }
 

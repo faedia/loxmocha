@@ -327,4 +327,9 @@ auto parse_type([[maybe_unused]] lexer_t& lexer) -> parser_result_t<type::type_t
     return parser_result_t<type::type_t>{type::identifier_t(token_t::k_identifier("int")), false, {}};
 }
 
+auto parse_pattern([[maybe_unused]] lexer_t& lexer) -> parser_result_t<pattern::pattern_t>
+{
+    return parser_result_t<pattern::pattern_t>{pattern::identifier_t{token_t::k_identifier("my_var")}, false, {}};
+}
+
 } // namespace loxmocha

@@ -40,6 +40,7 @@ auto parse_decl(lexer_t& lexer) -> parser_result_t<decl::decl_t>;
 auto parse_stmt(lexer_t& lexer) -> parser_result_t<stmt::stmt_t>;
 auto parse_expr(lexer_t& lexer) -> parser_result_t<expr::expr_t>;
 auto parse_type(lexer_t& lexer) -> parser_result_t<type::type_t>;
+auto parse_pattern(lexer_t& lexer) -> parser_result_t<pattern::pattern_t>;
 
 // TODO: Something I'm not sure about is whether the parser should be
 // free functions or a class with state. Having the state makes it easier to manage

@@ -1,13 +1,13 @@
 #pragma once
 
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace loxmocha::expr {
@@ -91,8 +91,8 @@ public:
      * @brief Struct representing a function parameter.
      */
     struct parameter_t {
-        token_t                name;
-        safe_ptr<type::type_t> type;
+        safe_ptr<pattern::pattern_t> pattern;
+        safe_ptr<type::type_t>       type;
     };
 
     /**
@@ -174,13 +174,19 @@ public:
     auto operator=(const variable_t&) -> variable_t&     = delete;
     auto operator=(variable_t&&) noexcept -> variable_t& = default;
 
+    enum class mut_e : std::uint8_t { var, let };
+
     /**
      * @brief Constructs a variable declaration from an identifier and a type.
      *
      * @param identifier The identifier of the variable.
      * @param type The type of the variable.
+     * @param initialiser The initialiser expression for the variable.
      */
-    explicit variable_t(token_t identifier, safe_ptr<type::type_t>&& type);
+    explicit variable_t(mut_e                    mut,
+                        token_t                  identifier,
+                        safe_ptr<type::type_t>&& type,
+                        safe_ptr<expr::expr_t>&& initialiser);
 
     /**
      * @brief Get the identifier of the variable declaration.
@@ -204,9 +210,22 @@ public:
      */
     [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
 
+    /**
+     * @brief Get the initialiser expression of the variable declaration.
+     * @return const safe_ptr<expr::expr_t>& The initialiser expression.
+     */
+    [[nodiscard]] auto initialiser() const -> const safe_ptr<expr::expr_t>& { return initialiser_; }
+    /**
+     * @brief Get the initialiser expression of the variable declaration.
+     * @return safe_ptr<expr::expr_t>& The initialiser expression.
+     */
+    [[nodiscard]] auto initialiser() -> safe_ptr<expr::expr_t>& { return initialiser_; }
+
 private:
+    mut_e                  mutability_;
     token_t                identifier_;
     safe_ptr<type::type_t> type_;
+    safe_ptr<expr::expr_t> initialiser_;
 };
 
 /**
