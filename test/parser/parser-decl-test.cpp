@@ -25,6 +25,8 @@ TEST(ParserTest, DeclFunctionNoParametersTest) { FAIL() << "Not implemented"; }
 
 TEST(ParserTest, DeclFunctionNoReturnTypeTest) { FAIL() << "Not implemented"; }
 
-TEST(ParserTest, DeclVariableTest) { FAIL() << "Not implemented"; }
+TEST(ParserTest, DeclLetTest) { FAIL() << "Not implemented"; }
+
+TEST(ParserTest, DeclVarTest) { FAIL() << "Not implemented"; }
 
 // TODO: Add negative testing cases!
