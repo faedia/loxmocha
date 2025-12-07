@@ -13,7 +13,7 @@
 
 using namespace loxmocha::test::helpers;
 
-TEST(ParserTest, ParserLiteralStringTest)
+TEST(ParserTest, ExprLiteralStringTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"("this is a string")"};
@@ -22,7 +22,7 @@ TEST(ParserTest, ParserLiteralStringTest)
     result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::l_string(R"("this is a string")")});
 }
 
-TEST(ParserTest, ParserLiteralCharTest)
+TEST(ParserTest, ExprLiteralCharTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"('c')"};
@@ -31,7 +31,7 @@ TEST(ParserTest, ParserLiteralCharTest)
     result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::l_char(R"('c')")});
 }
 
-TEST(ParserTest, ParserLiteralIntegerTest)
+TEST(ParserTest, ExprLiteralIntegerTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"12345"};
@@ -40,7 +40,7 @@ TEST(ParserTest, ParserLiteralIntegerTest)
     result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::l_integer("12345")});
 }
 
-TEST(ParserTest, ParserIdentifierTest)
+TEST(ParserTest, ExprIdentifierTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"my_variable"};
@@ -49,7 +49,7 @@ TEST(ParserTest, ParserIdentifierTest)
     result.result().visit(test::assert_visitor{}, expr::identifier_t{token_t::k_identifier("my_variable")});
 }
 
-TEST(ParserTest, ParserLiteralTrueTest)
+TEST(ParserTest, ExprLiteralTrueTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"true"};
@@ -58,7 +58,7 @@ TEST(ParserTest, ParserLiteralTrueTest)
     result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::k_true("true")});
 }
 
-TEST(ParserTest, ParserLiteralFalseTest)
+TEST(ParserTest, ExprLiteralFalseTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"false"};
@@ -67,7 +67,7 @@ TEST(ParserTest, ParserLiteralFalseTest)
     result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::k_false("false")});
 }
 
-TEST(ParserTest, ParserAndTest)
+TEST(ParserTest, ExprAndTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a && b"};
@@ -77,7 +77,7 @@ TEST(ParserTest, ParserAndTest)
                                                     e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserOrTest)
+TEST(ParserTest, ExprOrTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"x || y"};
@@ -87,7 +87,7 @@ TEST(ParserTest, ParserOrTest)
                                                     e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
-TEST(ParserTest, ParserMultipleLogicalTest)
+TEST(ParserTest, ExprMultipleLogicalTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a && b || c && d"};
@@ -102,7 +102,7 @@ TEST(ParserTest, ParserMultipleLogicalTest)
                                         e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
-TEST(ParserTest, ParserEqualityTest)
+TEST(ParserTest, ExprEqualityTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a == b"};
@@ -112,7 +112,7 @@ TEST(ParserTest, ParserEqualityTest)
                                                     e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserInequalityTest)
+TEST(ParserTest, ExprInequalityTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"x != y"};
@@ -122,7 +122,7 @@ TEST(ParserTest, ParserInequalityTest)
                                                     e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
-TEST(ParserTest, ParserMultipleEqualityTest)
+TEST(ParserTest, ExprMultipleEqualityTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a == b != c == d != e"};
@@ -140,7 +140,7 @@ TEST(ParserTest, ParserMultipleEqualityTest)
             e(expr::identifier_t{token_t::k_identifier("e")})});
 }
 
-TEST(ParserTest, ParserEqualityPrecedenceTest)
+TEST(ParserTest, ExprEqualityPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a == b && c != d"};
@@ -155,7 +155,7 @@ TEST(ParserTest, ParserEqualityPrecedenceTest)
                                         e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
-TEST(ParserTest, ParserLessThanTest)
+TEST(ParserTest, ExprLessThanTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a < b"};
@@ -165,7 +165,7 @@ TEST(ParserTest, ParserLessThanTest)
                                                     e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserLessThanOrEqualTest)
+TEST(ParserTest, ExprLessThanOrEqualTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"x <= y"};
@@ -175,7 +175,7 @@ TEST(ParserTest, ParserLessThanOrEqualTest)
                                                     e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
-TEST(ParserTest, ParserGreaterThanTest)
+TEST(ParserTest, ExprGreaterThanTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a > b"};
@@ -185,7 +185,7 @@ TEST(ParserTest, ParserGreaterThanTest)
                                                     e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserGreaterThanOrEqualTest)
+TEST(ParserTest, ExprGreaterThanOrEqualTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"x >= y"};
@@ -195,7 +195,7 @@ TEST(ParserTest, ParserGreaterThanOrEqualTest)
                                                     e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
-TEST(ParserTest, ParserMultipleComparisonTest)
+TEST(ParserTest, ExprMultipleComparisonTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a < b <= c > d >= e"};
@@ -213,7 +213,7 @@ TEST(ParserTest, ParserMultipleComparisonTest)
             e(expr::identifier_t{token_t::k_identifier("e")})});
 }
 
-TEST(ParserTest, ParserComparisonPrecedenceTest)
+TEST(ParserTest, ExprComparisonPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a < b == b > c"};
@@ -228,7 +228,7 @@ TEST(ParserTest, ParserComparisonPrecedenceTest)
                                         e(expr::identifier_t{token_t::k_identifier("c")})})});
 }
 
-TEST(ParserTest, ParserAdditionTest)
+TEST(ParserTest, ExprAdditionTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a + b"};
@@ -238,7 +238,7 @@ TEST(ParserTest, ParserAdditionTest)
                                                     e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserSubtractionTest)
+TEST(ParserTest, ExprSubtractionTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"x - y"};
@@ -248,7 +248,7 @@ TEST(ParserTest, ParserSubtractionTest)
                                                     e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
-TEST(ParserTest, ParserMultipleAdditionTest)
+TEST(ParserTest, ExprMultipleAdditionTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a + b - c + d"};
@@ -263,7 +263,7 @@ TEST(ParserTest, ParserMultipleAdditionTest)
                        e(expr::identifier_t{token_t::k_identifier("d")})});
 }
 
-TEST(ParserTest, ParserAdditionPrecedenceTest)
+TEST(ParserTest, ExprAdditionPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a + b < c - d"};
@@ -278,7 +278,7 @@ TEST(ParserTest, ParserAdditionPrecedenceTest)
                                         e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
-TEST(ParserTest, ParserMultiplicationTest)
+TEST(ParserTest, ExprMultiplicationTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a * b"};
@@ -288,7 +288,7 @@ TEST(ParserTest, ParserMultiplicationTest)
                                                     e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserDivisionTest)
+TEST(ParserTest, ExprDivisionTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"x / y"};
@@ -298,7 +298,7 @@ TEST(ParserTest, ParserDivisionTest)
                                                     e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
-TEST(ParserTest, ParserMultipleMultiplicationTest)
+TEST(ParserTest, ExprMultipleMultiplicationTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a * b / c * d"};
@@ -313,7 +313,7 @@ TEST(ParserTest, ParserMultipleMultiplicationTest)
                        e(expr::identifier_t{token_t::k_identifier("d")})});
 }
 
-TEST(ParserTest, ParserMultiplicationPrecedenceTest)
+TEST(ParserTest, ExprMultiplicationPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a * b + c / d"};
@@ -328,7 +328,7 @@ TEST(ParserTest, ParserMultiplicationPrecedenceTest)
                                         e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
-TEST(ParserTest, ParserNegationTest)
+TEST(ParserTest, ExprNegationTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"-42"};
@@ -336,7 +336,7 @@ TEST(ParserTest, ParserNegationTest)
         test::assert_visitor{}, expr::unary_t{token_t::p_minus("-"), e(expr::literal_t{token_t::l_integer("42")})});
 }
 
-TEST(ParserTest, ParserLogicalNotTest)
+TEST(ParserTest, ExprLogicalNotTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"!true"};
@@ -344,7 +344,7 @@ TEST(ParserTest, ParserLogicalNotTest)
                                      expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_true("true")})});
 }
 
-TEST(ParserTest, ParserMultipleUnaryTest)
+TEST(ParserTest, ExprMultipleUnaryTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"-!false"};
@@ -354,7 +354,7 @@ TEST(ParserTest, ParserMultipleUnaryTest)
                       e(expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_false("false")})})});
 }
 
-TEST(ParserTest, ParserUnaryPrecedenceTest)
+TEST(ParserTest, ExprUnaryPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"-a * !b"};
@@ -365,7 +365,7 @@ TEST(ParserTest, ParserUnaryPrecedenceTest)
                        e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("b")})})});
 }
 
-TEST(ParserTest, ParserFieldAccessTest)
+TEST(ParserTest, ExprFieldAccessTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a.b.c"};
@@ -375,7 +375,7 @@ TEST(ParserTest, ParserFieldAccessTest)
                       token_t::k_identifier("c")});
 }
 
-TEST(ParserTest, ParserIndexAccessTest)
+TEST(ParserTest, ExprIndexAccessTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"matrix[i + 2][j]"};
@@ -388,7 +388,7 @@ TEST(ParserTest, ParserIndexAccessTest)
                       e(expr::identifier_t{token_t::k_identifier("j")})});
 }
 
-TEST(ParserTest, ParserCallNoArgumentsTest)
+TEST(ParserTest, ExprCallNoArgumentsTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"func()"};
@@ -396,7 +396,7 @@ TEST(ParserTest, ParserCallNoArgumentsTest)
                                      expr::call_t{e(expr::identifier_t{token_t::k_identifier("func")}), {}, {}});
 }
 
-TEST(ParserTest, ParserCallPositionalArgumentsTest)
+TEST(ParserTest, ExprCallPositionalArgumentsTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"add(5, 10)"};
@@ -407,7 +407,7 @@ TEST(ParserTest, ParserCallPositionalArgumentsTest)
                                                   {}});
 }
 
-TEST(ParserTest, ParserCallNamedArgumentsTest)
+TEST(ParserTest, ExprCallNamedArgumentsTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"setPosition(x: 100, y: 200)"};
@@ -422,7 +422,7 @@ TEST(ParserTest, ParserCallNamedArgumentsTest)
                                                    .value = expr::literal_t{token_t::l_integer("200")}})});
 }
 
-TEST(ParserTest, ParserCallMixedArgumentTest)
+TEST(ParserTest, ExprCallMixedArgumentTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"drawCircle(x + 10, y, radius: 25)"};
@@ -438,7 +438,7 @@ TEST(ParserTest, ParserCallMixedArgumentTest)
                 .name = token_t::k_identifier("radius"), .value = expr::literal_t{token_t::l_integer("25")}})});
 }
 
-TEST(ParserTest, ParserPositionalAfterNamedArgsTest)
+TEST(ParserTest, ExprPositionalAfterNamedArgsTest)
 {
     using namespace loxmocha;
     lexer_t lexer("func(a, b: 2, c)");
@@ -449,7 +449,7 @@ TEST(ParserTest, ParserPositionalAfterNamedArgsTest)
     ASSERT_EQ(result.diagnostics().front(), "Expected ':' after named argument identifier");
 }
 
-TEST(ParserTest, ParserNestedCallsTest)
+TEST(ParserTest, ExprNestedCallsTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"outer(inner(1, 2), another(3))"};
@@ -467,7 +467,7 @@ TEST(ParserTest, ParserNestedCallsTest)
             {}});
 }
 
-TEST(ParserTest, ParserMixedAccessTest)
+TEST(ParserTest, ExprMixedAccessTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"obj.field[index](arg1, arg2).anotherField"};
@@ -483,7 +483,7 @@ TEST(ParserTest, ParserMixedAccessTest)
             token_t::k_identifier("anotherField")});
 }
 
-TEST(ParserTest, ParserAccessPrecedenceTest)
+TEST(ParserTest, ExprAccessPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"-a.b + c.d[e.f] - -g.h()"};
@@ -506,7 +506,7 @@ TEST(ParserTest, ParserAccessPrecedenceTest)
                                            {}})})});
 }
 
-TEST(ParserTest, ParserGroupingTest)
+TEST(ParserTest, ExprGroupingTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"(a)"};
@@ -514,7 +514,7 @@ TEST(ParserTest, ParserGroupingTest)
                                      expr::grouping_t{e(expr::identifier_t{token_t::k_identifier("a")})});
 }
 
-TEST(ParserTest, ParserIsTest)
+TEST(ParserTest, ExprIsTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a is b"};
@@ -523,7 +523,7 @@ TEST(ParserTest, ParserIsTest)
                                                 p(pattern::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserIsPrecedenceTest)
+TEST(ParserTest, ExprIsPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"!a is b"};
@@ -533,7 +533,7 @@ TEST(ParserTest, ParserIsPrecedenceTest)
                    p(pattern::identifier_t{token_t::k_identifier("b")})});
 }
 
-TEST(ParserTest, ParserIsPrecedenceWithGroupingTest)
+TEST(ParserTest, ExprIsPrecedenceWithGroupingTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"!(a is b)"};
@@ -544,7 +544,7 @@ TEST(ParserTest, ParserIsPrecedenceWithGroupingTest)
                                                       p(pattern::identifier_t{token_t::k_identifier("b")})})})});
 }
 
-TEST(ParserTest, ParserIsPrecedenceWithAccessTest)
+TEST(ParserTest, ExprIsPrecedenceWithAccessTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a.b is c"};
@@ -554,7 +554,7 @@ TEST(ParserTest, ParserIsPrecedenceWithAccessTest)
                    p(pattern::identifier_t{token_t::k_identifier("c")})});
 }
 
-TEST(ParserTest, ParserIsPrecedenceWithAndTest)
+TEST(ParserTest, ExprIsPrecedenceWithAndTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a && b is c"};
@@ -566,7 +566,7 @@ TEST(ParserTest, ParserIsPrecedenceWithAndTest)
                                     p(pattern::identifier_t{token_t::k_identifier("c")})})});
 }
 
-TEST(ParserTest, ParserCastTest)
+TEST(ParserTest, ExprCastTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a as MyType"};
@@ -575,7 +575,7 @@ TEST(ParserTest, ParserCastTest)
                                                   t(type::identifier_t{token_t::k_identifier("MyType")})});
 }
 
-TEST(ParserTest, ParserCastPrecedenceTest)
+TEST(ParserTest, ExprCastPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"-a as MyType"};
@@ -585,7 +585,7 @@ TEST(ParserTest, ParserCastPrecedenceTest)
                      t(type::identifier_t{token_t::k_identifier("MyType")})});
 }
 
-TEST(ParserTest, ParserArrayTest)
+TEST(ParserTest, ExprArrayTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"[1, 2, 3]"};
@@ -597,7 +597,7 @@ TEST(ParserTest, ParserArrayTest)
                                                                   expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ParserArrayEmptyTest)
+TEST(ParserTest, ExprArrayEmptyTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"[]"};
@@ -606,7 +606,7 @@ TEST(ParserTest, ParserArrayEmptyTest)
     result.result().visit(test::assert_visitor{}, expr::array_t{{}});
 }
 
-TEST(ParserTest, ParserArraySingleElementTest)
+TEST(ParserTest, ExprArraySingleElementTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"[42]"};
@@ -616,7 +616,7 @@ TEST(ParserTest, ParserArraySingleElementTest)
                           expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
 }
 
-TEST(ParserTest, ParserArrayTrailingCommaTest)
+TEST(ParserTest, ExprArrayTrailingCommaTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"[1, 2, 3, ]"};
@@ -628,7 +628,7 @@ TEST(ParserTest, ParserArrayTrailingCommaTest)
                                                                   expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ParserArrayPrecedenceTest)
+TEST(ParserTest, ExprArrayPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"[a + b, c * d][i - 1]"};
@@ -646,7 +646,7 @@ TEST(ParserTest, ParserArrayPrecedenceTest)
                                        e(expr::literal_t{token_t::l_integer("1")})})});
 }
 
-TEST(ParserTest, ParserRecordTest)
+TEST(ParserTest, ExprRecordTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"{x: 10, y: 20}"};
@@ -660,7 +660,7 @@ TEST(ParserTest, ParserRecordTest)
                                                       .value = expr::literal_t{token_t::l_integer("20")}})});
 }
 
-TEST(ParserTest, ParserRecordEmptyTest)
+TEST(ParserTest, ExprRecordEmptyTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"{}"};
@@ -669,7 +669,7 @@ TEST(ParserTest, ParserRecordEmptyTest)
     result.result().visit(test::assert_visitor{}, expr::record_t{{}});
 }
 
-TEST(ParserTest, ParserRecordSingleFieldTest)
+TEST(ParserTest, ExprRecordSingleFieldTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"{value: 42}"};
@@ -681,7 +681,7 @@ TEST(ParserTest, ParserRecordSingleFieldTest)
             .name = token_t::k_identifier("value"), .value = expr::literal_t{token_t::l_integer("42")}})});
 }
 
-TEST(ParserTest, ParserRecordTrailingCommaTest)
+TEST(ParserTest, ExprRecordTrailingCommaTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"{a: 1, b: 2, }"};
@@ -695,7 +695,7 @@ TEST(ParserTest, ParserRecordTrailingCommaTest)
                                                       .value = expr::literal_t{token_t::l_integer("2")}})});
 }
 
-TEST(ParserTest, ParserRecordPrecedenceTest)
+TEST(ParserTest, ExprRecordPrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"{sum: a + b, product: c * d}.sum"};
@@ -714,7 +714,7 @@ TEST(ParserTest, ParserRecordPrecedenceTest)
             token_t::k_identifier("sum")});
 }
 
-TEST(ParserTest, ParserTupleTest)
+TEST(ParserTest, ExprTupleTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"(1, 2, 3)"};
@@ -726,7 +726,7 @@ TEST(ParserTest, ParserTupleTest)
                                                                   expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ParserTupleEmptyTest)
+TEST(ParserTest, ExprTupleEmptyTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"()"};
@@ -735,7 +735,7 @@ TEST(ParserTest, ParserTupleEmptyTest)
     result.result().visit(test::assert_visitor{}, expr::tuple_t{{}});
 }
 
-TEST(ParserTest, ParserTupleSingleElementTest)
+TEST(ParserTest, ExprTupleSingleElementTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"(42,)"};
@@ -745,7 +745,7 @@ TEST(ParserTest, ParserTupleSingleElementTest)
                           expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
 }
 
-TEST(ParserTest, ParserTupleTrailingCommaTest)
+TEST(ParserTest, ExprTupleTrailingCommaTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"(1, 2, 3, )"};
@@ -757,7 +757,7 @@ TEST(ParserTest, ParserTupleTrailingCommaTest)
                                                                   expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ParserTuplePrecedenceTest)
+TEST(ParserTest, ExprTuplePrecedenceTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"(a + b, c * d)[1]"};
@@ -773,7 +773,7 @@ TEST(ParserTest, ParserTuplePrecedenceTest)
                       e(expr::literal_t{token_t::l_integer("1")})});
 }
 
-TEST(ParserTest, ParserIfTest)
+TEST(ParserTest, ExprIfTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"if a && b => c"};
@@ -786,7 +786,7 @@ TEST(ParserTest, ParserIfTest)
             .then_branch = e(expr::identifier_t{token_t::k_identifier("c")})})});
 }
 
-TEST(ParserTest, ParserIfElseIfTest)
+TEST(ParserTest, ExprIfElseIfTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -808,7 +808,7 @@ TEST(ParserTest, ParserIfElseIfTest)
                                              .then_branch = e(expr::literal_t{token_t::l_string("\"medium\"")})})});
 }
 
-TEST(ParserTest, ParserIfElseTest)
+TEST(ParserTest, ExprIfElseTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -823,7 +823,7 @@ TEST(ParserTest, ParserIfElseTest)
                    e(expr::literal_t{token_t::l_string("\"invalid\"")})});
 }
 
-TEST(ParserTest, ParserIfElseIfElseTest)
+TEST(ParserTest, ExprIfElseIfElseTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -847,7 +847,7 @@ TEST(ParserTest, ParserIfElseIfElseTest)
                    e(expr::literal_t{token_t::l_string("\"C\"")})});
 }
 
-TEST(ParserTest, ParserIfBlockTest)
+TEST(ParserTest, ExprIfBlockTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -862,7 +862,7 @@ TEST(ParserTest, ParserIfBlockTest)
             .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})})});
 }
 
-TEST(ParserTest, ParserIfElseMixedBlockTest)
+TEST(ParserTest, ExprIfElseMixedBlockTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -883,7 +883,7 @@ TEST(ParserTest, ParserIfElseMixedBlockTest)
                                                     e(expr::identifier_t{token_t::k_identifier("c")})})})});
 }
 
-TEST(ParserTest, ParserIfValueTest)
+TEST(ParserTest, ExprIfValueTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -902,7 +902,7 @@ TEST(ParserTest, ParserIfValueTest)
             e(expr::literal_t{token_t::l_integer("2")})});
 }
 
-TEST(ParserTest, ParserWhileTest)
+TEST(ParserTest, ExprWhileTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"while a < b => a + 1"};
@@ -915,7 +915,7 @@ TEST(ParserTest, ParserWhileTest)
                                                                     e(expr::literal_t{token_t::l_integer("1")})})});
 }
 
-TEST(ParserTest, ParserWhileBlockTest)
+TEST(ParserTest, ExprWhileBlockTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -934,7 +934,7 @@ TEST(ParserTest, ParserWhileBlockTest)
                                                        e(expr::literal_t{token_t::l_integer("1")})})})});
 }
 
-TEST(ParserTest, ParserWhileValueTest)
+TEST(ParserTest, ExprWhileValueTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -952,7 +952,7 @@ TEST(ParserTest, ParserWhileValueTest)
                        e(expr::literal_t{token_t::l_integer("10")})});
 }
 
-TEST(ParserTest, ParserBlockTest)
+TEST(ParserTest, ExprBlockTest)
 {
     using namespace loxmocha;
     lexer_t lexer{R"(
@@ -973,7 +973,7 @@ TEST(ParserTest, ParserBlockTest)
                              e(expr::literal_t{token_t::l_integer("2")})})});
 }
 
-TEST(ParserTest, ParserBlockEmptyTest)
+TEST(ParserTest, ExprBlockEmptyTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"begin end"};
@@ -996,7 +996,7 @@ TEST(ParserTest, ParserBlockValueTest)
                        e(expr::literal_t{token_t::l_integer("2")})});
 }
 
-TEST(ParserTest, ParserNoRHSLogicalTest)
+TEST(ParserTest, ExprNoRHSLogicalTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a and"};
@@ -1007,7 +1007,7 @@ TEST(ParserTest, ParserNoRHSLogicalTest)
     EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
 }
 
-TEST(ParserTest, ParserNoRHSEqualityTest)
+TEST(ParserTest, ExprNoRHSEqualityTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a =="};
@@ -1018,7 +1018,7 @@ TEST(ParserTest, ParserNoRHSEqualityTest)
     EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
 }
 
-TEST(ParserTest, ParserNoRHSComparisonTest)
+TEST(ParserTest, ExprNoRHSComparisonTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a >"};
@@ -1029,7 +1029,7 @@ TEST(ParserTest, ParserNoRHSComparisonTest)
     EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
 }
 
-TEST(ParserTest, ParserNoRHSAdditionTest)
+TEST(ParserTest, ExprNoRHSAdditionTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a +"};
@@ -1040,7 +1040,7 @@ TEST(ParserTest, ParserNoRHSAdditionTest)
     EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
 }
 
-TEST(ParserTest, ParserNoRHSMultiplicationTest)
+TEST(ParserTest, ExprNoRHSMultiplicationTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"a *"};
@@ -1051,7 +1051,7 @@ TEST(ParserTest, ParserNoRHSMultiplicationTest)
     EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
 }
 
-TEST(ParserTest, ParserFieldNoIdentifierTest)
+TEST(ParserTest, ExprFieldNoIdentifierTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"obj."};
@@ -1062,7 +1062,7 @@ TEST(ParserTest, ParserFieldNoIdentifierTest)
     EXPECT_EQ(result.diagnostics().front(), "Expected identifier after '.'");
 }
 
-TEST(ParserTest, ParserIndexAccessNoExpressionTest)
+TEST(ParserTest, ExprIndexAccessNoExpressionTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"arr[2)"};
@@ -1073,7 +1073,7 @@ TEST(ParserTest, ParserIndexAccessNoExpressionTest)
     EXPECT_EQ(result.diagnostics().front(), "Expected ']' after index expression");
 }
 
-TEST(ParserTest, ParserCallNoClosingParenTest)
+TEST(ParserTest, ExprCallNoClosingParenTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"foo(2, 3]"};
@@ -1085,7 +1085,7 @@ TEST(ParserTest, ParserCallNoClosingParenTest)
     EXPECT_EQ(result.diagnostics().back(), "Expected ')' after arguments");
 }
 
-TEST(ParserTest, ParserGroupingNoClosingParenTest)
+TEST(ParserTest, ExprGroupingNoClosingParenTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"(a + b]"};
@@ -1096,7 +1096,7 @@ TEST(ParserTest, ParserGroupingNoClosingParenTest)
     EXPECT_EQ(result.diagnostics().front(), "Expected ')' after expression");
 }
 
-TEST(ParserTest, ParserEmptyInputTest)
+TEST(ParserTest, ExprEmptyInputTest)
 {
     using namespace loxmocha;
     lexer_t lexer{""};
@@ -1107,7 +1107,7 @@ TEST(ParserTest, ParserEmptyInputTest)
     EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
 }
 
-TEST(ParserTest, ParserInvalidTokenTest)
+TEST(ParserTest, ExprInvalidTokenTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"+"};

@@ -6,7 +6,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(ParserTest, ExprIdentifierTest)
+TEST(ParserTest, TypeIdentifierTest)
 {
     using namespace loxmocha;
     lexer_t lexer{"my_var"};
