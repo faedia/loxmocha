@@ -706,12 +706,13 @@ TEST(ParserTest, ExprIfValueTest)
         "(if x > 0 => x else => -x) * 2",
         expr::binary_t{
             token_t::p_asterisk("*"),
-            e(expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                             .condition   = e(expr::binary_t{token_t::p_greater(">"),
-                                                           e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                           e(expr::literal_t{token_t::l_integer("0")})}),
-                             .then_branch = e(expr::identifier_t{token_t::k_identifier("x")})}),
-                         e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("x")})})}),
+            e(expr::grouping_t{e(expr::if_t{
+                make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                    .condition   = e(expr::binary_t{token_t::p_greater(">"),
+                                                  e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                  e(expr::literal_t{token_t::l_integer("0")})}),
+                    .then_branch = e(expr::identifier_t{token_t::k_identifier("x")})}),
+                e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("x")})})})}),
             e(expr::literal_t{token_t::l_integer("2")})});
 }
 
@@ -747,14 +748,15 @@ TEST(ParserTest, ExprWhileValueTest)
 {
     sunny_day_expr_test(
         "(while n > 0 => n - 1) + 10",
-        expr::binary_t{token_t::p_plus("+"),
-                       e(expr::while_t{e(expr::binary_t{token_t::p_greater(">"),
-                                                        e(expr::identifier_t{token_t::k_identifier("n")}),
-                                                        e(expr::literal_t{token_t::l_integer("0")})}),
-                                       e(expr::binary_t{token_t::p_minus("-"),
-                                                        e(expr::identifier_t{token_t::k_identifier("n")}),
-                                                        e(expr::literal_t{token_t::l_integer("1")})})}),
-                       e(expr::literal_t{token_t::l_integer("10")})});
+        expr::binary_t{
+            token_t::p_plus("+"),
+            e(expr::grouping_t{e(expr::while_t{e(expr::binary_t{token_t::p_greater(">"),
+                                                                e(expr::identifier_t{token_t::k_identifier("n")}),
+                                                                e(expr::literal_t{token_t::l_integer("0")})}),
+                                               e(expr::binary_t{token_t::p_minus("-"),
+                                                                e(expr::identifier_t{token_t::k_identifier("n")}),
+                                                                e(expr::literal_t{token_t::l_integer("1")})})})}),
+            e(expr::literal_t{token_t::l_integer("10")})});
 }
 
 TEST(ParserTest, ExprBlockTest)
@@ -783,12 +785,13 @@ TEST(ParserTest, ExprBlockValueTest)
         R"(
         (begin a + b end) + 2
     )",
-        expr::binary_t{token_t::p_plus("+"),
-                       e(expr::block_t{{},
-                                       e(expr::binary_t{token_t::p_plus("+"),
-                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                        e(expr::identifier_t{token_t::k_identifier("b")})})}),
-                       e(expr::literal_t{token_t::l_integer("2")})});
+        expr::binary_t{
+            token_t::p_plus("+"),
+            e(expr::grouping_t{e(expr::block_t{{},
+                                               e(expr::binary_t{token_t::p_plus("+"),
+                                                                e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                                e(expr::identifier_t{token_t::k_identifier("b")})})})}),
+            e(expr::literal_t{token_t::l_integer("2")})});
 }
 
 TEST(ParserTest, ExprNoRHSLogicalTest) { rainy_day_expr_test("a &&", {"Unexpected end of input"}); }
@@ -813,7 +816,7 @@ TEST(ParserTest, ExprCallNoClosingParenTest)
     rainy_day_expr_test("func(2, 3]", {"Expected identifier for named argument", "Expected ')' after arguments"});
 }
 
-TEST(ParserTest, ExprGroupingNoClosingParenTest) { rainy_day_expr_test("(a + b]", {"Expected ')' after expression"}); }
+TEST(ParserTest, ExprGroupingNoClosingParenTest) { rainy_day_expr_test("(a + b]", {"Expected ',' or ')' after expression"}); }
 
 TEST(ParserTest, ExprEmptyInputTest) { rainy_day_expr_test("", {"Unexpected end of input"}); }
 

@@ -65,6 +65,13 @@ private:
     auto parse_pattern_internal() -> pattern::pattern_t;
     auto parse_type_internal() -> type::type_t;
 
+    auto if_expr() -> expr::expr_t;
+    auto if_body() -> expr::expr_t;
+    auto else_body() -> expr::expr_t;
+    auto conditional_branch() -> expr::if_t::conditional_branch_t;
+
+    auto while_expr() -> expr::expr_t;
+
     auto or_expr() -> expr::expr_t;
     auto and_expr() -> expr::expr_t;
     auto equality_expr() -> expr::expr_t;

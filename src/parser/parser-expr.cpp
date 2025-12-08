@@ -7,6 +7,7 @@
 #include "parser-internal.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -28,7 +29,87 @@ auto parser_t::parse_expr() -> parser_result_t<expr::expr_t>
     return parser_result_t<expr::expr_t>{parse_expr_internal(), has_error_, std::move(diagnostics_)};
 }
 
-auto parser_t::parse_expr_internal() -> expr::expr_t { return or_expr(); }
+auto parser_t::parse_expr_internal() -> expr::expr_t
+{
+    switch (auto token = lexer_.peek_token(); token ? token->kind() : token_t::kind_e::s_eof) {
+    case token_t::kind_e::k_if: lexer_.consume_token(); return if_expr();
+    case token_t::kind_e::k_while: lexer_.consume_token(); return while_expr();
+    default: return or_expr();
+    }
+
+    return or_expr();
+}
+
+auto parser_t::if_expr() -> expr::expr_t
+{
+    std::vector<expr::if_t::conditional_branch_t> conditional_branches{};
+
+    conditional_branches.emplace_back(conditional_branch());
+
+    for (;;) {
+        auto else_token = lexer_.peek_token();
+        if (!else_token || !match<token_t::kind_e::k_else>(*else_token)) {
+            break;
+        }
+        lexer_.consume_token();
+        auto if_token = lexer_.peek_token();
+        if (if_token && match<token_t::kind_e::k_if>(*if_token)) {
+            lexer_.consume_token();
+            conditional_branches.emplace_back(conditional_branch());
+        } else {
+            auto else_branch = else_body();
+            return expr::if_t{std::move(conditional_branches), safe_ptr<expr::expr_t>::make(std::move(else_branch))};
+        }
+    }
+
+    return expr::if_t{std::move(conditional_branches)};
+}
+
+auto parser_t::conditional_branch() -> expr::if_t::conditional_branch_t
+{
+    auto condition = or_expr();
+    auto then_body = if_body();
+    return expr::if_t::conditional_branch_t{.condition   = safe_ptr<expr::expr_t>::make(std::move(condition)),
+                                            .then_branch = safe_ptr<expr::expr_t>::make(std::move(then_body))};
+}
+
+auto parser_t::if_body() -> expr::expr_t
+{
+    if (auto arrow = lexer_.peek_token(); arrow && match<token_t::kind_e::p_arrow>(*arrow)) {
+        lexer_.consume_token();
+        return parse_expr_internal();
+    }
+    diagnostics_.emplace_back("Expected '=> after 'if'");
+    has_error_ = true;
+    return expr::error_t{};
+}
+
+auto parser_t::else_body() -> expr::expr_t
+{
+    if (auto arrow = lexer_.peek_token(); arrow && match<token_t::kind_e::p_arrow>(*arrow)) {
+        lexer_.consume_token();
+        return parse_expr_internal();
+    }
+    diagnostics_.emplace_back("Expected '=> after 'else'");
+    has_error_ = true;
+    return expr::error_t{};
+}
+
+auto parser_t::while_expr() -> expr::expr_t
+{
+    auto condition = or_expr();
+
+    if (auto arrow = lexer_.peek_token(); arrow && match<token_t::kind_e::p_arrow>(*arrow)) {
+        lexer_.consume_token();
+        auto body = parse_expr_internal();
+        return expr::while_t{safe_ptr<expr::expr_t>::make(std::move(condition)),
+                             safe_ptr<expr::expr_t>::make(std::move(body))};
+    }
+
+    diagnostics_.emplace_back("Expected '=> after 'while'");
+    has_error_ = true;
+    return expr::error_t{};
+}
 
 auto parser_t::or_expr() -> expr::expr_t
 {
