@@ -268,6 +268,10 @@ auto parser_t::primary_expr() -> expr::expr_t
         lexer_.consume_token();
         return array_expr();
     }
+    if (match<token_t::kind_e::p_left_brace>(token)) {
+        lexer_.consume_token();
+        return record_expr();
+    }
     if (match<token_t::kind_e::p_left_paren>(token)) {
         lexer_.consume_token();
         auto expr = equality_expr();
@@ -288,30 +292,48 @@ auto parser_t::primary_expr() -> expr::expr_t
 
 auto parser_t::array_expr() -> expr::expr_t
 {
-    std::vector<expr::expr_t> elements{};
+    auto elements = parse_delimited<token_t::kind_e::p_right_square, token_t::kind_e::p_comma, expr::expr_t>(
+        [this]() -> expr::expr_t { return parse_expr_internal(); });
 
-    for (;;) {
-        auto element = lexer_.peek_token();
-        if (element && match<token_t::kind_e::p_right_square>(*element)) {
-            break;
-        }
-
-        elements.emplace_back(parse_expr_internal());
-
-        auto comma = lexer_.peek_token();
-        if (comma && match<token_t::kind_e::p_comma>(*comma)) {
-            lexer_.consume_token();
-        } else {
-            if (auto next = lexer_.peek_token(); next && match<token_t::kind_e::p_right_square>(*next)) {
-                lexer_.consume_token();
-            } else {
-                diagnostics_.emplace_back("Expected ']' after array elements");
-                has_error_ = true;
-            }
-            break;
-        }
+    if (auto end_square = lexer_.peek_token(); !end_square || !match<token_t::kind_e::p_right_square>(*end_square)) {
+        diagnostics_.emplace_back("Expected ']' after array elements");
+        has_error_ = true;
+        return expr::error_t{};
     }
+
+    lexer_.consume_token();
 
     return expr::array_t{std::move(elements)};
 }
+
+auto parser_t::record_expr() -> expr::expr_t
+{
+    auto elements = parse_delimited<token_t::kind_e::p_right_brace, token_t::kind_e::p_comma, expr::record_t::field_t>(
+        [this]() -> expr::record_t::field_t {
+            auto name = lexer_.peek_token();
+            if (!name || !match<token_t::kind_e::k_identifier>(*name)) {
+                diagnostics_.emplace_back("Expected identifier for record field name");
+                has_error_ = true;
+                return expr::record_t::field_t{.name = *name, .value = expr::error_t{}};
+            }
+            lexer_.consume_token();
+            auto colon = lexer_.peek_token();
+            if (!colon || !match<token_t::kind_e::p_colon>(*colon)) {
+                diagnostics_.emplace_back("Expected ':' after record field name");
+                has_error_ = true;
+                return expr::record_t::field_t{.name = *name, .value = expr::error_t{}};
+            }
+            lexer_.consume_token();
+            return expr::record_t::field_t{.name = *name, .value = parse_expr_internal()};
+        });
+
+    if (auto end_brace = lexer_.peek_token(); !end_brace || !match<token_t::kind_e::p_right_brace>(*end_brace)) {
+        diagnostics_.emplace_back("Expected '}' after record fields");
+        has_error_ = true;
+        return expr::error_t{};
+    }
+    lexer_.consume_token();
+    return expr::record_t{std::move(elements)};
+}
+
 } // namespace loxmocha::internal

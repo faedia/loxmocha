@@ -38,6 +38,29 @@ private:
         return left;
     }
 
+    template<token_t::kind_e end, token_t::kind_e separator, typename T>
+    auto parse_delimited(auto&& parse_element) -> std::vector<T>
+    {
+        std::vector<T> elements{};
+
+        for (;;) {
+            auto element = lexer_.peek_token();
+            if (element && match<end>(*element)) {
+                break;
+            }
+
+            elements.emplace_back(parse_element());
+
+            if (auto sep = lexer_.peek_token(); sep && match<separator>(*sep)) {
+                lexer_.consume_token();
+            } else {
+                break;
+            }
+        }
+
+        return elements;
+    }
+
     auto parse_expr_internal() -> expr::expr_t;
     auto parse_pattern_internal() -> pattern::pattern_t;
     auto parse_type_internal() -> type::type_t;
@@ -59,6 +82,7 @@ private:
     auto access_expr() -> expr::expr_t;
     auto primary_expr() -> expr::expr_t;
     auto array_expr() -> expr::expr_t;
+    auto record_expr() -> expr::expr_t;
 
     auto tag_pattern() -> pattern::pattern_t;
     auto primary_pattern() -> pattern::pattern_t;
