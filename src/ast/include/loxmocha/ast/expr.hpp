@@ -4,8 +4,6 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
-#include <utility>
-#include <variant>
 #include <vector>
 
 namespace loxmocha::stmt {

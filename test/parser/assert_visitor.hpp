@@ -21,7 +21,8 @@ public:
 
     void operator()([[maybe_unused]] const auto& actual, [[maybe_unused]] const auto& expected)
     {
-        FAIL() << "Unexpected expression type encountered in assertion visitor.";
+        FAIL() << "Unexpected expression type encountered in assertion visitor. expected type: "
+               << typeid(expected).name() << " got type: " << typeid(actual).name();
     }
 
     void operator()(const auto& actual, const loxmocha::decl::decl_t& expected)

@@ -9,125 +9,113 @@
 #include "loxmocha/ast/type.hpp"
 
 #include "gtest/gtest.h"
+#include <print>
+#include <ranges>
+#include <string>
 #include <vector>
 
+using namespace loxmocha;
 using namespace loxmocha::test::helpers;
+
+namespace {
+void sunny_day_expr_test(const std::string& source, const expr::expr_t& expected)
+{
+    lexer_t lexer{source};
+    auto    result = parse_expr(lexer);
+
+    EXPECT_TRUE(!!result) << "Parsing has failed with an error";
+
+    for (const auto& diag : result.diagnostics()) {
+        std::print("Diagnostic: {}\n", diag);
+    }
+
+    result.result().visit(test::assert_visitor{}, expected);
+}
+
+void rainy_day_expr_test(const std::string& source, const std::vector<std::string>& expected_diagnostics)
+{
+    lexer_t lexer{source};
+    auto    result = parse_expr(lexer);
+
+    EXPECT_FALSE(!!result) << "Parsing was expected to fail but succeeded";
+
+    EXPECT_EQ(result.diagnostics().size(), expected_diagnostics.size())
+        << "Number of diagnostics does not match expected";
+
+    for (const auto& [a_diag, e_diag] : std::views::zip(result.diagnostics(), expected_diagnostics)) {
+        EXPECT_EQ(a_diag, e_diag) << "Diagnostic message does not match expected. Expected: " << e_diag
+                                  << ", Actual: " << a_diag;
+    }
+}
+
+} // namespace
 
 TEST(ParserTest, ExprLiteralStringTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"("this is a string")"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::l_string(R"("this is a string")")});
+    sunny_day_expr_test(R"("this is a string")", expr::literal_t{token_t::l_string(R"("this is a string")")});
 }
 
-TEST(ParserTest, ExprLiteralCharTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{R"('c')"};
-    auto    result = parse_expr(lexer);
+TEST(ParserTest, ExprLiteralCharTest) { sunny_day_expr_test(R"('c')", expr::literal_t{token_t::l_char(R"('c')")}); }
 
-    result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::l_char(R"('c')")});
-}
-
-TEST(ParserTest, ExprLiteralIntegerTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"12345"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::l_integer("12345")});
-}
+TEST(ParserTest, ExprLiteralIntegerTest) { sunny_day_expr_test("12345", expr::literal_t{token_t::l_integer("12345")}); }
 
 TEST(ParserTest, ExprIdentifierTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"my_variable"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::identifier_t{token_t::k_identifier("my_variable")});
+    sunny_day_expr_test("my_variable", expr::identifier_t{token_t::k_identifier("my_variable")});
 }
 
-TEST(ParserTest, ExprLiteralTrueTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"true"};
-    auto    result = parse_expr(lexer);
+TEST(ParserTest, ExprLiteralTrueTest) { sunny_day_expr_test("true", expr::literal_t{token_t::k_true("true")}); }
 
-    result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::k_true("true")});
-}
-
-TEST(ParserTest, ExprLiteralFalseTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"false"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::literal_t{token_t::k_false("false")});
-}
+TEST(ParserTest, ExprLiteralFalseTest) { sunny_day_expr_test("false", expr::literal_t{token_t::k_false("false")}); }
 
 TEST(ParserTest, ExprAndTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a && b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_and_and("||"),
-                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a && b",
+                        expr::binary_t{token_t::p_and_and("&&"),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprOrTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"x || y"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_pipe_pipe("||"),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("y")})});
+    sunny_day_expr_test("x || y",
+                        expr::binary_t{token_t::p_pipe_pipe("||"),
+                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                       e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
 TEST(ParserTest, ExprMultipleLogicalTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a && b || c && d"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::binary_t{token_t::p_pipe_pipe("||"),
-                       e(expr::binary_t{token_t::p_and_and("&&"),
-                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
-                       e(expr::binary_t{token_t::p_and_and("&&"),
-                                        e(expr::identifier_t{token_t::k_identifier("c")}),
-                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
+    sunny_day_expr_test("a && b || c && d",
+                        expr::binary_t{token_t::p_pipe_pipe("||"),
+                                       e(expr::binary_t{token_t::p_and_and("&&"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                       e(expr::binary_t{token_t::p_and_and("&&"),
+                                                        e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
 TEST(ParserTest, ExprEqualityTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a == b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_equal_equal("=="),
-                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a == b",
+                        expr::binary_t{token_t::p_equal_equal("=="),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprInequalityTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"x != y"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_not_equal("!="),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("y")})});
+    sunny_day_expr_test("x != y",
+                        expr::binary_t{token_t::p_not_equal("!="),
+                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                       e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
 TEST(ParserTest, ExprMultipleEqualityTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a == b != c == d != e"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "a == b != c == d != e",
         expr::binary_t{
             token_t::p_not_equal("!="),
             e(expr::binary_t{token_t::p_equal_equal("=="),
@@ -142,65 +130,52 @@ TEST(ParserTest, ExprMultipleEqualityTest)
 
 TEST(ParserTest, ExprEqualityPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a == b && c != d"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::binary_t{token_t::p_and_and("&&"),
-                       e(expr::binary_t{token_t::p_equal_equal("=="),
-                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
-                       e(expr::binary_t{token_t::p_not_equal("!="),
-                                        e(expr::identifier_t{token_t::k_identifier("c")}),
-                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
+    sunny_day_expr_test("a == b && c != d",
+                        expr::binary_t{token_t::p_and_and("&&"),
+                                       e(expr::binary_t{token_t::p_equal_equal("=="),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                       e(expr::binary_t{token_t::p_not_equal("!="),
+                                                        e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
 TEST(ParserTest, ExprLessThanTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a < b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_less("<"),
-                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a < b",
+                        expr::binary_t{token_t::p_less("<"),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprLessThanOrEqualTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"x <= y"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_less_equal("<="),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("y")})});
+    sunny_day_expr_test("x <= y",
+                        expr::binary_t{token_t::p_less_equal("<="),
+                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                       e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
 TEST(ParserTest, ExprGreaterThanTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a > b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_greater(">"),
-                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a > b",
+                        expr::binary_t{token_t::p_greater(">"),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprGreaterThanOrEqualTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"x >= y"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_greater_equal(">="),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("y")})});
+    sunny_day_expr_test("x >= y",
+                        expr::binary_t{token_t::p_greater_equal(">="),
+                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                       e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
 TEST(ParserTest, ExprMultipleComparisonTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a < b <= c > d >= e"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "a < b <= c > d >= e",
         expr::binary_t{
             token_t::p_greater_equal(">="),
             e(expr::binary_t{token_t::p_greater(">"),
@@ -215,45 +190,36 @@ TEST(ParserTest, ExprMultipleComparisonTest)
 
 TEST(ParserTest, ExprComparisonPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a < b == b > c"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::binary_t{token_t::p_equal_equal("=="),
-                       e(expr::binary_t{token_t::p_less("<"),
-                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
-                       e(expr::binary_t{token_t::p_greater(">"),
-                                        e(expr::identifier_t{token_t::k_identifier("b")}),
-                                        e(expr::identifier_t{token_t::k_identifier("c")})})});
+    sunny_day_expr_test("a < b == b > c",
+                        expr::binary_t{token_t::p_equal_equal("=="),
+                                       e(expr::binary_t{token_t::p_less("<"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                       e(expr::binary_t{token_t::p_greater(">"),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("c")})})});
 }
 
 TEST(ParserTest, ExprAdditionTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a + b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_plus("+"),
-                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a + b",
+                        expr::binary_t{token_t::p_plus("+"),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprSubtractionTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"x - y"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_minus("-"),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("y")})});
+    sunny_day_expr_test("x - y",
+                        expr::binary_t{token_t::p_minus("-"),
+                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                       e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
 TEST(ParserTest, ExprMultipleAdditionTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a + b - c + d"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "a + b - c + d",
         expr::binary_t{token_t::p_plus("+"),
                        e(expr::binary_t{token_t::p_minus("-"),
                                         e(expr::binary_t{token_t::p_plus("+"),
@@ -265,45 +231,36 @@ TEST(ParserTest, ExprMultipleAdditionTest)
 
 TEST(ParserTest, ExprAdditionPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a + b < c - d"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::binary_t{token_t::p_less("<"),
-                       e(expr::binary_t{token_t::p_plus("+"),
-                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
-                       e(expr::binary_t{token_t::p_minus("-"),
-                                        e(expr::identifier_t{token_t::k_identifier("c")}),
-                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
+    sunny_day_expr_test("a + b < c - d",
+                        expr::binary_t{token_t::p_less("<"),
+                                       e(expr::binary_t{token_t::p_plus("+"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                       e(expr::binary_t{token_t::p_minus("-"),
+                                                        e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
 TEST(ParserTest, ExprMultiplicationTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a * b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_asterisk("*"),
-                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a * b",
+                        expr::binary_t{token_t::p_asterisk("*"),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprDivisionTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"x / y"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::binary_t{token_t::p_slash("/"),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("y")})});
+    sunny_day_expr_test("x / y",
+                        expr::binary_t{token_t::p_slash("/"),
+                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                       e(expr::identifier_t{token_t::k_identifier("y")})});
 }
 
 TEST(ParserTest, ExprMultipleMultiplicationTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a * b / c * d"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "a * b / c * d",
         expr::binary_t{token_t::p_asterisk("*"),
                        e(expr::binary_t{token_t::p_slash("/"),
                                         e(expr::binary_t{token_t::p_asterisk("*"),
@@ -315,51 +272,38 @@ TEST(ParserTest, ExprMultipleMultiplicationTest)
 
 TEST(ParserTest, ExprMultiplicationPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a * b + c / d"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::binary_t{token_t::p_plus("+"),
-                       e(expr::binary_t{token_t::p_asterisk("*"),
-                                        e(expr::identifier_t{token_t::k_identifier("a")}),
-                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
-                       e(expr::binary_t{token_t::p_slash("/"),
-                                        e(expr::identifier_t{token_t::k_identifier("c")}),
-                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
+    sunny_day_expr_test("a * b + c / d",
+                        expr::binary_t{token_t::p_plus("+"),
+                                       e(expr::binary_t{token_t::p_asterisk("*"),
+                                                        e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                       e(expr::binary_t{token_t::p_slash("/"),
+                                                        e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                        e(expr::identifier_t{token_t::k_identifier("d")})})});
 }
 
 TEST(ParserTest, ExprNegationTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"-42"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{}, expr::unary_t{token_t::p_minus("-"), e(expr::literal_t{token_t::l_integer("42")})});
+    sunny_day_expr_test("-42", expr::unary_t{token_t::p_minus("-"), e(expr::literal_t{token_t::l_integer("42")})});
 }
 
 TEST(ParserTest, ExprLogicalNotTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"!true"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_true("true")})});
+    sunny_day_expr_test("!true", expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_true("true")})});
 }
 
 TEST(ParserTest, ExprMultipleUnaryTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"-!false"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "-!false",
         expr::unary_t{token_t::p_minus("-"),
                       e(expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_false("false")})})});
 }
 
 TEST(ParserTest, ExprUnaryPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"-a * !b"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "-a * !b",
         expr::binary_t{token_t::p_asterisk("*"),
                        e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("a")})}),
                        e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("b")})})});
@@ -367,20 +311,16 @@ TEST(ParserTest, ExprUnaryPrecedenceTest)
 
 TEST(ParserTest, ExprFieldAccessTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a.b.c"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "a.b.c",
         expr::field_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")}),
                       token_t::k_identifier("c")});
 }
 
 TEST(ParserTest, ExprIndexAccessTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"matrix[i + 2][j]"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "matrix[i + 2][j]",
         expr::index_t{e(expr::index_t{e(expr::identifier_t{token_t::k_identifier("matrix")}),
                                       e(expr::binary_t{token_t::p_plus("+"),
                                                        e(expr::identifier_t{token_t::k_identifier("i")}),
@@ -390,29 +330,22 @@ TEST(ParserTest, ExprIndexAccessTest)
 
 TEST(ParserTest, ExprCallNoArgumentsTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"func()"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::call_t{e(expr::identifier_t{token_t::k_identifier("func")}), {}, {}});
+    sunny_day_expr_test("func()", expr::call_t{e(expr::identifier_t{token_t::k_identifier("func")}), {}, {}});
 }
 
 TEST(ParserTest, ExprCallPositionalArgumentsTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"add(5, 10)"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::call_t{e(expr::identifier_t{token_t::k_identifier("add")}),
-                                                  make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("5")},
-                                                                            expr::literal_t{token_t::l_integer("10")}),
-                                                  {}});
+    sunny_day_expr_test("add(5, 10)",
+                        expr::call_t{e(expr::identifier_t{token_t::k_identifier("add")}),
+                                     make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("5")},
+                                                               expr::literal_t{token_t::l_integer("10")}),
+                                     {}});
 }
 
 TEST(ParserTest, ExprCallNamedArgumentsTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"setPosition(x: 100, y: 200)"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "setPosition(x: 100, y: 200)",
         expr::call_t{e(expr::identifier_t{token_t::k_identifier("setPosition")}),
                      {},
                      make_vector<expr::call_t::named_arg_t>(
@@ -424,10 +357,8 @@ TEST(ParserTest, ExprCallNamedArgumentsTest)
 
 TEST(ParserTest, ExprCallMixedArgumentTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"drawCircle(x + 10, y, radius: 25)"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "drawCircle(x + 10, y, radius: 25)",
         expr::call_t{
             e(expr::identifier_t{token_t::k_identifier("drawCircle")}),
             make_vector<expr::expr_t>(expr::binary_t{token_t::p_plus("+"),
@@ -440,21 +371,13 @@ TEST(ParserTest, ExprCallMixedArgumentTest)
 
 TEST(ParserTest, ExprPositionalAfterNamedArgsTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer("func(a, b: 2, c)");
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    ASSERT_EQ(result.diagnostics().front(), "Expected ':' after named argument identifier");
+    rainy_day_expr_test("func(a, b: 2, c)", {"Expected ':' after named argument identifier"});
 }
 
 TEST(ParserTest, ExprNestedCallsTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"outer(inner(1, 2), another(3))"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "outer(inner(1, 2), another(3))",
         expr::call_t{
             e(expr::identifier_t{token_t::k_identifier("outer")}),
             make_vector<expr::expr_t>(expr::call_t{e(expr::identifier_t{token_t::k_identifier("inner")}),
@@ -469,10 +392,8 @@ TEST(ParserTest, ExprNestedCallsTest)
 
 TEST(ParserTest, ExprMixedAccessTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"obj.field[index](arg1, arg2).anotherField"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "obj.field[index](arg1, arg2).anotherField",
         expr::field_t{
             e(expr::call_t{e(expr::index_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("obj")}),
                                                            token_t::k_identifier("field")}),
@@ -485,10 +406,8 @@ TEST(ParserTest, ExprMixedAccessTest)
 
 TEST(ParserTest, ExprAccessPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"-a.b + c.d[e.f] - -g.h()"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "-a.b + c.d[e.f] - -g.h()",
         expr::binary_t{
             token_t::p_minus("-"),
             e(expr::binary_t{
@@ -508,37 +427,28 @@ TEST(ParserTest, ExprAccessPrecedenceTest)
 
 TEST(ParserTest, ExprGroupingTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"(a)"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::grouping_t{e(expr::identifier_t{token_t::k_identifier("a")})});
+    sunny_day_expr_test("(a)", expr::grouping_t{e(expr::identifier_t{token_t::k_identifier("a")})});
 }
 
 TEST(ParserTest, ExprIsTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a is b"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::is_t{e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                p(pattern::identifier_t{token_t::k_identifier("b")})});
+    sunny_day_expr_test("a is b",
+                        expr::is_t{e(expr::identifier_t{token_t::k_identifier("a")}),
+                                   p(pattern::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprIsPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"!a is b"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "!a is b",
         expr::is_t{e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("a")})}),
                    p(pattern::identifier_t{token_t::k_identifier("b")})});
 }
 
 TEST(ParserTest, ExprIsPrecedenceWithGroupingTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"!(a is b)"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "!(a is b)",
         expr::unary_t{token_t::p_bang("!"),
                       e(expr::grouping_t{e(expr::is_t{e(expr::identifier_t{token_t::k_identifier("a")}),
                                                       p(pattern::identifier_t{token_t::k_identifier("b")})})})});
@@ -546,161 +456,108 @@ TEST(ParserTest, ExprIsPrecedenceWithGroupingTest)
 
 TEST(ParserTest, ExprIsPrecedenceWithAccessTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a.b is c"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "a.b is c",
         expr::is_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")}),
                    p(pattern::identifier_t{token_t::k_identifier("c")})});
 }
 
 TEST(ParserTest, ExprIsPrecedenceWithAndTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a && b is c"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::binary_t{token_t::p_and_and("&&"),
-                       e(expr::identifier_t{token_t::k_identifier("a")}),
-                       e(expr::is_t{e(expr::identifier_t{token_t::k_identifier("b")}),
-                                    p(pattern::identifier_t{token_t::k_identifier("c")})})});
+    sunny_day_expr_test("a && b is c",
+                        expr::binary_t{token_t::p_and_and("&&"),
+                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                       e(expr::is_t{e(expr::identifier_t{token_t::k_identifier("b")}),
+                                                    p(pattern::identifier_t{token_t::k_identifier("c")})})});
 }
 
 TEST(ParserTest, ExprCastTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"a as MyType"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::cast_t{e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                  t(type::identifier_t{token_t::k_identifier("MyType")})});
+    sunny_day_expr_test("a as MyType",
+                        expr::cast_t{e(expr::identifier_t{token_t::k_identifier("a")}),
+                                     t(type::identifier_t{token_t::k_identifier("MyType")})});
 }
 
 TEST(ParserTest, ExprCastPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"-a as MyType"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "-a as MyType",
         expr::cast_t{e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("a")})}),
                      t(type::identifier_t{token_t::k_identifier("MyType")})});
 }
 
 TEST(ParserTest, ExprArrayTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"[1, 2, 3]"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
-                                                                  expr::literal_t{token_t::l_integer("2")},
-                                                                  expr::literal_t{token_t::l_integer("3")})});
+    sunny_day_expr_test("[1, 2, 3]",
+                        expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
+                                                                expr::literal_t{token_t::l_integer("2")},
+                                                                expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ExprArrayEmptyTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"[]"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::array_t{{}});
-}
+TEST(ParserTest, ExprArrayEmptyTest) { sunny_day_expr_test("[]", expr::array_t{{}}); }
 
 TEST(ParserTest, ExprArraySingleElementTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"[42]"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
+    sunny_day_expr_test("[42]", expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
 }
 
 TEST(ParserTest, ExprArrayTrailingCommaTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"[1, 2, 3, ]"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
-                                                                  expr::literal_t{token_t::l_integer("2")},
-                                                                  expr::literal_t{token_t::l_integer("3")})});
+    sunny_day_expr_test("[1, 2, 3, ]",
+                        expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
+                                                                expr::literal_t{token_t::l_integer("2")},
+                                                                expr::literal_t{token_t::l_integer("3")})});
 }
 
 TEST(ParserTest, ExprArrayPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"[a + b, c * d][i - 1]"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::index_t{e(expr::array_t{make_vector<expr::expr_t>(
-                          expr::binary_t{token_t::p_plus("+"),
-                                         e(expr::identifier_t{token_t::k_identifier("a")}),
-                                         e(expr::identifier_t{token_t::k_identifier("b")})},
-                          expr::binary_t{token_t::p_asterisk("*"),
-                                         e(expr::identifier_t{token_t::k_identifier("c")}),
-                                         e(expr::identifier_t{token_t::k_identifier("d")})})}),
-                      e(expr::binary_t{token_t::p_minus("-"),
-                                       e(expr::identifier_t{token_t::k_identifier("i")}),
-                                       e(expr::literal_t{token_t::l_integer("1")})})});
+    sunny_day_expr_test("[a + b, c * d][i - 1]",
+                        expr::index_t{e(expr::array_t{make_vector<expr::expr_t>(
+                                          expr::binary_t{token_t::p_plus("+"),
+                                                         e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("b")})},
+                                          expr::binary_t{token_t::p_asterisk("*"),
+                                                         e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("d")})})}),
+                                      e(expr::binary_t{token_t::p_minus("-"),
+                                                       e(expr::identifier_t{token_t::k_identifier("i")}),
+                                                       e(expr::literal_t{token_t::l_integer("1")})})});
 }
 
 TEST(ParserTest, ExprRecordTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"{x: 10, y: 20}"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::record_t{make_vector<expr::record_t::field_t>(
-                              expr::record_t::field_t{.name  = token_t::k_identifier("x"),
-                                                      .value = expr::literal_t{token_t::l_integer("10")}},
-                              expr::record_t::field_t{.name  = token_t::k_identifier("y"),
-                                                      .value = expr::literal_t{token_t::l_integer("20")}})});
+    sunny_day_expr_test("{x: 10, y: 20}",
+                        expr::record_t{make_vector<expr::record_t::field_t>(
+                            expr::record_t::field_t{.name  = token_t::k_identifier("x"),
+                                                    .value = expr::literal_t{token_t::l_integer("10")}},
+                            expr::record_t::field_t{.name  = token_t::k_identifier("y"),
+                                                    .value = expr::literal_t{token_t::l_integer("20")}})});
 }
 
-TEST(ParserTest, ExprRecordEmptyTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"{}"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::record_t{{}});
-}
+TEST(ParserTest, ExprRecordEmptyTest) { sunny_day_expr_test("{}", expr::record_t{{}}); }
 
 TEST(ParserTest, ExprRecordSingleFieldTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"{value: 42}"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "{value: 42}",
         expr::record_t{make_vector<expr::record_t::field_t>(expr::record_t::field_t{
             .name = token_t::k_identifier("value"), .value = expr::literal_t{token_t::l_integer("42")}})});
 }
 
 TEST(ParserTest, ExprRecordTrailingCommaTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"{a: 1, b: 2, }"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::record_t{make_vector<expr::record_t::field_t>(
-                              expr::record_t::field_t{.name  = token_t::k_identifier("a"),
-                                                      .value = expr::literal_t{token_t::l_integer("1")}},
-                              expr::record_t::field_t{.name  = token_t::k_identifier("b"),
-                                                      .value = expr::literal_t{token_t::l_integer("2")}})});
+    sunny_day_expr_test("{a: 1, b: 2, }",
+                        expr::record_t{make_vector<expr::record_t::field_t>(
+                            expr::record_t::field_t{.name  = token_t::k_identifier("a"),
+                                                    .value = expr::literal_t{token_t::l_integer("1")}},
+                            expr::record_t::field_t{.name  = token_t::k_identifier("b"),
+                                                    .value = expr::literal_t{token_t::l_integer("2")}})});
 }
 
 TEST(ParserTest, ExprRecordPrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"{sum: a + b, product: c * d}.sum"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "{sum: a + b, product: c * d}.sum",
         expr::field_t{
             e(expr::record_t{make_vector<expr::record_t::field_t>(
                 expr::record_t::field_t{.name  = token_t::k_identifier("sum"),
@@ -716,123 +573,89 @@ TEST(ParserTest, ExprRecordPrecedenceTest)
 
 TEST(ParserTest, ExprTupleTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"(1, 2, 3)"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
-                                                                  expr::literal_t{token_t::l_integer("2")},
-                                                                  expr::literal_t{token_t::l_integer("3")})});
+    sunny_day_expr_test("(1, 2, 3)",
+                        expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
+                                                                expr::literal_t{token_t::l_integer("2")},
+                                                                expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ExprTupleEmptyTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"()"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{}, expr::tuple_t{{}});
-}
+TEST(ParserTest, ExprTupleEmptyTest) { sunny_day_expr_test("()", expr::tuple_t{{}}); }
 
 TEST(ParserTest, ExprTupleSingleElementTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"(42,)"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
+    sunny_day_expr_test("(42,)", expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
 }
 
 TEST(ParserTest, ExprTupleTrailingCommaTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"(1, 2, 3, )"};
-    auto    result = parse_expr(lexer);
-
-    result.result().visit(test::assert_visitor{},
-                          expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
-                                                                  expr::literal_t{token_t::l_integer("2")},
-                                                                  expr::literal_t{token_t::l_integer("3")})});
+    sunny_day_expr_test("(1, 2, 3, )",
+                        expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
+                                                                expr::literal_t{token_t::l_integer("2")},
+                                                                expr::literal_t{token_t::l_integer("3")})});
 }
 
 TEST(ParserTest, ExprTuplePrecedenceTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"(a + b, c * d)[1]"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::index_t{e(expr::tuple_t{make_vector<expr::expr_t>(
-                          expr::binary_t{token_t::p_plus("+"),
-                                         e(expr::identifier_t{token_t::k_identifier("a")}),
-                                         e(expr::identifier_t{token_t::k_identifier("b")})},
-                          expr::binary_t{token_t::p_asterisk("*"),
-                                         e(expr::identifier_t{token_t::k_identifier("c")}),
-                                         e(expr::identifier_t{token_t::k_identifier("d")})})}),
-                      e(expr::literal_t{token_t::l_integer("1")})});
+    sunny_day_expr_test("(a + b, c * d)[1]",
+                        expr::index_t{e(expr::tuple_t{make_vector<expr::expr_t>(
+                                          expr::binary_t{token_t::p_plus("+"),
+                                                         e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("b")})},
+                                          expr::binary_t{token_t::p_asterisk("*"),
+                                                         e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("d")})})}),
+                                      e(expr::literal_t{token_t::l_integer("1")})});
 }
 
 TEST(ParserTest, ExprIfTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"if a && b => c"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-            .condition   = e(expr::binary_t{token_t::p_and_and("&&"),
-                                          e(expr::identifier_t{token_t::k_identifier("a")}),
-                                          e(expr::identifier_t{token_t::k_identifier("b")})}),
-            .then_branch = e(expr::identifier_t{token_t::k_identifier("c")})})});
+    sunny_day_expr_test("if a && b => c",
+                        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                            .condition   = e(expr::binary_t{token_t::p_and_and("&&"),
+                                                          e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                          e(expr::identifier_t{token_t::k_identifier("b")})}),
+                            .then_branch = e(expr::identifier_t{token_t::k_identifier("c")})})});
 }
 
 TEST(ParserTest, ExprIfElseIfTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(R"(
         if x < 10 => "small"
         else if x < 20 => "medium"
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(
-            expr::if_t::conditional_branch_t{.condition =
-                                                 e(expr::binary_t{token_t::p_less("<"),
-                                                                  e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                                  e(expr::literal_t{token_t::l_integer("10")})}),
-                                             .then_branch = e(expr::literal_t{token_t::l_string("\"small\"")})},
-            expr::if_t::conditional_branch_t{.condition =
-                                                 e(expr::binary_t{token_t::p_less("<"),
-                                                                  e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                                  e(expr::literal_t{token_t::l_integer("20")})}),
-                                             .then_branch = e(expr::literal_t{token_t::l_string("\"medium\"")})})});
+    )",
+                        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(
+                            expr::if_t::conditional_branch_t{
+                                .condition   = e(expr::binary_t{token_t::p_less("<"),
+                                                              e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                              e(expr::literal_t{token_t::l_integer("10")})}),
+                                .then_branch = e(expr::literal_t{token_t::l_string("\"small\"")})},
+                            expr::if_t::conditional_branch_t{
+                                .condition   = e(expr::binary_t{token_t::p_less("<"),
+                                                              e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                              e(expr::literal_t{token_t::l_integer("20")})}),
+                                .then_branch = e(expr::literal_t{token_t::l_string("\"medium\"")})})});
 }
 
 TEST(ParserTest, ExprIfElseTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(R"(
         if isValid => "valid"
         else => "invalid"
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                       .condition   = e(expr::identifier_t{token_t::k_identifier("isValid")}),
-                       .then_branch = e(expr::literal_t{token_t::l_string("\"valid\"")})}),
-                   e(expr::literal_t{token_t::l_string("\"invalid\"")})});
+    )",
+                        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                                       .condition   = e(expr::identifier_t{token_t::k_identifier("isValid")}),
+                                       .then_branch = e(expr::literal_t{token_t::l_string("\"valid\"")})}),
+                                   e(expr::literal_t{token_t::l_string("\"invalid\"")})});
 }
 
 TEST(ParserTest, ExprIfElseIfElseTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(
+        R"(
         if score >= 90 => "A"
         else if score >= 80 => "B"
         else => "C"
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    )",
         expr::if_t{make_vector<expr::if_t::conditional_branch_t>(
                        expr::if_t::conditional_branch_t{
                            .condition   = e(expr::binary_t{token_t::p_greater_equal(">="),
@@ -849,48 +672,38 @@ TEST(ParserTest, ExprIfElseIfElseTest)
 
 TEST(ParserTest, ExprIfBlockTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(R"(
         if isReady then
             a
         end
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-            .condition   = e(expr::identifier_t{token_t::k_identifier("isReady")}),
-            .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})})});
+    )",
+                        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                            .condition   = e(expr::identifier_t{token_t::k_identifier("isReady")}),
+                            .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})})});
 }
 
 TEST(ParserTest, ExprIfElseMixedBlockTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(
+        R"(
         if condition then
             a
         else
             b + c
         end
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    )",
         expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
                        .condition   = e(expr::identifier_t{token_t::k_identifier("condition")}),
                        .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})}),
-                   e(expr::block_t{{},
-                                   e(expr::binary_t{token_t::p_plus("+"),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("c")})})})});
+                   e(expr::binary_t{token_t::p_plus("+"),
+                                    e(expr::identifier_t{token_t::k_identifier("b")}),
+                                    e(expr::identifier_t{token_t::k_identifier("c")})})});
 }
 
 TEST(ParserTest, ExprIfValueTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
-        (if x > 0 => x else => -x) * 2
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "(if x > 0 => x else => -x) * 2",
         expr::binary_t{
             token_t::p_asterisk("*"),
             e(expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
@@ -904,27 +717,23 @@ TEST(ParserTest, ExprIfValueTest)
 
 TEST(ParserTest, ExprWhileTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"while a < b => a + 1"};
-    parse_expr(lexer).result().visit(test::assert_visitor{},
-                                     expr::while_t{e(expr::binary_t{token_t::p_less("<"),
-                                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                                    e(expr::identifier_t{token_t::k_identifier("b")})}),
-                                                   e(expr::binary_t{token_t::p_plus("+"),
-                                                                    e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                                    e(expr::literal_t{token_t::l_integer("1")})})});
+    sunny_day_expr_test("while a < b => a + 1",
+                        expr::while_t{e(expr::binary_t{token_t::p_less("<"),
+                                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                       e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                      e(expr::binary_t{token_t::p_plus("+"),
+                                                       e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                       e(expr::literal_t{token_t::l_integer("1")})})});
 }
 
 TEST(ParserTest, ExprWhileBlockTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(
+        R"(
         while count > 0 then
             count - 1
         end
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    )",
         expr::while_t{e(expr::binary_t{token_t::p_greater(">"),
                                        e(expr::identifier_t{token_t::k_identifier("count")}),
                                        e(expr::literal_t{token_t::l_integer("0")})}),
@@ -936,12 +745,8 @@ TEST(ParserTest, ExprWhileBlockTest)
 
 TEST(ParserTest, ExprWhileValueTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
-        (while n > 0 => n - 1) + 10
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    sunny_day_expr_test(
+        "(while n > 0 => n - 1) + 10",
         expr::binary_t{token_t::p_plus("+"),
                        e(expr::while_t{e(expr::binary_t{token_t::p_greater(">"),
                                                         e(expr::identifier_t{token_t::k_identifier("n")}),
@@ -954,40 +759,30 @@ TEST(ParserTest, ExprWhileValueTest)
 
 TEST(ParserTest, ExprBlockTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(R"(
         begin
             x = x + 1;
             x + 2
         end
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
-        expr::block_t{
-            make_vector<stmt::stmt_t>(stmt::assign_t{e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                     e(expr::binary_t{token_t::p_plus("+"),
-                                                                      e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                                      e(expr::literal_t{token_t::l_integer("1")})})}),
-            e(expr::binary_t{token_t::p_plus("+"),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::literal_t{token_t::l_integer("2")})})});
+    )",
+                        expr::block_t{make_vector<stmt::stmt_t>(stmt::assign_t{
+                                          e(expr::identifier_t{token_t::k_identifier("x")}),
+                                          e(expr::binary_t{token_t::p_plus("+"),
+                                                           e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                           e(expr::literal_t{token_t::l_integer("1")})})}),
+                                      e(expr::binary_t{token_t::p_plus("+"),
+                                                       e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                       e(expr::literal_t{token_t::l_integer("2")})})});
 }
 
-TEST(ParserTest, ExprBlockEmptyTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"begin end"};
-    parse_expr(lexer).result().visit(test::assert_visitor{}, expr::block_t{{}, e(expr::tuple_t{{}})});
-}
+TEST(ParserTest, ExprBlockEmptyTest) { sunny_day_expr_test("begin end", expr::block_t{{}, e(expr::tuple_t{{}})}); }
 
-TEST(ParserTest, ParserBlockValueTest)
+TEST(ParserTest, ExprBlockValueTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{R"(
+    sunny_day_expr_test(
+        R"(
         (begin a + b end) + 2
-    )"};
-    parse_expr(lexer).result().visit(
-        test::assert_visitor{},
+    )",
         expr::binary_t{token_t::p_plus("+"),
                        e(expr::block_t{{},
                                        e(expr::binary_t{token_t::p_plus("+"),
@@ -996,125 +791,30 @@ TEST(ParserTest, ParserBlockValueTest)
                        e(expr::literal_t{token_t::l_integer("2")})});
 }
 
-TEST(ParserTest, ExprNoRHSLogicalTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"a and"};
-    auto    result = parse_expr(lexer);
+TEST(ParserTest, ExprNoRHSLogicalTest) { rainy_day_expr_test("a &&", {"Unexpected end of input"}); }
 
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
-}
+TEST(ParserTest, ExprNoRHSEqualityTest) { rainy_day_expr_test("a ==", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprNoRHSEqualityTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"a =="};
-    auto    result = parse_expr(lexer);
+TEST(ParserTest, ExprNoRHSComparisonTest) { rainy_day_expr_test("a >", {"Unexpected end of input"}); }
 
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
-}
+TEST(ParserTest, ExprNoRHSAdditionTest) { rainy_day_expr_test("a +", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprNoRHSComparisonTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"a >"};
-    auto    result = parse_expr(lexer);
+TEST(ParserTest, ExprNoRHSMultiplicationTest) { rainy_day_expr_test("a *", {"Unexpected end of input"}); }
 
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
-}
-
-TEST(ParserTest, ExprNoRHSAdditionTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"a +"};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
-}
-
-TEST(ParserTest, ExprNoRHSMultiplicationTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"a *"};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
-}
-
-TEST(ParserTest, ExprFieldNoIdentifierTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"obj."};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Expected identifier after '.'");
-}
+TEST(ParserTest, ExprFieldNoIdentifierTest) { rainy_day_expr_test("obj.", {"Expected identifier after '.'"}); }
 
 TEST(ParserTest, ExprIndexAccessNoExpressionTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"arr[2)"};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Expected ']' after index expression");
+    rainy_day_expr_test("arr[2)", {"Expected ']' after index expression"});
 }
 
 TEST(ParserTest, ExprCallNoClosingParenTest)
 {
-    using namespace loxmocha;
-    lexer_t lexer{"foo(2, 3]"};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 2);
-    EXPECT_EQ(result.diagnostics().front(), "Expected identifier for named argument");
-    EXPECT_EQ(result.diagnostics().back(), "Expected ')' after arguments");
+    rainy_day_expr_test("func(2, 3]", {"Expected identifier for named argument", "Expected ')' after arguments"});
 }
 
-TEST(ParserTest, ExprGroupingNoClosingParenTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"(a + b]"};
-    auto    result = parse_expr(lexer);
+TEST(ParserTest, ExprGroupingNoClosingParenTest) { rainy_day_expr_test("(a + b]", {"Expected ')' after expression"}); }
 
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Expected ')' after expression");
-}
+TEST(ParserTest, ExprEmptyInputTest) { rainy_day_expr_test("", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprEmptyInputTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{""};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 1);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected end of input");
-}
-
-TEST(ParserTest, ExprInvalidTokenTest)
-{
-    using namespace loxmocha;
-    lexer_t lexer{"+"};
-    auto    result = parse_expr(lexer);
-
-    ASSERT_TRUE(!result);
-    ASSERT_EQ(result.diagnostics().size(), 2);
-    EXPECT_EQ(result.diagnostics().front(), "Unexpected token: +");
-    EXPECT_EQ(result.diagnostics().back(), "Unexpected end of input");
-}
+TEST(ParserTest, ExprInvalidTokenTest) { rainy_day_expr_test("+", {"Unexpected token: +", "Unexpected end of input"}); }
