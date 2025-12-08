@@ -13,8 +13,7 @@ TEST(ParserTest, StmtExprTest)
     using namespace loxmocha;
     lexer_t lexer{"42"};
     parse_stmt(lexer).result().visit(
-        test::assert_visitor{},
-        stmt::expr_t{safe_ptr<expr::expr_t>::make(expr::identifier_t(token_t::l_integer("42")))});
+        test::assert_visitor{}, stmt::expr_t{safe_ptr<expr::expr_t>::make(expr::literal_t{token_t::l_integer("42")})});
 }
 
 TEST(ParserTest, StmtAssignTest) { FAIL() << "Not implemented"; }

@@ -3,11 +3,19 @@
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "parser-internal.hpp"
+#include "loxmocha/ast/parser.hpp"
 
-#include <utility>
 #include <string>
+#include <utility>
 
 namespace loxmocha::internal {
+
+auto parser_t::parse_pattern() -> parser_result_t<pattern::pattern_t>
+{
+    has_error_ = false;
+    diagnostics_.clear();
+    return parser_result_t<pattern::pattern_t>{parse_pattern_internal(), has_error_, std::move(diagnostics_)};
+}
 
 auto parser_t::parse_pattern_internal() -> pattern::pattern_t { return tag_pattern(); }
 

@@ -4,6 +4,7 @@
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
+#include "loxmocha/ast/stmt.hpp"
 
 #include <vector>
 
@@ -13,7 +14,11 @@ class parser_t {
 public:
     explicit parser_t(lexer_t& lexer) : lexer_(lexer) {}
 
+    auto parse_decl() -> parser_result_t<decl::decl_t>;
     auto parse_expr() -> parser_result_t<expr::expr_t>;
+    auto parse_pattern() -> parser_result_t<pattern::pattern_t>;
+    auto parse_stmt() -> parser_result_t<stmt::stmt_t>;
+    auto parse_type() -> parser_result_t<type::type_t>;
 
 private:
     template<token_t::kind_e... Kinds>
@@ -61,9 +66,13 @@ private:
         return elements;
     }
 
+    auto parse_decl_internal() -> decl::decl_t;
     auto parse_expr_internal() -> expr::expr_t;
     auto parse_pattern_internal() -> pattern::pattern_t;
+    auto parse_stmt_internal() -> stmt::stmt_t;
     auto parse_type_internal() -> type::type_t;
+
+    static auto is_decl_start_token(const token_t& token) -> bool;
 
     auto if_expr() -> expr::expr_t;
     auto if_body() -> expr::expr_t;
@@ -94,6 +103,9 @@ private:
 
     auto tag_pattern() -> pattern::pattern_t;
     auto primary_pattern() -> pattern::pattern_t;
+
+    auto expr_or_assign_stmt() -> stmt::stmt_t;
+    auto decl_stmt() -> stmt::stmt_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     lexer_t&                 lexer_;
