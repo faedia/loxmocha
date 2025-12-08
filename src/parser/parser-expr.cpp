@@ -264,6 +264,10 @@ auto parser_t::primary_expr() -> expr::expr_t
         lexer_.consume_token();
         return expr::identifier_t(token);
     }
+    if (match<token_t::kind_e::p_left_square>(token)) {
+        lexer_.consume_token();
+        return array_expr();
+    }
     if (match<token_t::kind_e::p_left_paren>(token)) {
         lexer_.consume_token();
         auto expr = equality_expr();
@@ -280,5 +284,34 @@ auto parser_t::primary_expr() -> expr::expr_t
     diagnostics_.emplace_back("Unexpected token: " + std::string(token.span()));
     has_error_ = true;
     return expr::error_t{};
+}
+
+auto parser_t::array_expr() -> expr::expr_t
+{
+    std::vector<expr::expr_t> elements{};
+
+    for (;;) {
+        auto element = lexer_.peek_token();
+        if (element && match<token_t::kind_e::p_right_square>(*element)) {
+            break;
+        }
+
+        elements.emplace_back(parse_expr_internal());
+
+        auto comma = lexer_.peek_token();
+        if (comma && match<token_t::kind_e::p_comma>(*comma)) {
+            lexer_.consume_token();
+        } else {
+            if (auto next = lexer_.peek_token(); next && match<token_t::kind_e::p_right_square>(*next)) {
+                lexer_.consume_token();
+            } else {
+                diagnostics_.emplace_back("Expected ']' after array elements");
+                has_error_ = true;
+            }
+            break;
+        }
+    }
+
+    return expr::array_t{std::move(elements)};
 }
 } // namespace loxmocha::internal
