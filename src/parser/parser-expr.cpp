@@ -6,6 +6,8 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "parser-internal.hpp"
 
+#include <algorithm>
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -274,15 +276,7 @@ auto parser_t::primary_expr() -> expr::expr_t
     }
     if (match<token_t::kind_e::p_left_paren>(token)) {
         lexer_.consume_token();
-        auto expr = equality_expr();
-        auto next = lexer_.peek_token();
-        if (next && !match<token_t::kind_e::p_right_paren>(*next)) {
-            diagnostics_.emplace_back("Expected ')' after expression");
-            has_error_ = true;
-            return expr::error_t{};
-        }
-        lexer_.consume_token();
-        return expr::grouping_t{safe_ptr<expr::expr_t>::make(std::move(expr))};
+        return tuple_or_grouping_expr();
     }
 
     diagnostics_.emplace_back("Unexpected token: " + std::string(token.span()));
@@ -334,6 +328,49 @@ auto parser_t::record_expr() -> expr::expr_t
     }
     lexer_.consume_token();
     return expr::record_t{std::move(elements)};
+}
+
+auto parser_t::tuple_or_grouping_expr() -> expr::expr_t
+{
+    // Special case for empty tuple
+    if (auto next = lexer_.peek_token(); next && match<token_t::kind_e::p_right_paren>(*next)) {
+        lexer_.consume_token();
+        return expr::tuple_t{{}};
+    }
+
+    auto first_expr = parse_expr_internal();
+
+    // If we have a single element followed by a paren then its a grouping, otherwise we have some kind of tuple
+    if (auto next = lexer_.peek_token(); next && match<token_t::kind_e::p_right_paren>(*next)) {
+        lexer_.consume_token();
+        return expr::grouping_t{safe_ptr<expr::expr_t>::make(std::move(first_expr))};
+    }
+
+    if (auto comma = lexer_.peek_token(); !comma || !match<token_t::kind_e::p_comma>(*comma)) {
+        diagnostics_.emplace_back("Expected ',' or ')' after expression");
+        has_error_ = true;
+        return expr::error_t{};
+    }
+    lexer_.consume_token();
+
+    std::vector<expr::expr_t> rest =
+        parse_delimited<token_t::kind_e::p_right_paren, token_t::kind_e::p_comma, expr::expr_t>(
+            [this]() -> expr::expr_t { return parse_expr_internal(); });
+
+    if (auto end_paren = lexer_.peek_token(); !end_paren || !match<token_t::kind_e::p_right_paren>(*end_paren)) {
+        diagnostics_.emplace_back("Expected ')' after expression");
+        has_error_ = true;
+        return expr::error_t{};
+    }
+
+    lexer_.consume_token();
+
+    std::vector<expr::expr_t> elements{};
+    elements.emplace_back(std::move(first_expr));
+    std::ranges::transform(
+        rest.begin(), rest.end(), std::back_inserter(elements), [](expr::expr_t& expr) { return std::move(expr); });
+
+    return expr::tuple_t{std::move(elements)};
 }
 
 } // namespace loxmocha::internal

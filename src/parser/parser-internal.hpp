@@ -83,6 +83,7 @@ private:
     auto primary_expr() -> expr::expr_t;
     auto array_expr() -> expr::expr_t;
     auto record_expr() -> expr::expr_t;
+    auto tuple_or_grouping_expr() -> expr::expr_t;
 
     auto tag_pattern() -> pattern::pattern_t;
     auto primary_pattern() -> pattern::pattern_t;
