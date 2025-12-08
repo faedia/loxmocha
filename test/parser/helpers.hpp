@@ -59,6 +59,11 @@ inline void expr_test(const std::string& source, const expr::expr_t& expected)
     base_test<expr::expr_t>(source, expected, parse_expr);
 }
 
+inline void type_test(const std::string& source, const type::type_t& expected)
+{
+    base_test<type::type_t>(source, expected, parse_type);
+}
+
 inline void
 rainy_day_test(const std::string& source, const std::vector<std::string>& expected_diagnostics, auto&& parse)
 {
