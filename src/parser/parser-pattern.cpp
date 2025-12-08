@@ -1,9 +1,9 @@
+#include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "parser-internal.hpp"
-#include "loxmocha/ast/parser.hpp"
 
 #include <string>
 #include <utility>

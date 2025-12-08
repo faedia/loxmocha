@@ -21,22 +21,18 @@ TEST(ParserTest, TypeArrayTest)
 TEST(ParserTest, TypeMultiDimensionalArrayTest)
 {
     type_test("MyType[3][const_func()]",
-              type::array_t{
-                  t(
-                      type::array_t{t(type::identifier_t{token_t::k_identifier("MyType")}),
-                                    e(expr::literal_t{token_t::l_integer("3")})}),
-                  e(expr::call_t{
-                      e(expr::identifier_t{token_t::k_identifier("const_func")}), {}, {}})});
+              type::array_t{t(type::array_t{t(type::identifier_t{token_t::k_identifier("MyType")}),
+                                            e(expr::literal_t{token_t::l_integer("3")})}),
+                            e(expr::call_t{e(expr::identifier_t{token_t::k_identifier("const_func")}), {}, {}})});
 }
 
 TEST(ParserTest, TypeTupleTest)
 {
     type_test("(int, string, arr[5])",
-              type::tuple_t{make_vector<type::type_t>(
-                  type::identifier_t{token_t::k_identifier("int")},
-                  type::identifier_t{token_t::k_identifier("string")},
-                  type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
-                                e(expr::literal_t{token_t::l_integer("5")})})});
+              type::tuple_t{make_vector<type::type_t>(type::identifier_t{token_t::k_identifier("int")},
+                                                      type::identifier_t{token_t::k_identifier("string")},
+                                                      type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
+                                                                    e(expr::literal_t{token_t::l_integer("5")})})});
 }
 
 TEST(ParserTest, TypeEmptyTupleTest) { type_test("()", type::tuple_t{{}}); }
@@ -49,11 +45,10 @@ TEST(ParserTest, TypeTupleSingleElementTest)
 TEST(ParserTest, TypeTupleTrailingCommaTest)
 {
     type_test("(int, arr[10], string,)",
-              type::tuple_t{make_vector<type::type_t>(
-                  type::identifier_t{token_t::k_identifier("int")},
-                  type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
-                                e(expr::literal_t{token_t::l_integer("10")})},
-                  type::identifier_t{token_t::k_identifier("string")})});
+              type::tuple_t{make_vector<type::type_t>(type::identifier_t{token_t::k_identifier("int")},
+                                                      type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
+                                                                    e(expr::literal_t{token_t::l_integer("10")})},
+                                                      type::identifier_t{token_t::k_identifier("string")})});
 }
 
 TEST(ParserTest, TypeRecordTest)
@@ -110,14 +105,12 @@ TEST(ParserTest, TypeSingleTaggedTest)
 
 TEST(ParserTest, TypeReferenceTest)
 {
-    type_test("let int",
-              type::reference_t{t(type::identifier_t{token_t::k_identifier("int")})});
+    type_test("let int", type::reference_t{t(type::identifier_t{token_t::k_identifier("int")})});
 }
 
 TEST(ParserTest, TypeMutableReferenceTest)
 {
-    type_test("var string",
-              type::mutable_t{t(type::identifier_t{token_t::k_identifier("string")})});
+    type_test("var string", type::mutable_t{t(type::identifier_t{token_t::k_identifier("string")})});
 }
 
 TEST(ParserTest, TypeFunctionTest)
@@ -133,8 +126,7 @@ TEST(ParserTest, TypeFunctionTest)
 TEST(ParserTest, TypeFunctionNoParametersTest)
 {
     type_test("fun(): int",
-              type::function_t{std::vector<type::type_t>{},
-                               t(type::identifier_t{token_t::k_identifier("int")})});
+              type::function_t{std::vector<type::type_t>{}, t(type::identifier_t{token_t::k_identifier("int")})});
 }
 
 TEST(ParserTest, TypeFunctionNoReturnTypeTest)
@@ -162,26 +154,24 @@ TEST(ParserTest, TypeGroupingTest)
 
 TEST(ParserTest, TypeFunctionPrecedenceTest)
 {
-    type_test(
-        "fun(int[10], rec a: string end): arr[5]",
-        type::function_t{
-            make_vector<type::type_t>(
-                type::array_t{t(type::identifier_t{token_t::k_identifier("int")}),
-                              e(expr::literal_t{token_t::l_integer("10")})},
-                type::record_t{make_vector<type::record_t::field_t>(type::record_t::field_t{
-                    .name = token_t::k_identifier("a"), .type = type::identifier_t{token_t::k_identifier("string")}})}),
-            t(
-                type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
-                              e(expr::literal_t{token_t::l_integer("5")})})});
+    type_test("fun(int[10], rec a: string end): arr[5]",
+              type::function_t{
+                  make_vector<type::type_t>(type::array_t{t(type::identifier_t{token_t::k_identifier("int")}),
+                                                          e(expr::literal_t{token_t::l_integer("10")})},
+                                            type::record_t{make_vector<type::record_t::field_t>(type::record_t::field_t{
+                                                .name = token_t::k_identifier("a"),
+                                                .type = type::identifier_t{token_t::k_identifier("string")}})}),
+                  t(type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
+                                  e(expr::literal_t{token_t::l_integer("5")})})});
 }
 
 TEST(ParserTest, TypeFunctionArrayTest)
 {
-    type_test("(fun(int):int)[3]",
-              type::array_t{t(type::function_t{
-                                make_vector<type::type_t>(type::identifier_t{token_t::k_identifier("int")}),
-                                t(type::identifier_t{token_t::k_identifier("int")})}),
-                            e(expr::literal_t{token_t::l_integer("3")})});
+    type_test(
+        "(fun(int):int)[3]",
+        type::array_t{t(type::function_t{make_vector<type::type_t>(type::identifier_t{token_t::k_identifier("int")}),
+                                         t(type::identifier_t{token_t::k_identifier("int")})}),
+                      e(expr::literal_t{token_t::l_integer("3")})});
 };
 
 // TODO: Add negative testing cases!
