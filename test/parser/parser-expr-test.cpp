@@ -644,9 +644,9 @@ TEST(ParserTest, ExprIfElseMixedBlockTest)
                        .condition   = e(expr::identifier_t{token_t::k_identifier("condition")}),
                        .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})}),
                    e(expr::block_t{{},
-                                  e(expr::binary_t{token_t::p_plus("+"),
-                                                   e(expr::identifier_t{token_t::k_identifier("b")}),
-                                                   e(expr::identifier_t{token_t::k_identifier("c")})})})});
+                                   e(expr::binary_t{token_t::p_plus("+"),
+                                                    e(expr::identifier_t{token_t::k_identifier("b")}),
+                                                    e(expr::identifier_t{token_t::k_identifier("c")})})})});
 }
 
 TEST(ParserTest, ExprIfValueTest)
