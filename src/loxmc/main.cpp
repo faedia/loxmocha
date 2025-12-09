@@ -6,6 +6,7 @@
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/type.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <fstream>
 #include <iterator>
@@ -489,7 +490,11 @@ auto main(int argc, const char* argv[]) -> int
 
     auto lexer = loxmocha::lexer_t{source_code};
 
+    auto start = std::chrono::high_resolution_clock::now();
     auto parse_result = loxmocha::parse_decl(lexer);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::print("Parsing took {} microseconds.\n",
+               std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
     if (!parse_result) {
         std::print("Parsing failed with errors:\n");
