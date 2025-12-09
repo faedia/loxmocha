@@ -30,7 +30,7 @@ TEST(ParserTest, DeclFunctionTest)
 
                 ),
             t(type::identifier_t{token_t::k_identifier("bool")}),
-            e(expr::binary_t{token_t::p_equal("=="),
+            e(expr::binary_t{token_t::p_equal_equal("=="),
                              e(expr::call_t{e(expr::identifier_t{token_t::k_identifier("to_string")}),
                                             make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("a")}),
                                             {}}),

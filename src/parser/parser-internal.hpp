@@ -1,5 +1,6 @@
 #pragma once
 
+#include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/parser.hpp"
@@ -85,6 +86,10 @@ private:
     auto parse_type_internal() -> type::type_t;
 
     static auto is_decl_start_token(const token_t& token) -> bool;
+
+    auto fun_decl() -> decl::decl_t;
+    auto item_decl(decl::variable_t::mut_e mut) -> decl::decl_t;
+    auto type_decl() -> decl::decl_t;
 
     auto if_expr() -> expr::expr_t;
     auto if_body() -> expr::expr_t;
