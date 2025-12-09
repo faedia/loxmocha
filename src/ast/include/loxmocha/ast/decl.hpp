@@ -189,6 +189,17 @@ public:
                         safe_ptr<expr::expr_t>&& initialiser);
 
     /**
+     * @brief Get the mutability of the variable declaration.
+     * @return mut_e The mutability of the variable declaration.
+     */
+    [[nodiscard]] auto mutability() const -> mut_e { return mutability_; }
+    /**
+     * @brief Get the mutability of the variable declaration.
+     * @return mut_e& The mutability of the variable declaration.
+     */
+    [[nodiscard]] auto mutability() -> mut_e& { return mutability_; }
+
+    /**
      * @brief Get the identifier of the variable declaration.
      * @return const token_t& The identifier of the variable declaration.
      */
