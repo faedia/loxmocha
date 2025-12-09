@@ -7,11 +7,21 @@
 #include "loxmocha/ast/type.hpp"
 
 #include "gtest/gtest.h"
+#include <cxxabi.h>
+#include <memory>
 #include <ranges>
 
 namespace loxmocha::test {
 class assert_visitor {
 public:
+    static auto demangle(const char* name) -> std::string
+    {
+        const std::unique_ptr<char, void (*)(void*)> demangled_ptr(abi::__cxa_demangle(name, nullptr, nullptr, nullptr),
+                                                                   std::free);
+        std::string                                  result = demangled_ptr ? demangled_ptr.get() : name;
+        return result;
+    }
+
     template<loxmocha::token_t::kind_e... Kinds>
     static auto expect_token_kind(const loxmocha::token_t& token) -> void
     {
@@ -22,7 +32,7 @@ public:
     void operator()([[maybe_unused]] const auto& actual, [[maybe_unused]] const auto& expected)
     {
         FAIL() << "Unexpected expression type encountered in assertion visitor. expected type: "
-               << typeid(expected).name() << " got type: " << typeid(actual).name();
+               << demangle(typeid(expected).name()) << " got type: " << demangle(typeid(actual).name());
     }
 
     void operator()(const auto& actual, const loxmocha::decl::decl_t& expected)
