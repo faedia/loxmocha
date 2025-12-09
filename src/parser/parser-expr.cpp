@@ -1,6 +1,7 @@
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
+#include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
@@ -34,6 +35,7 @@ auto parser_t::parse_expr_internal() -> expr::expr_t
     switch (auto token = lexer_.peek_token(); token ? token->kind() : token_t::kind_e::s_eof) {
     case token_t::kind_e::k_if: lexer_.consume_token(); return if_expr();
     case token_t::kind_e::k_while: lexer_.consume_token(); return while_expr();
+    case token_t::kind_e::k_begin: lexer_.consume_token(); return block_expr();
     default: return or_expr();
     }
 
@@ -43,45 +45,47 @@ auto parser_t::parse_expr_internal() -> expr::expr_t
 auto parser_t::if_expr() -> expr::expr_t
 {
     std::vector<expr::if_t::conditional_branch_t> conditional_branches{};
-
-    conditional_branches.emplace_back(conditional_branch());
-
     for (;;) {
-        auto else_token = lexer_.peek_token();
-        if (!else_token || !match<token_t::kind_e::k_else>(*else_token)) {
+        auto condition = or_expr();
+        if (expect_token<token_t::kind_e::p_arrow>()) {
+            auto then_branch = parse_expr_internal();
+            conditional_branches.emplace_back(
+                expr::if_t::conditional_branch_t{.condition   = safe_ptr<expr::expr_t>::make(std::move(condition)),
+                                                 .then_branch = safe_ptr<expr::expr_t>::make(std::move(then_branch))});
+
+            if (!expect_token<token_t::kind_e::k_else>()) {
+                return expr::if_t{std::move(conditional_branches)};
+            }
+        } else if (expect_token<token_t::kind_e::k_then>()) {
+            auto then_branch = block_body();
+            conditional_branches.emplace_back(
+                expr::if_t::conditional_branch_t{.condition   = safe_ptr<expr::expr_t>::make(std::move(condition)),
+                                                 .then_branch = safe_ptr<expr::expr_t>::make(std::move(then_branch))});
+
+            if (expect_token<token_t::kind_e::k_end>()) {
+                return expr::if_t{std::move(conditional_branches)};
+            }
+
+            if (!expect_token<token_t::kind_e::k_else>()) {
+                has_error_ = true;
+                diagnostics_.emplace_back("Expected 'else' or 'end' after 'if' conditional branch");
+                return expr::error_t{};
+            }
+
+        } else {
+            has_error_ = true;
+            diagnostics_.emplace_back("Expected '=>' or 'then' after 'if' condition");
+            return expr::error_t{};
+        }
+
+        if (!expect_token<token_t::kind_e::k_if>()) {
             break;
         }
-        lexer_.consume_token();
-        auto if_token = lexer_.peek_token();
-        if (if_token && match<token_t::kind_e::k_if>(*if_token)) {
-            lexer_.consume_token();
-            conditional_branches.emplace_back(conditional_branch());
-        } else {
-            auto else_branch = else_body();
-            return expr::if_t{std::move(conditional_branches), safe_ptr<expr::expr_t>::make(std::move(else_branch))};
-        }
     }
 
-    return expr::if_t{std::move(conditional_branches)};
-}
+    auto else_branch = else_body();
 
-auto parser_t::conditional_branch() -> expr::if_t::conditional_branch_t
-{
-    auto condition = or_expr();
-    auto then_body = if_body();
-    return expr::if_t::conditional_branch_t{.condition   = safe_ptr<expr::expr_t>::make(std::move(condition)),
-                                            .then_branch = safe_ptr<expr::expr_t>::make(std::move(then_body))};
-}
-
-auto parser_t::if_body() -> expr::expr_t
-{
-    if (auto arrow = lexer_.peek_token(); arrow && match<token_t::kind_e::p_arrow>(*arrow)) {
-        lexer_.consume_token();
-        return parse_expr_internal();
-    }
-    diagnostics_.emplace_back("Expected '=> after 'if'");
-    has_error_ = true;
-    return expr::error_t{};
+    return expr::if_t{std::move(conditional_branches), safe_ptr<expr::expr_t>::make(std::move(else_branch))};
 }
 
 auto parser_t::else_body() -> expr::expr_t
@@ -90,9 +94,7 @@ auto parser_t::else_body() -> expr::expr_t
         lexer_.consume_token();
         return parse_expr_internal();
     }
-    diagnostics_.emplace_back("Expected '=> after 'else'");
-    has_error_ = true;
-    return expr::error_t{};
+    return block_expr();
 }
 
 auto parser_t::while_expr() -> expr::expr_t
@@ -106,9 +108,54 @@ auto parser_t::while_expr() -> expr::expr_t
                              safe_ptr<expr::expr_t>::make(std::move(body))};
     }
 
-    diagnostics_.emplace_back("Expected '=> after 'while'");
-    has_error_ = true;
-    return expr::error_t{};
+    if (!expect_token<token_t::kind_e::k_then>()) {
+        has_error_ = true;
+        diagnostics_.emplace_back("Expected '=>' or 'then' after while condition");
+        return expr::error_t{};
+    }
+
+    auto body = block_expr();
+    return expr::while_t{safe_ptr<expr::expr_t>::make(std::move(condition)),
+                         safe_ptr<expr::expr_t>::make(std::move(body))};
+}
+
+auto parser_t::block_expr() -> expr::expr_t
+{
+    auto block = block_body();
+
+    if (!expect_token<token_t::kind_e::k_end>()) {
+        diagnostics_.emplace_back("Expected 'end' after block expression");
+        has_error_ = true;
+        return expr::error_t{};
+    }
+
+    return block;
+}
+
+auto parser_t::block_body() -> expr::expr_t
+{
+    std::vector<stmt::stmt_t> statements{};
+    auto                      return_expr = safe_ptr<expr::expr_t>::make(expr::tuple_t{{}});
+
+    for (;;) {
+        if (auto end_token = lexer_.peek_token();
+            end_token && match<token_t::kind_e::k_end, token_t::kind_e::k_else>(*end_token)) {
+            break;
+        }
+
+        auto stmt = parse_stmt_internal();
+
+        if (expect_token<token_t::kind_e::p_semicolon>()) {
+            statements.emplace_back(std::move(stmt));
+            continue;
+        }
+
+        if (stmt.is<stmt::expr_t>()) {
+            return_expr = std::move(stmt.as<stmt::expr_t>().expr());
+        }
+    }
+
+    return expr::block_t{std::move(statements), std::move(return_expr)};
 }
 
 auto parser_t::or_expr() -> expr::expr_t

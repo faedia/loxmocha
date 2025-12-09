@@ -98,6 +98,9 @@ private:
 
     auto while_expr() -> expr::expr_t;
 
+    auto block_expr() -> expr::expr_t;
+    auto block_body() -> expr::expr_t;
+
     auto or_expr() -> expr::expr_t;
     auto and_expr() -> expr::expr_t;
     auto equality_expr() -> expr::expr_t;

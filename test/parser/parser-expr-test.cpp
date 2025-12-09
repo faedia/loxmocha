@@ -643,9 +643,10 @@ TEST(ParserTest, ExprIfElseMixedBlockTest)
         expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
                        .condition   = e(expr::identifier_t{token_t::k_identifier("condition")}),
                        .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})}),
-                   e(expr::binary_t{token_t::p_plus("+"),
-                                    e(expr::identifier_t{token_t::k_identifier("b")}),
-                                    e(expr::identifier_t{token_t::k_identifier("c")})})});
+                   e(expr::block_t{{},
+                                  e(expr::binary_t{token_t::p_plus("+"),
+                                                   e(expr::identifier_t{token_t::k_identifier("b")}),
+                                                   e(expr::identifier_t{token_t::k_identifier("c")})})})});
 }
 
 TEST(ParserTest, ExprIfValueTest)
@@ -738,6 +739,27 @@ TEST(ParserTest, ExprBlockValueTest)
                                                                 e(expr::identifier_t{token_t::k_identifier("a")}),
                                                                 e(expr::identifier_t{token_t::k_identifier("b")})})})}),
             e(expr::literal_t{token_t::l_integer("2")})});
+}
+
+TEST(ParserTest, ExprBlockNoReturnTest)
+{
+    expr_test(
+        R"(
+        begin
+            x = x + 1;
+            y = y + 2;
+        end
+    )",
+        expr::block_t{
+            make_vector<stmt::stmt_t>(stmt::assign_t{e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                     e(expr::binary_t{token_t::p_plus("+"),
+                                                                      e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                                      e(expr::literal_t{token_t::l_integer("1")})})},
+                                      stmt::assign_t{e(expr::identifier_t{token_t::k_identifier("y")}),
+                                                     e(expr::binary_t{token_t::p_plus("+"),
+                                                                      e(expr::identifier_t{token_t::k_identifier("y")}),
+                                                                      e(expr::literal_t{token_t::l_integer("2")})})}),
+            e(expr::tuple_t{{}})});
 }
 
 TEST(ParserTest, ExprNoRHSLogicalTest) { rainy_day_expr_test("a &&", {"Unexpected end of input"}); }

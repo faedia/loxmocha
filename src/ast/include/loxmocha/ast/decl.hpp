@@ -91,8 +91,8 @@ public:
      * @brief Struct representing a function parameter.
      */
     struct parameter_t {
-        token_t name;
-        safe_ptr<type::type_t>       type;
+        token_t                name;
+        safe_ptr<type::type_t> type;
     };
 
     /**
