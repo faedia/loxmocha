@@ -152,7 +152,12 @@ auto parser_t::block_body() -> expr::expr_t
 
         if (stmt.is<stmt::expr_t>()) {
             return_expr = std::move(stmt.as<stmt::expr_t>().expr());
+            break;
         }
+
+        has_error_ = true;
+        diagnostics_.emplace_back("Expected ';' or expression at end of statement in block");
+        return expr::error_t{};
     }
 
     return expr::block_t{std::move(statements), std::move(return_expr)};
