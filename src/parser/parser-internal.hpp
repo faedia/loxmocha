@@ -66,6 +66,18 @@ private:
         return elements;
     }
 
+    template<token_t::kind_e... Kinds>
+    auto expect_token() -> std::optional<token_t>
+    {
+        auto token = lexer_.peek_token();
+        if (token && match<Kinds...>(*token)) {
+            lexer_.consume_token();
+            return *token;
+        }
+
+        return std::nullopt;
+    }
+
     auto parse_decl_internal() -> decl::decl_t;
     auto parse_expr_internal() -> expr::expr_t;
     auto parse_pattern_internal() -> pattern::pattern_t;
@@ -106,6 +118,15 @@ private:
 
     auto expr_or_assign_stmt() -> stmt::stmt_t;
     auto decl_stmt() -> stmt::stmt_t;
+
+    auto fun_type() -> type::type_t;
+    auto ref_type() -> type::type_t;
+    auto mutable_type() -> type::type_t;
+    auto tagged_type() -> type::type_t;
+    auto record_type() -> type::type_t;
+    auto array_type() -> type::type_t;
+    auto primary_type() -> type::type_t;
+    auto tuple_or_grouping_type() -> type::type_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     lexer_t&                 lexer_;

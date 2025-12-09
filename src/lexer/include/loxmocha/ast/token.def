@@ -68,6 +68,7 @@ LOXMOCHA_KEYWORD(k_true, "true", 114)
 LOXMOCHA_KEYWORD(k_type, "type", 115)
 LOXMOCHA_KEYWORD(k_var, "var", 116)
 LOXMOCHA_KEYWORD(k_while, "while", 117)
+LOXMOCHA_KEYWORD(k_choice, "choice", 118)
 
 LOXMOCHA_TOKEN(c_line_comment, "// This is a comment", 200)
 LOXMOCHA_TOKEN(c_block_comment, "/* This is \n a block comment*/", 201)

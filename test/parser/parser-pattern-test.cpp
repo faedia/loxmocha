@@ -19,7 +19,7 @@ TEST(ParserTest, PatternIdentifierTest)
 TEST(ParserTest, PatternTagTest)
 {
     using namespace loxmocha;
-    lexer_t lexer{"SomeTagType.SomeTagName my_var"};
+    lexer_t lexer{"choice SomeTagType.SomeTagName my_var"};
     parse_pattern(lexer).result().visit(test::assert_visitor{},
                                         pattern::tag_t{t(type::identifier_t{token_t::k_identifier("SomeTagType")}),
                                                        token_t::k_identifier("SomeTagName"),
@@ -29,7 +29,7 @@ TEST(ParserTest, PatternTagTest)
 TEST(ParserTest, PatternTagInTagTest)
 {
     using namespace loxmocha;
-    lexer_t lexer{"SomeTagType.SomeTagName (AnotherTagType.AnotherTagName inner_var)"};
+    lexer_t lexer{"choice SomeTagType.SomeTagName (choice AnotherTagType.AnotherTagName inner_var)"};
     parse_pattern(lexer).result().visit(
         test::assert_visitor{},
         pattern::tag_t{t(type::identifier_t{token_t::k_identifier("SomeTagType")}),
