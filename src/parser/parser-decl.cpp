@@ -97,9 +97,8 @@ auto parser_t::fun_decl() -> decl::decl_t
         return decl::error_t{"Invalid function declaration"};
     }
 
-    has_error_ = true;
-    diagnostics_.emplace_back("Block bodies in function declarations are not yet supported");
-    return decl::error_t{"Invalid function declaration"};
+    return decl::function_t{
+        *name, std::move(params), std::move(return_type), safe_ptr<expr::expr_t>::make(block_expr())};
 }
 
 auto parser_t::item_decl(decl::variable_t::mut_e mut) -> decl::decl_t
