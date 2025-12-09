@@ -86,7 +86,9 @@ public:
 
         ASSERT_EQ(actual.parameters().size(), expected.parameters().size());
         for (const auto& [a_param, e_param] : std::views::zip(actual.parameters(), expected.parameters())) {
-            a_param.pattern->visit(*this, *e_param.pattern);
+            EXPECT_EQ(a_param.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_param.name.kind(), e_param.name.kind());
+            EXPECT_EQ(a_param.name.span(), e_param.name.span());
             a_param.type->visit(*this, *e_param.type);
         }
 

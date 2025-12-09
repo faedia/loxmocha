@@ -143,6 +143,14 @@ private:
 class stmt_t : public node_t<expr_t, assign_t, decl_t> {
 public:
     using node_t::node_t;
+
+    stmt_t(const stmt_t&)     = delete;
+    stmt_t(stmt_t&&) noexcept = default;
+
+    ~stmt_t() = default;
+
+    auto operator=(const stmt_t&) -> stmt_t&     = delete;
+    auto operator=(stmt_t&&) noexcept -> stmt_t& = default;
 };
 
 } // namespace loxmocha::stmt

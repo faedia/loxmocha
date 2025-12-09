@@ -14,6 +14,11 @@
 
 namespace loxmocha::test::helpers {
 
+[[nodiscard]] inline auto d(loxmocha::decl::decl_t&& decl) -> loxmocha::safe_ptr<loxmocha::decl::decl_t>
+{
+    return loxmocha::safe_ptr<loxmocha::decl::decl_t>::make(std::move(decl));
+}
+
 [[nodiscard]] inline auto e(loxmocha::expr::expr_t&& expr) -> loxmocha::safe_ptr<loxmocha::expr::expr_t>
 {
     return loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(std::move(expr));
@@ -22,6 +27,11 @@ namespace loxmocha::test::helpers {
 [[nodiscard]] inline auto p(loxmocha::pattern::pattern_t&& pattern) -> loxmocha::safe_ptr<loxmocha::pattern::pattern_t>
 {
     return loxmocha::safe_ptr<loxmocha::pattern::pattern_t>::make(std::move(pattern));
+}
+
+[[nodiscard]] inline auto s(loxmocha::stmt::stmt_t&& stmt) -> loxmocha::safe_ptr<loxmocha::stmt::stmt_t>
+{
+    return loxmocha::safe_ptr<loxmocha::stmt::stmt_t>::make(std::move(stmt));
 }
 
 [[nodiscard]] inline auto t(loxmocha::type::type_t&& type) -> loxmocha::safe_ptr<loxmocha::type::type_t>
@@ -54,9 +64,19 @@ void base_test(const std::string& source, const T& expected, auto&& parse)
     result.result().visit(assert_visitor{}, expected);
 }
 
+inline void decl_test(const std::string& source, const decl::decl_t& expected)
+{
+    base_test<decl::decl_t>(source, expected, parse_decl);
+}
+
 inline void expr_test(const std::string& source, const expr::expr_t& expected)
 {
     base_test<expr::expr_t>(source, expected, parse_expr);
+}
+
+inline void stmt_test(const std::string& source, const stmt::stmt_t& expected)
+{
+    base_test<stmt::stmt_t>(source, expected, parse_stmt);
 }
 
 inline void type_test(const std::string& source, const type::type_t& expected)
