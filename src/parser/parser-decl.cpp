@@ -42,13 +42,13 @@ auto parser_t::is_decl_start_token(const token_t& token) -> bool
 
 auto parser_t::fun_decl() -> decl::decl_t
 {
+    // We expect a function to start with an identifier and an opening paren.
     auto name = expect_token<token_t::kind_e::k_identifier>();
     if (!name) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected function name in function declaration");
         return decl::error_t{"Invalid function declaration"};
     }
-
     if (!expect_token<token_t::kind_e::p_left_paren>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected '(' after function name in function declaration");
@@ -58,6 +58,8 @@ auto parser_t::fun_decl() -> decl::decl_t
     auto params =
         parse_delimited<token_t::kind_e::p_right_paren, token_t::kind_e::p_comma, decl::function_t::parameter_t>(
             [this]() -> decl::function_t::parameter_t {
+                // A parameter consists of an identifier, a colon and a type.
+                // If we don't have a name or a colon then we report an error.
                 auto param_name = expect_token<token_t::kind_e::k_identifier>();
                 if (!param_name) {
                     has_error_ = true;
@@ -77,20 +79,26 @@ auto parser_t::fun_decl() -> decl::decl_t
                                                      .type = safe_ptr<type::type_t>::make(parse_type_internal())};
             });
 
+    // Now we expect and consume the closing parent.
     if (!expect_token<token_t::kind_e::p_right_paren>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected ')' after function parameters in function declaration");
         return decl::error_t{"Invalid function declaration"};
     }
 
+    // If we have a colon then we parse the return type, otherwise we default to the empty tuple.
     auto return_type = expect_token<token_t::kind_e::p_colon>() ? safe_ptr<type::type_t>::make(parse_type_internal())
                                                                 : safe_ptr<type::type_t>::make(type::tuple_t{{}});
 
+    // We have two kinds of bodies for function.
+    // We either have an expression body which has the entry token '=>'
     if (expect_token<token_t::kind_e::p_arrow>()) {
         return decl::function_t{
             *name, std::move(params), std::move(return_type), safe_ptr<expr::expr_t>::make(parse_expr_internal())};
     }
 
+    // Otherwise we have a block body which has the entry token 'begin'.
+    // If we do not have a 'begin' token then we will report an error.
     if (!expect_token<token_t::kind_e::k_begin>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected 'begin' or '=>' after function signature in function declaration");
@@ -103,6 +111,7 @@ auto parser_t::fun_decl() -> decl::decl_t
 
 auto parser_t::item_decl(decl::variable_t::mut_e mut) -> decl::decl_t
 {
+    // We expect a variable to start with an identifier, a colon, a type, an equal sign and an initialiser.
     auto name = expect_token<token_t::kind_e::k_identifier>();
     if (!name) {
         has_error_ = true;
@@ -131,6 +140,7 @@ auto parser_t::item_decl(decl::variable_t::mut_e mut) -> decl::decl_t
 
 auto parser_t::type_decl() -> decl::decl_t
 {
+    // We expect a type to start with an identifier, an 'is' keyword and a type.
     auto name = expect_token<token_t::kind_e::k_identifier>();
     if (!name) {
         has_error_ = true;

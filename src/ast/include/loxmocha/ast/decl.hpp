@@ -25,6 +25,12 @@ class decl_t;
 /**
  * @class type_t
  * @brief represents a type declaration
+ *
+ * A type declaration associates an identifier with a type expression.
+ * They have the form:
+ *
+ * `"type" identifier "is" type_expression`
+ *
  */
 class type_t {
 public:
@@ -75,6 +81,12 @@ private:
 /**
  * @class function_t
  * @brief represents a function declaration
+ *
+ * A function declaration consists of an identifier, a list of parameters
+ *   (each with a name and type), a return type and a body expression.
+ * They have the form:
+ *
+ * `"fun" identifier "(" (parameter ("," parameter)* ","?)? ")" ":" type_expression ("=>" expression | block_expression)`
  */
 class function_t {
 public:
@@ -162,6 +174,15 @@ private:
 /**
  * @class variable_t
  * @brief represents a variable declaration
+ *
+ * A function declaration consists of an identifier, a type, an initialiser expression.
+ * A variable's mutability is determined by the keyword used in the declaration:
+ *   - `var` indicates a mutable variable.
+ *   - `let` indicates an immutable variable.
+ * All variables must have an explicit type annotation and an initialiser.
+ * They have the form:
+ *
+ * `("var" | "let") identifier ":" type_expression "=" expression`
  */
 class variable_t {
 public:
@@ -174,6 +195,10 @@ public:
     auto operator=(const variable_t&) -> variable_t&     = delete;
     auto operator=(variable_t&&) noexcept -> variable_t& = default;
 
+    /**
+     * @enum mut_e
+     * @brief represents the mutability of a variable
+     */
     enum class mut_e : std::uint8_t { var, let };
 
     /**
@@ -279,6 +304,8 @@ private:
 /**
  * @class decl_t
  * @brief represents a declaration
+ *
+ * A declaration is either a type declaration, function declaration or variable declaration.
  */
 class decl_t : public node_t<type_t, function_t, variable_t, error_t> {
 public:

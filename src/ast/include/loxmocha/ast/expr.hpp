@@ -25,6 +25,12 @@ class expr_t;
 /**
  * @class literal_t
  * @brief represents a literal expression.
+ *
+ * A literal expression represents a constant token value, such as an integer, string, character or boolean.
+ *
+ * They have the form:
+ *
+ * `(string_literal | int_literal | char_literal | true_literal | false_literal)`
  */
 class literal_t {
 public:
@@ -62,6 +68,12 @@ private:
 /**
  * @class identifier_t
  * @brief represents an identifier expression.
+ *
+ * An identifier expression represents some name in a value scope.
+ *
+ * They have the form:
+ *
+ * `identifier`
  */
 class identifier_t {
 public:
@@ -99,6 +111,13 @@ private:
 /**
  * @class binary_t
  * @brief represents a binary expression.
+ *
+ * A binary expression consists of a left operand, a binary operator, and a right operand.
+ * Both operands are expressions.
+ *
+ * They have the form:
+ *
+ * `expression binary_operator expression`
  */
 class binary_t {
 public:
@@ -162,6 +181,13 @@ private:
 /**
  * @class unary_t
  * @brief represents a unary expression.
+ *
+ * A unary expression consists of a unary operator and an operand expression.
+ * The operand is an expression.
+ *
+ * They have the form:
+ *
+ * `unary_operator expression`
  */
 class unary_t {
 public:
@@ -211,7 +237,15 @@ private:
 
 /**
  * @class is_t
- * @brief represents an "is" type check expression.
+ * @brief represents an "is" pattern match expression.
+ *
+ * An "is" expression consists of an expression and a pattern to match against.
+ * The expression returns true if it matches the pattern, false otherwise.
+ * It also performs binding of any variables in the pattern if the match is successful.
+ *
+ * They have the form:
+ *
+ * `expression "is" pattern`
  */
 class is_t {
 public:
@@ -262,6 +296,13 @@ private:
 /**
  * @class cast_t
  * @brief represents an "as" type cast expression.
+ *
+ * An "as" expression consists of an expression and a type to cast to.
+ * The starting type of the expression must be compatible with the target type.
+ *
+ * They have the form:
+ *
+ * `expression "as" type_expression`
  */
 class cast_t {
 public:
@@ -312,6 +353,15 @@ private:
 /**
  * @class array_t
  * @brief represents an array expression.
+ *
+ * An array expression consists of a list of element expressions.
+ * It constructs an array of the size of the number of elements
+ * and initialises each element with the corresponding expression.
+ * Each element expression must be compatible with the array's element type.
+ *
+ * They have the form:
+ *
+ * `"[" (expression ("," expression)* ","?)? "]"`
  */
 class array_t {
 public:
@@ -345,6 +395,15 @@ private:
 /**
  * @class tuple_t
  * @brief represents a tuple expression.
+ *
+ * A tuple expression consists of a list of element expressions.
+ * It constructs a tuple of the size of the number of elements
+ * and initialises each element with the corresponding expression.
+ * Each element expression can be of any type.
+ *
+ * They have the form:
+ *
+ * `"(" (expression "," (expression ",")* expression?)? ")"`
  */
 class tuple_t {
 public:
@@ -382,6 +441,18 @@ private:
 /**
  * @class record_t
  * @brief represents a record expression.
+ *
+ * A record expression consists of a list of fields.
+ * It constructs a record with the given fields.
+ * Each field has a name and an expression value.
+ * The expression value of each field can be of any type.
+ *
+ * They have the form:
+ *
+ * `"{" (field ("," field)* ","?)? "}"`
+ *
+ * Where fields have the form:
+ * `identifier ":" expression`
  */
 class record_t {
 public:
@@ -423,6 +494,13 @@ private:
 /**
  * @class index_t
  * @brief represents an array index expression.
+ *
+ * An array index expression consists of a base expression and an index expression.
+ * The base expression must evaluate to an array type.
+ * The index expression must evaluate to an integer type.
+ *
+ * They have the form:
+ * `expression "[" expression "]"`
  */
 class index_t {
 public:
@@ -473,6 +551,13 @@ private:
 /**
  * @class field_t
  * @brief represents a field access expression of a record.
+ *
+ * A field access expression consists of a base expression and a field name.
+ * The base expression must evaluate to a record type.
+ * The field name must be a valid field in the record type.
+ *
+ * They have the form:
+ * `expression "." identifier`
  */
 class field_t {
 public:
@@ -525,6 +610,24 @@ private:
 /**
  * @class call_t
  * @brief represents a function call expression.
+ *
+ * A function call expression consists of a callee expression and a list of arguments.
+ * The callee expression must evaluate to a function type.
+ * The arguments can be positional or named.
+ * Positional arguments must be provided in the order of the callee's parameter list.
+ * Named arguments can be provided in any order.
+ * Positional arguments cannot follow named arguments.
+ *
+ * They have the form:
+ *
+ * `expression "(" positional_arguments? named_arguments? ")"`
+ *
+ * Where positional_arguments have the form:
+ * `expression ("," expression)* ","?`
+ *
+ * And named_arguments have the form:
+ * `identifier ":" expression ("," identifier ":" expression)* ","?`
+ *
  */
 class call_t {
 public:
@@ -593,6 +696,21 @@ private:
 /**
  * @class if_t
  * @brief represents an if expression.
+ *
+ * An if expression consists of a series of conditional branches and an optional else branch.
+ * Each conditional branch has a condition expression and a body expression.
+ * The else branch is an expression that is executed if none of the conditions are met.
+ *
+ * Each condition expression must evaluate to a boolean type.
+ * Each body expression must evaluate to the same type.
+ * If there is not an else branch, the if expression evaluates to an optional type.
+ *
+ * They have the form:
+ *
+ * `"if" condition ("=>" expression else_continuation? | "then" block_body (else_continuation | "end"))`
+ *
+ * Where `else_continuation` has the form:
+ * `"else" (if_expression | ("=>" expression | block_body "end"))`
  */
 class if_t {
 public:
@@ -660,6 +778,15 @@ private:
 /**
  * @class while_t
  * @brief represents a while loop expression.
+ *
+ * A while loop expression consists of a condition expression and a body expression.
+ * The condition expression is evaluated before each iteration of the loop.
+ * If the condition evaluates to true, the body expression is executed.
+ * The return value of the while loop is the final value of the body expression when the condition evaluates to false.
+ *
+ * They have the form:
+ *
+ * `"while" condition ("=>" expression | "then" block_body "end")`
  */
 class while_t {
 public:
@@ -710,6 +837,14 @@ private:
 /**
  * @class block_t
  * @brief represents a block expression.
+ *
+ * A block expression consists of a series of statements followed by an optional return expression.
+ * If a return expression is provided, the block evaluates to the value of the return expression.
+ * Otherwise, the block evaluates to an empty tuple.
+ *
+ * They have the form:
+ *
+ * `"begin" (statement ";")* (expression)? "end"`
  */
 class block_t {
 public:
@@ -761,6 +896,14 @@ private:
 /**
  * @class grouping_t
  * @brief represents a grouping expression.
+ *
+ * A grouping expression consists of a single expression enclosed in parentheses.
+ * It is used to control the order of evaluation in complex expressions.
+ *
+ * They have the form:
+ *
+ * `"(" expression ")"`
+ *
  */
 class grouping_t {
 public:

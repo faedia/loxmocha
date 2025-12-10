@@ -7,10 +7,20 @@
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 
+#include <utility>
 #include <vector>
 
 namespace loxmocha::internal {
 
+/**
+ * @class parser_t
+ *
+ * @brief Internal parser implementation for parsing various AST nodes.
+ *
+ * This provides methods to parse declarations, expressions, patterns, statements and types.
+ *
+ * This is an internal class and should not be used outside of the parser library.
+ */
 class parser_t {
 public:
     explicit parser_t(lexer_t& lexer) : lexer_(lexer) {}
@@ -22,6 +32,13 @@ public:
     auto parse_type() -> parser_result_t<type::type_t>;
 
 private:
+    /**
+     * @brief Check if the given token matches any of the specified kinds.
+     *
+     * @tparam Kinds The kinds to match against.
+     * @param token The token to check.
+     * @return true if the token matches any of the specified kinds, false otherwise.
+     */
     template<token_t::kind_e... Kinds>
     auto match(const token_t& token) -> bool
     {
@@ -30,6 +47,37 @@ private:
         return ((token.kind() == Kinds) || ...);
     }
 
+    /**
+     * @brief Expect the next token to be one of the specified kinds.
+     *
+     * If the next token matches any of the specified kinds, it is consumed and returned.
+     * Otherwise, std::nullopt is returned.
+     *
+     * @tparam Kinds The kinds to expect.
+     * @return std::optional<token_t> The expected token if it matches, std::nullopt otherwise.
+     */
+    template<token_t::kind_e... Kinds>
+    auto expect_token() -> std::optional<token_t>
+    {
+        auto token = lexer_.peek_token();
+        if (token && match<Kinds...>(*token)) {
+            lexer_.consume_token();
+            return *token;
+        }
+
+        return std::nullopt;
+    }
+
+    /**
+     * @brief Parse a binary expression with the specified operator kinds.
+     *
+     * @tparam Kinds The operator kinds to parse.
+     * @param parse_lhs A function that determines how to parse the lhs expression.
+     * @param parse_rhs A function that determines how to parse the rhs expression.
+     * @param construct_expr A function that determines how to construct the binary expression node from the operator
+     * token, lhs expression and rhs expression.
+     * @return expr::expr_t The parsed binary expression.
+     */
     template<token_t::kind_e... Kinds>
     auto parse_binary_expr(auto&& parse_lhs, auto&& parse_rhs, auto&& construct_expr) -> expr::expr_t
     {
@@ -44,6 +92,19 @@ private:
         return left;
     }
 
+    /**
+     * @brief Parse a delimited list of elements.
+     *
+     * Parses elements until the end token is encountered, separated by the specified separator token.
+     * This does not consume the end token.
+     * If after parsing an element the separator is not found, parsing stops.
+     *
+     * @tparam end The kind of the end token.
+     * @tparam separator The kind of the separator token.
+     * @tparam T The type of the elements to parse.
+     * @param parse_element A function that determines how to parse each element.
+     * @return std::vector<T> The parsed elements.
+     */
     template<token_t::kind_e end, token_t::kind_e separator, typename T>
     auto parse_delimited(auto&& parse_element) -> std::vector<T>
     {
@@ -57,9 +118,7 @@ private:
 
             elements.emplace_back(parse_element());
 
-            if (auto sep = lexer_.peek_token(); sep && match<separator>(*sep)) {
-                lexer_.consume_token();
-            } else {
+            if (!expect_token<separator>()) {
                 break;
             }
         }
@@ -67,16 +126,40 @@ private:
         return elements;
     }
 
-    template<token_t::kind_e... Kinds>
-    auto expect_token() -> std::optional<token_t>
+    /**
+     * @brief Parse a delimited list of elements starting with a given start node.
+     *
+     * Parses elements until the end token is encountered, separated by the specified separator token.
+     * This does not consume the end token.
+     * If after parsing an element the separator is not found, parsing stops.
+     *
+     * @tparam end The kind of the end token.
+     * @tparam separator The kind of the separator token.
+     * @tparam T The type of the elements to parse.
+     * @param start_node The first element to include in the result.
+     * @param parse_element A function that determines how to parse each subsequent element.
+     * @return std::vector<T> The parsed elements including the start node.
+     */
+    template<token_t::kind_e end, token_t::kind_e separator, typename T>
+    auto parse_delimited(T&& start_node, auto&& parse_element) -> std::vector<T>
     {
-        auto token = lexer_.peek_token();
-        if (token && match<Kinds...>(*token)) {
-            lexer_.consume_token();
-            return *token;
+        std::vector<T> elements{};
+        elements.emplace_back(std::forward<T>(start_node));
+
+        for (;;) {
+            auto element = lexer_.peek_token();
+            if (element && match<end>(*element)) {
+                break;
+            }
+
+            elements.emplace_back(parse_element());
+
+            if (!expect_token<separator>()) {
+                break;
+            }
         }
 
-        return std::nullopt;
+        return elements;
     }
 
     auto parse_decl_internal() -> decl::decl_t;

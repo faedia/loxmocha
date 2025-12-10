@@ -130,8 +130,8 @@ public:
     template<typename Visitor, typename... Args>
     auto visit(Visitor&& visitor, Args&&... args) const
     {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          node_);
+        return std::visit(
+            [&visitor, &args...](auto&& arg) -> auto { return visitor(arg, std::forward<Args>(args)...); }, node_);
     }
 
     /**
@@ -146,8 +146,8 @@ public:
     template<typename Visitor, typename... Args>
     auto visit(Visitor&& visitor, Args&&... args)
     {
-        return std::visit([&visitor, &args...](auto&& arg) { return visitor(arg, std::forward<Args>(args)...); },
-                          node_);
+        return std::visit(
+            [&visitor, &args...](auto&& arg) -> auto { return visitor(arg, std::forward<Args>(args)...); }, node_);
     }
 
 private:

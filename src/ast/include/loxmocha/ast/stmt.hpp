@@ -3,8 +3,6 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
-#include <variant>
-
 namespace loxmocha::expr {
 class expr_t;
 }
@@ -17,6 +15,12 @@ namespace loxmocha::stmt {
 
 /**
  * @brief Represents an expression statement.
+ *
+ * An expression statement consists of a single expression.
+ *
+ * They have the form:
+ *
+ * `expression`
  */
 class expr_t {
 public:
@@ -53,6 +57,14 @@ private:
 
 /**
  * @brief Represents an assignment statement.
+ *
+ * An assignment statement consists of a target expression and a value expression.
+ * The target expression is some expression that is assignable, such as a variable, field access, reference dereference,
+ * or array index.
+ *
+ * They have the form:
+ *
+ * `expression "=" expression`
  */
 class assign_t {
 public:
@@ -102,6 +114,12 @@ private:
 
 /**
  * @brief Represents a declaration statement.
+ *
+ * A declaration statement consists of a single declaration.
+ *
+ * They have the form:
+ *
+ * `declaration`
  */
 class decl_t {
 public:

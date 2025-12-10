@@ -15,6 +15,12 @@ class pattern_t;
 /**
  * @class identifier_t
  * @brief represents an identifier pattern.
+ *
+ * An identifier pattern matches any value and binds it to the given name.
+ *
+ * They have the form:
+ *
+ * `identifier`
  */
 class identifier_t {
 public:
@@ -52,6 +58,14 @@ private:
 /**
  * @class tag_t
  * @brief represents a tag pattern.
+ *
+ * A tag pattern matches a tagged value with a specific type and tag choice.
+ * It consists of a type, a choice, and a sub-pattern.
+ * The sub-pattern is used to match the value associated with the tag.
+ * 
+ * They have the form:
+ *
+ * `"choice type_expression "." identifier pattern`
  */
 class tag_t {
 public:

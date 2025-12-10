@@ -19,14 +19,16 @@ auto parser_t::parse_stmt() -> parser_result_t<stmt::stmt_t>
 
 auto parser_t::parse_stmt_internal() -> stmt::stmt_t
 {
+    // If the first token is a start token for a declaration, parse a declaration statement.
     if (auto token = lexer_.peek_token(); token && is_decl_start_token(*token)) {
         return stmt::decl_t{safe_ptr<decl::decl_t>::make(parse_decl_internal())};
     }
 
+    // Otherwise we will have some kind of expression or assignment statement.
+    // But assignment statements are expressions followed by an equal sign and another expression.
     auto expr = parse_expr_internal();
 
-    if (auto equal = lexer_.peek_token(); equal && match<token_t::kind_e::p_equal>(*equal)) {
-        lexer_.consume_token();
+    if (expect_token<token_t::kind_e::p_equal>()) {
         auto value_expr = parse_expr_internal();
         return stmt::assign_t{safe_ptr<expr::expr_t>::make(std::move(expr)),
                               safe_ptr<expr::expr_t>::make(std::move(value_expr))};

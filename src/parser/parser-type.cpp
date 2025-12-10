@@ -4,8 +4,6 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "parser-internal.hpp"
 
-#include <algorithm>
-#include <iterator>
 #include <utility>
 #include <vector>
 
@@ -20,6 +18,8 @@ auto parser_t::parse_type() -> parser_result_t<type::type_t>
 
 auto parser_t::parse_type_internal() -> type::type_t
 {
+    // Check the first token to see if it is some entry for a complex type.
+    // Otherwise parse some other type.
     switch (auto token = lexer_.peek_token(); token ? token->kind() : token_t::kind_e::s_eof) {
     case token_t::kind_e::k_fun: lexer_.consume_token(); return fun_type();
     case token_t::kind_e::k_let: lexer_.consume_token(); return ref_type();
@@ -28,28 +28,29 @@ auto parser_t::parse_type_internal() -> type::type_t
     case token_t::kind_e::k_rec: lexer_.consume_token(); return record_type();
     default: return array_type();
     }
-
-    diagnostics_.emplace_back("Type parsing not implemented");
-    return type::identifier_t{token_t::k_identifier("MyType")};
 }
 
 auto parser_t::fun_type() -> type::type_t
 {
+    // Function types start with the fun token followed by a paren.
     if (!expect_token<token_t::kind_e::p_left_paren>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected '(' after 'fun' in function type");
         return type::identifier_t{token_t::k_identifier("ErrorType")};
     }
 
+    // Get the params after the function.
     auto param_types = parse_delimited<token_t::kind_e::p_right_paren, token_t::kind_e::p_comma, type::type_t>(
         [this]() -> type::type_t { return parse_type_internal(); });
 
+    // If we ended without a closing paren then we have an error.
     if (!expect_token<token_t::kind_e::p_right_paren>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected ')' after function parameter types");
         return type::identifier_t{token_t::k_identifier("ErrorType")};
     }
 
+    // If we have a colon then we parse the return type, otherwise we default to the empty tuple.
     if (expect_token<token_t::kind_e::p_colon>()) {
         return type::function_t{std::move(param_types), safe_ptr<type::type_t>::make(parse_type_internal())};
     }
@@ -68,6 +69,7 @@ auto parser_t::mutable_type() -> type::type_t
 
 auto parser_t::tagged_type() -> type::type_t
 {
+    // Tagged types must have at least one tag.
     if (expect_token<token_t::kind_e::k_end>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Tagged type must have at least one tag");
@@ -76,6 +78,7 @@ auto parser_t::tagged_type() -> type::type_t
 
     auto tags = parse_delimited<token_t::kind_e::k_end, token_t::kind_e::p_comma, type::tagged_t::tag_t>(
         [this]() -> type::tagged_t::tag_t {
+            // Each tag consists of an identifier, a colon and a type.
             auto name_token = expect_token<token_t::kind_e::k_identifier>();
             if (!name_token) {
                 has_error_ = true;
@@ -92,6 +95,7 @@ auto parser_t::tagged_type() -> type::type_t
             return type::tagged_t::tag_t{.name = *name_token, .type = parse_type_internal()};
         });
 
+    // After parsing all the tags we must have an end token.
     if (!expect_token<token_t::kind_e::k_end>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected 'end' after tagged type definition");
@@ -104,6 +108,7 @@ auto parser_t::record_type() -> type::type_t
 {
     auto fields = parse_delimited<token_t::kind_e::k_end, token_t::kind_e::p_comma, type::record_t::field_t>(
         [this]() -> type::record_t::field_t {
+            // A field consists of an identifier, a colon and a type.
             auto name_token = expect_token<token_t::kind_e::k_identifier>();
             if (!name_token) {
                 has_error_ = true;
@@ -120,6 +125,7 @@ auto parser_t::record_type() -> type::type_t
             return type::record_t::field_t{.name = *name_token, .type = parse_type_internal()};
         });
 
+    // If we ended without an end token then we have an error.
     if (!expect_token<token_t::kind_e::k_end>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected 'end' after record type definition");
@@ -131,6 +137,8 @@ auto parser_t::record_type() -> type::type_t
 
 auto parser_t::array_type() -> type::type_t
 {
+    // Array types start with a primary type followed by some array size expressions.
+    // Multiple array size expressions enable support for multi-dimensional arrays.
     auto base_type = primary_type();
 
     while (expect_token<token_t::kind_e::p_left_square>()) {
@@ -149,10 +157,12 @@ auto parser_t::array_type() -> type::type_t
 
 auto parser_t::primary_type() -> type::type_t
 {
+    // If we have an identifier then we just have an identifier type.
     if (auto token = expect_token<token_t::kind_e::k_identifier>()) {
         return type::identifier_t{*token};
     }
 
+    // Otherwise we expect a tuple or grouping.
     if (expect_token<token_t::kind_e::p_left_paren>()) {
         return tuple_or_grouping_type();
     }
@@ -164,33 +174,38 @@ auto parser_t::primary_type() -> type::type_t
 
 auto parser_t::tuple_or_grouping_type() -> type::type_t
 {
+    // Special case for empty tuple
     if (expect_token<token_t::kind_e::p_right_paren>()) {
         return type::tuple_t{{}};
     }
 
     auto first_type = parse_type_internal();
-    if (!expect_token<token_t::kind_e::p_comma>()) {
-        if (!expect_token<token_t::kind_e::p_right_paren>()) {
-            has_error_ = true;
-            diagnostics_.emplace_back("Expected ',' or ')' in grouping type");
-            return type::identifier_t{token_t::k_identifier("ErrorType")};
-        }
+
+    // If we have a single element followed by a paren then its a grouping, otherwise we have some kind of tuple
+    if (expect_token<token_t::kind_e::p_right_paren>()) {
         return first_type;
     }
 
-    std::vector<type::type_t> element_types{};
-    element_types.emplace_back(std::move(first_type));
-    std::ranges::move(parse_delimited<token_t::kind_e::p_right_paren, token_t::kind_e::p_comma, type::type_t>(
-                          [this]() -> type::type_t { return parse_type_internal(); }),
-                      std::back_inserter(element_types));
-
-    if (!expect_token<token_t::kind_e::p_right_paren>()) {
+    // We must have a comma to after the first time to indicate a tuple.
+    if (!expect_token<token_t::kind_e::p_comma>()) {
         has_error_ = true;
-        diagnostics_.emplace_back("Expected ')' after tuple type elements");
+        diagnostics_.emplace_back("Expected ',' or ')' in grouping type");
         return type::identifier_t{token_t::k_identifier("ErrorType")};
     }
 
-    return type::tuple_t{std::move(element_types)};
+    // Now parse the rest of the types.
+    std::vector<type::type_t> types =
+        parse_delimited<token_t::kind_e::p_right_paren, token_t::kind_e::p_comma, type::type_t>(
+            std::move(first_type), [this]() -> type::type_t { return parse_type_internal(); });
+
+    // Expect the closing paren.
+    if (!expect_token<token_t::kind_e::p_right_paren>()) {
+        has_error_ = true;
+        diagnostics_.emplace_back("Expected ')' after grouping type");
+        return type::identifier_t{token_t::k_identifier("ErrorType")};
+    }
+
+    return type::tuple_t{std::move(types)};
 }
 
 } // namespace loxmocha::internal
