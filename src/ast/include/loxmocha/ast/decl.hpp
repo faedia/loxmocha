@@ -86,7 +86,8 @@ private:
  *   (each with a name and type), a return type and a body expression.
  * They have the form:
  *
- * `"fun" identifier "(" (parameter ("," parameter)* ","?)? ")" ":" type_expression ("=>" expression | block_expression)`
+ * `"fun" identifier "(" (parameter ("," parameter)* ","?)? ")" ":" type_expression ("=>" expression |
+ * block_expression)`
  */
 class function_t {
 public:

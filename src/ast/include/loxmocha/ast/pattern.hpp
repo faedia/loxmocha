@@ -62,7 +62,7 @@ private:
  * A tag pattern matches a tagged value with a specific type and tag choice.
  * It consists of a type, a choice, and a sub-pattern.
  * The sub-pattern is used to match the value associated with the tag.
- * 
+ *
  * They have the form:
  *
  * `"choice type_expression "." identifier pattern`
