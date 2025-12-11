@@ -4,7 +4,6 @@
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
-#include <variant>
 #include <vector>
 
 namespace loxmocha::expr {
@@ -18,6 +17,12 @@ class type_t;
 /**
  * @class identifier_t
  * @brief represents an identifier type expression.
+ *
+ * An identifier type expression represents a type by its name.
+ *
+ * They have the form:
+ *
+ * `identifier`
  */
 class identifier_t {
 public:
@@ -55,6 +60,15 @@ private:
 /**
  * @class array_t
  * @brief represents an array type expression.
+ *
+ * An array type expression consists of an element type and a size expression.
+ * The element type specifies the type of each element in the array.
+ * The size expression specifies the number of elements in the array.
+ * The size expression must evaluate at compile time to a non-negative integer.
+ *
+ * They have the form:
+ *
+ * `type_expression "[" expression "]"`
  */
 class array_t {
 public:
@@ -62,7 +76,7 @@ public:
 
     array_t(const array_t&)     = delete;
     array_t(array_t&&) noexcept = default;
-    ~array_t()                  = default;
+    ~array_t();
 
     auto operator=(const array_t&) -> array_t&     = delete;
     auto operator=(array_t&&) noexcept -> array_t& = default;
@@ -105,6 +119,14 @@ private:
 /**
  * @class tuple_t
  * @brief represents a tuple type expression.
+ *
+ * A tuple type expression consists of a list of element types.
+ * Each element type specifies the type of the corresponding element in the tuple.
+ * The elements can be of different types.
+ *
+ * They have the form:
+ *
+ * `"(" (type_expression "," (type_expression ",")* type_expression?)? ")"`
  */
 class tuple_t {
 public:
@@ -141,6 +163,17 @@ private:
 /**
  * @class record_t
  * @brief represents a record type expression.
+ *
+ * A record type expression consists of a list of fields.
+ * Each field has a name and a type.
+ * The fields can be of different types.
+ *
+ * They have the form:
+ *
+ * `"rec" (field ("," field)* ","?)? "end"`
+ *
+ * Where a field has the form:
+ * `identifier ":" type_expression`
  */
 class record_t {
 public:
@@ -182,6 +215,14 @@ private:
 /**
  * @class tagged_t
  * @brief represents a tagged union type expression.
+ *
+ * A tagged union type expression consists of a list of tags.
+ * Each tag has a name and an associated type.
+ * The tags can be of different types.
+ *
+ * They have the form:
+ *
+ * `"choice" tag ("," tag)* "end"`
  */
 class tagged_t {
 public:
@@ -223,6 +264,14 @@ private:
 /**
  * @class reference_t
  * @brief represents a reference type expression.
+ *
+ * A reference type expression consists of a base type.
+ * The base type specifies the type being referenced.
+ * The reference type allows for indirect access to the base type.
+ *
+ * They have the form:
+ *
+ * `"let" type_expression`
  */
 class reference_t {
 public:
@@ -259,6 +308,15 @@ private:
 /**
  * @class function_t
  * @brief represents a function type expression.
+ *
+ * A function type expression consists of a list of parameter types and a return type.
+ * The parameter types specify the types of the function parameters.
+ * The return type specifies the type of the value returned by the function.
+ * The parameters can be of different types.
+ *
+ * They have the form:
+ *
+ * `"fun" "(" ("type_expression ("," type_expression)* ","?)? ")" ":" type_expression`
  */
 class function_t {
 public:
@@ -309,6 +367,14 @@ private:
 /**
  * @class mutable_t
  * @brief represents a mutable type expression.
+ *
+ * A mutable type expression consists of a base type.
+ * The base type specifies the type that is mutable.
+ * The mutable type allows for modification of values of the base type.
+ *
+ * They have the form:
+ *
+ * `"var" type_expression`
  */
 class mutable_t {
 public:
@@ -349,6 +415,14 @@ private:
 class type_t : public node_t<identifier_t, array_t, tuple_t, record_t, tagged_t, reference_t, function_t, mutable_t> {
 public:
     using node_t::node_t;
+
+    type_t(const type_t&)     = delete;
+    type_t(type_t&&) noexcept = default;
+
+    ~type_t() = default;
+
+    auto operator=(const type_t&) -> type_t&     = delete;
+    auto operator=(type_t&&) noexcept -> type_t& = default;
 };
 
 struct record_t::field_t {

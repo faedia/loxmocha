@@ -40,7 +40,7 @@ jobs:
           build-essential \
           cmake \
           ninja-build \
-          clang-tidy-19 \
+          clang-tidy-20 \
           cppcheck \
           software-properties-common
 
@@ -50,16 +50,16 @@ jobs:
 
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-        sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 60
-        sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-19
+        sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-20 60
+        sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-20
 
         gcc --version
         g++ --version
         clang-tidy --version
-        clang-tidy-19 --version
+        clang-tidy-20 --version
 
         which clang-tidy
-        which clang-tidy-19
+        which clang-tidy-20
         sudo update-alternatives --config clang-tidy
 
 

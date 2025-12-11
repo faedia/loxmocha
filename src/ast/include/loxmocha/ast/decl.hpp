@@ -1,13 +1,13 @@
 #pragma once
 
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace loxmocha::expr {
@@ -25,6 +25,12 @@ class decl_t;
 /**
  * @class type_t
  * @brief represents a type declaration
+ *
+ * A type declaration associates an identifier with a type expression.
+ * They have the form:
+ *
+ * `"type" identifier "is" type_expression`
+ *
  */
 class type_t {
 public:
@@ -75,6 +81,13 @@ private:
 /**
  * @class function_t
  * @brief represents a function declaration
+ *
+ * A function declaration consists of an identifier, a list of parameters
+ *   (each with a name and type), a return type and a body expression.
+ * They have the form:
+ *
+ * `"fun" identifier "(" (parameter ("," parameter)* ","?)? ")" ":" type_expression ("=>" expression |
+ * block_expression)`
  */
 class function_t {
 public:
@@ -162,6 +175,15 @@ private:
 /**
  * @class variable_t
  * @brief represents a variable declaration
+ *
+ * A variable declaration consists of an identifier, a type, an initialiser expression.
+ * A variable's mutability is determined by the keyword used in the declaration:
+ *   - `var` indicates a mutable variable.
+ *   - `let` indicates an immutable variable.
+ * All variables must have an explicit type annotation and an initialiser.
+ * They have the form:
+ *
+ * `("var" | "let") identifier ":" type_expression "=" expression`
  */
 class variable_t {
 public:
@@ -175,12 +197,33 @@ public:
     auto operator=(variable_t&&) noexcept -> variable_t& = default;
 
     /**
+     * @enum mut_e
+     * @brief represents the mutability of a variable
+     */
+    enum class mut_e : std::uint8_t { var, let };
+
+    /**
      * @brief Constructs a variable declaration from an identifier and a type.
      *
      * @param identifier The identifier of the variable.
      * @param type The type of the variable.
+     * @param initialiser The initialiser expression for the variable.
      */
-    explicit variable_t(token_t identifier, safe_ptr<type::type_t>&& type);
+    explicit variable_t(mut_e                    mut,
+                        token_t                  identifier,
+                        safe_ptr<type::type_t>&& type,
+                        safe_ptr<expr::expr_t>&& initialiser);
+
+    /**
+     * @brief Get the mutability of the variable declaration.
+     * @return mut_e The mutability of the variable declaration.
+     */
+    [[nodiscard]] auto mutability() const -> mut_e { return mutability_; }
+    /**
+     * @brief Get the mutability of the variable declaration.
+     * @return mut_e& The mutability of the variable declaration.
+     */
+    [[nodiscard]] auto mutability() -> mut_e& { return mutability_; }
 
     /**
      * @brief Get the identifier of the variable declaration.
@@ -204,9 +247,22 @@ public:
      */
     [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
 
+    /**
+     * @brief Get the initialiser expression of the variable declaration.
+     * @return const safe_ptr<expr::expr_t>& The initialiser expression.
+     */
+    [[nodiscard]] auto initialiser() const -> const safe_ptr<expr::expr_t>& { return initialiser_; }
+    /**
+     * @brief Get the initialiser expression of the variable declaration.
+     * @return safe_ptr<expr::expr_t>& The initialiser expression.
+     */
+    [[nodiscard]] auto initialiser() -> safe_ptr<expr::expr_t>& { return initialiser_; }
+
 private:
+    mut_e                  mutability_;
     token_t                identifier_;
     safe_ptr<type::type_t> type_;
+    safe_ptr<expr::expr_t> initialiser_;
 };
 
 /**
@@ -249,6 +305,8 @@ private:
 /**
  * @class decl_t
  * @brief represents a declaration
+ *
+ * A declaration is either a type declaration, function declaration or variable declaration.
  */
 class decl_t : public node_t<type_t, function_t, variable_t, error_t> {
 public:

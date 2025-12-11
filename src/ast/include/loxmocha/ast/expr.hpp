@@ -1,12 +1,9 @@
 #pragma once
 
 #include "loxmocha/ast/token.hpp"
-#include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "loxmocha/node.hpp"
 
-#include <utility>
-#include <variant>
 #include <vector>
 
 namespace loxmocha::stmt {
@@ -17,6 +14,10 @@ namespace loxmocha::type {
 class type_t;
 }
 
+namespace loxmocha::pattern {
+class pattern_t;
+}
+
 namespace loxmocha::expr {
 
 class expr_t;
@@ -24,6 +25,12 @@ class expr_t;
 /**
  * @class literal_t
  * @brief represents a literal expression.
+ *
+ * A literal expression represents a constant token value, such as an integer, string, character or boolean.
+ *
+ * They have the form:
+ *
+ * `(string_literal | int_literal | char_literal | true_literal | false_literal)`
  */
 class literal_t {
 public:
@@ -61,6 +68,12 @@ private:
 /**
  * @class identifier_t
  * @brief represents an identifier expression.
+ *
+ * An identifier expression represents some name in a value scope.
+ *
+ * They have the form:
+ *
+ * `identifier`
  */
 class identifier_t {
 public:
@@ -98,6 +111,13 @@ private:
 /**
  * @class binary_t
  * @brief represents a binary expression.
+ *
+ * A binary expression consists of a left operand, a binary operator, and a right operand.
+ * Both operands are expressions.
+ *
+ * They have the form:
+ *
+ * `expression binary_operator expression`
  */
 class binary_t {
 public:
@@ -161,6 +181,13 @@ private:
 /**
  * @class unary_t
  * @brief represents a unary expression.
+ *
+ * A unary expression consists of a unary operator and an operand expression.
+ * The operand is an expression.
+ *
+ * They have the form:
+ *
+ * `unary_operator expression`
  */
 class unary_t {
 public:
@@ -210,7 +237,15 @@ private:
 
 /**
  * @class is_t
- * @brief represents an "is" type check expression.
+ * @brief represents an "is" pattern match expression.
+ *
+ * An "is" expression consists of an expression and a pattern to match against.
+ * The expression returns true if it matches the pattern, false otherwise.
+ * It also performs binding of any variables in the pattern if the match is successful.
+ *
+ * They have the form:
+ *
+ * `expression "is" pattern`
  */
 class is_t {
 public:
@@ -224,12 +259,12 @@ public:
     auto operator=(is_t&&) noexcept -> is_t& = default;
 
     /**
-     * @brief Constructs an "is" type check expression with the given expression and type.
+     * @brief Constructs an "is" type check expression with the given expression and pattern.
      *
      * @param expr The expression to check.
-     * @param type The type to check against.
+     * @param pattern The pattern to check against.
      */
-    is_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type);
+    is_t(safe_ptr<expr_t>&& expr, safe_ptr<pattern::pattern_t>&& pattern);
 
     /**
      * @brief Get the expression being checked.
@@ -243,24 +278,31 @@ public:
     [[nodiscard]] auto expr() -> safe_ptr<expr_t>& { return expr_; }
 
     /**
-     * @brief Get the type being checked against.
-     * @return const safe_ptr<type::type_t>& The type being checked against.
+     * @brief Get the pattern being checked against.
+     * @return const safe_ptr<pattern::pattern_t>& The pattern being checked against.
      */
-    [[nodiscard]] auto type() const -> const safe_ptr<type::type_t>& { return type_; }
+    [[nodiscard]] auto pattern() const -> const safe_ptr<pattern::pattern_t>& { return pattern_; }
     /**
-     * @brief Get the type being checked against.
-     * @return safe_ptr<type::type_t>& The type being checked against.
+     * @brief Get the pattern being checked against.
+     * @return safe_ptr<pattern::pattern_t>& The pattern being checked against.
      */
-    [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
+    [[nodiscard]] auto pattern() -> safe_ptr<pattern::pattern_t>& { return pattern_; }
 
 private:
-    safe_ptr<expr_t>       expr_;
-    safe_ptr<type::type_t> type_;
+    safe_ptr<expr_t>             expr_;
+    safe_ptr<pattern::pattern_t> pattern_;
 };
 
 /**
  * @class cast_t
  * @brief represents an "as" type cast expression.
+ *
+ * An "as" expression consists of an expression and a type to cast to.
+ * The starting type of the expression must be compatible with the target type.
+ *
+ * They have the form:
+ *
+ * `expression "as" type_expression`
  */
 class cast_t {
 public:
@@ -311,6 +353,15 @@ private:
 /**
  * @class array_t
  * @brief represents an array expression.
+ *
+ * An array expression consists of a list of element expressions.
+ * It constructs an array of the size of the number of elements
+ * and initialises each element with the corresponding expression.
+ * Each element expression must be compatible with the array's element type.
+ *
+ * They have the form:
+ *
+ * `"[" (expression ("," expression)* ","?)? "]"`
  */
 class array_t {
 public:
@@ -344,6 +395,15 @@ private:
 /**
  * @class tuple_t
  * @brief represents a tuple expression.
+ *
+ * A tuple expression consists of a list of element expressions.
+ * It constructs a tuple of the size of the number of elements
+ * and initialises each element with the corresponding expression.
+ * Each element expression can be of any type.
+ *
+ * They have the form:
+ *
+ * `"(" (expression "," (expression ",")* expression?)? ")"`
  */
 class tuple_t {
 public:
@@ -381,6 +441,18 @@ private:
 /**
  * @class record_t
  * @brief represents a record expression.
+ *
+ * A record expression consists of a list of fields.
+ * It constructs a record with the given fields.
+ * Each field has a name and an expression value.
+ * The expression value of each field can be of any type.
+ *
+ * They have the form:
+ *
+ * `"{" (field ("," field)* ","?)? "}"`
+ *
+ * Where fields have the form:
+ * `identifier ":" expression`
  */
 class record_t {
 public:
@@ -422,6 +494,13 @@ private:
 /**
  * @class index_t
  * @brief represents an array index expression.
+ *
+ * An array index expression consists of a base expression and an index expression.
+ * The base expression must evaluate to an array type.
+ * The index expression must evaluate to an integer type.
+ *
+ * They have the form:
+ * `expression "[" expression "]"`
  */
 class index_t {
 public:
@@ -472,6 +551,13 @@ private:
 /**
  * @class field_t
  * @brief represents a field access expression of a record.
+ *
+ * A field access expression consists of a base expression and a field name.
+ * The base expression must evaluate to a record type.
+ * The field name must be a valid field in the record type.
+ *
+ * They have the form:
+ * `expression "." identifier`
  */
 class field_t {
 public:
@@ -524,6 +610,24 @@ private:
 /**
  * @class call_t
  * @brief represents a function call expression.
+ *
+ * A function call expression consists of a callee expression and a list of arguments.
+ * The callee expression must evaluate to a function type.
+ * The arguments can be positional or named.
+ * Positional arguments must be provided in the order of the callee's parameter list.
+ * Named arguments can be provided in any order.
+ * Positional arguments cannot follow named arguments.
+ *
+ * They have the form:
+ *
+ * `expression "(" positional_arguments? named_arguments? ")"`
+ *
+ * Where positional_arguments have the form:
+ * `expression ("," expression)* ","?`
+ *
+ * And named_arguments have the form:
+ * `identifier ":" expression ("," identifier ":" expression)* ","?`
+ *
  */
 class call_t {
 public:
@@ -592,6 +696,21 @@ private:
 /**
  * @class if_t
  * @brief represents an if expression.
+ *
+ * An if expression consists of a series of conditional branches and an optional else branch.
+ * Each conditional branch has a condition expression and a body expression.
+ * The else branch is an expression that is executed if none of the conditions are met.
+ *
+ * Each condition expression must evaluate to a boolean type.
+ * Each body expression must evaluate to the same type.
+ * If there is not an else branch, the if expression evaluates to an optional type.
+ *
+ * They have the form:
+ *
+ * `"if" condition ("=>" expression else_continuation? | "then" block_body (else_continuation | "end"))`
+ *
+ * Where `else_continuation` has the form:
+ * `"else" (if_expression | ("=>" expression | block_body "end"))`
  */
 class if_t {
 public:
@@ -605,44 +724,38 @@ public:
     auto operator=(if_t&&) noexcept -> if_t& = default;
 
     /**
-     * @brief Constructs an if expression with the given condition, then branch, and an else branch.
+     * @brief Struct representing a conditional branch in the if expression.
+     */
+    struct conditional_branch_t;
+
+    /**
+     * @brief Constructs an if expression with the given conditional branches and else branch.
      *
-     * @param condition The condition expression.
-     * @param then_branch The expression to execute if the condition is true.
-     * @param else_branch The expression to execute if the condition is false.
+     * @param conditional_branches The conditional branches of the if expression.
+     * @param else_branch The else branch expression.
      */
-    if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch, safe_ptr<expr_t>&& else_branch);
+    if_t(std::vector<conditional_branch_t>&& conditional_branches, safe_ptr<expr_t>&& else_branch);
 
     /**
-     * @brief Constructs an if expression with the given condition and then branch (no else branch).
+     * @brief Constructs an if expression with the given conditional branches and no else branch.
      *
-     * @param condition The condition expression.
-     * @param then_branch The expression to execute if the condition is true.
-     * @remark This represents an if expression without an else branch, the else branch is implicitly null.
+     * @param conditional_branches The conditional branches of the if expression.
      */
-    if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch);
+    explicit if_t(std::vector<conditional_branch_t>&& conditional_branches);
 
     /**
-     * @brief Get the condition expression of the if expression.
-     * @return const safe_ptr<expr_t>& The condition expression of the if expression.
+     * @brief Get the conditional branches of the if expression, i.e. all branches following an [else] if.
+     * @return const std::vector<conditional_branch_t>& The conditional branches of the if expression.
      */
-    [[nodiscard]] auto condition() const -> const safe_ptr<expr_t>& { return condition_; }
+    [[nodiscard]] auto conditional_branches() const -> const std::vector<conditional_branch_t>&
+    {
+        return conditional_branches_;
+    }
     /**
-     * @brief Get the condition expression of the if expression.
-     * @return safe_ptr<expr_t>& The condition expression of the if expression.
+     * @brief Get the conditional branches of the if expression, i.e. all branches following an [else] if.
+     * @return const std::vector<conditional_branch_t>& The conditional branches of the if expression.
      */
-    [[nodiscard]] auto condition() -> safe_ptr<expr_t>& { return condition_; }
-
-    /**
-     * @brief Get the then branch expression of the if expression.
-     * @return const safe_ptr<expr_t>& The then branch expression of the if expression.
-     */
-    [[nodiscard]] auto then_branch() const -> const safe_ptr<expr_t>& { return then_branch_; }
-    /**
-     * @brief Get the then branch expression of the if expression.
-     * @return safe_ptr<expr_t>& The then branch expression of the if expression.
-     */
-    [[nodiscard]] auto then_branch() -> safe_ptr<expr_t>& { return then_branch_; }
+    [[nodiscard]] auto conditional_branches() -> std::vector<conditional_branch_t>& { return conditional_branches_; }
 
     /**
      * @brief Get the else branch expression of the if expression.
@@ -656,9 +769,8 @@ public:
     [[nodiscard]] auto else_branch() -> nullable_ptr<expr_t>& { return else_branch_; }
 
 private:
-    safe_ptr<expr_t>     condition_;
-    safe_ptr<expr_t>     then_branch_;
-    nullable_ptr<expr_t> else_branch_;
+    std::vector<conditional_branch_t> conditional_branches_;
+    nullable_ptr<expr_t>              else_branch_;
 };
 
 // TODO: For expression
@@ -666,6 +778,15 @@ private:
 /**
  * @class while_t
  * @brief represents a while loop expression.
+ *
+ * A while loop expression consists of a condition expression and a body expression.
+ * The condition expression is evaluated before each iteration of the loop.
+ * If the condition evaluates to true, the body expression is executed.
+ * The return value of the while loop is the final value of the body expression when the condition evaluates to false.
+ *
+ * They have the form:
+ *
+ * `"while" condition ("=>" expression | "then" block_body "end")`
  */
 class while_t {
 public:
@@ -716,6 +837,14 @@ private:
 /**
  * @class block_t
  * @brief represents a block expression.
+ *
+ * A block expression consists of a series of statements followed by an optional return expression.
+ * If a return expression is provided, the block evaluates to the value of the return expression.
+ * Otherwise, the block evaluates to an empty tuple.
+ *
+ * They have the form:
+ *
+ * `"begin" (statement ";")* (expression)? "end"`
  */
 class block_t {
 public:
@@ -767,6 +896,14 @@ private:
 /**
  * @class grouping_t
  * @brief represents a grouping expression.
+ *
+ * A grouping expression consists of a single expression enclosed in parentheses.
+ * It is used to control the order of evaluation in complex expressions.
+ *
+ * They have the form:
+ *
+ * `"(" expression ")"`
+ *
  */
 class grouping_t {
 public:
@@ -824,35 +961,47 @@ class expr_t
     : public node_t<literal_t,
                     identifier_t,
                     binary_t,
-                    unary_t,
-                    array_t,
-                    // TODO: Fix type handling and recursive issues...
                     is_t,
                     cast_t,
-                    tuple_t,
-                    record_t,
+                    unary_t,
                     index_t,
                     field_t,
                     // closure_t,
                     call_t,
+                    array_t,
+                    record_t,
+                    tuple_t,
+                    grouping_t,
                     if_t,
                     // for_t,
                     while_t,
                     block_t,
-                    grouping_t,
                     error_t> {
 public:
     using node_t::node_t;
+
+    expr_t(const expr_t&)     = delete;
+    expr_t(expr_t&&) noexcept = default;
+
+    ~expr_t() = default;
+
+    auto operator=(const expr_t&) -> expr_t&     = delete;
+    auto operator=(expr_t&&) noexcept -> expr_t& = default;
 };
 
 struct record_t::field_t {
-    token_t name_;
-    expr_t  value_;
+    token_t name;
+    expr_t  value;
 };
 
 struct call_t::named_arg_t {
     token_t name;
     expr_t  value;
+};
+
+struct if_t::conditional_branch_t {
+    safe_ptr<expr_t> condition;
+    safe_ptr<expr_t> then_branch;
 };
 
 } // namespace loxmocha::expr

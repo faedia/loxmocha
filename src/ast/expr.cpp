@@ -1,5 +1,6 @@
 #include "loxmocha/ast/expr.hpp"
 
+#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
@@ -17,7 +18,10 @@ binary_t::binary_t(const token_t& op, safe_ptr<expr_t>&& left, safe_ptr<expr_t>&
 
 unary_t::unary_t(const token_t& op, safe_ptr<expr_t>&& operand) : op_(op), operand_(std::move(operand)) {}
 
-is_t::is_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type) : expr_(std::move(expr)), type_(std::move(type)) {}
+is_t::is_t(safe_ptr<expr_t>&& expr, safe_ptr<pattern::pattern_t>&& pattern)
+    : expr_(std::move(expr)), pattern_(std::move(pattern))
+{
+}
 is_t::~is_t() = default;
 
 cast_t::cast_t(safe_ptr<expr_t>&& expr, safe_ptr<type::type_t>&& type) : expr_(std::move(expr)), type_(std::move(type))
@@ -44,15 +48,13 @@ call_t::call_t(safe_ptr<expr_t>&& callee, std::vector<expr_t>&& positional_args,
 {
 }
 
-if_t::if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch, safe_ptr<expr_t>&& else_branch)
-    : condition_(std::move(condition))
-    , then_branch_(std::move(then_branch))
-    , else_branch_(std::move(else_branch).to_nullable())
+if_t::if_t(std::vector<conditional_branch_t>&& branches, safe_ptr<expr_t>&& else_branch)
+    : conditional_branches_(std::move(branches)), else_branch_(std::move(else_branch).to_nullable())
 {
 }
 
-if_t::if_t(safe_ptr<expr_t>&& condition, safe_ptr<expr_t>&& then_branch)
-    : condition_(std::move(condition)), then_branch_(std::move(then_branch)), else_branch_(nullptr)
+if_t::if_t(std::vector<conditional_branch_t>&& branches)
+    : conditional_branches_(std::move(branches)), else_branch_(nullptr)
 {
 }
 

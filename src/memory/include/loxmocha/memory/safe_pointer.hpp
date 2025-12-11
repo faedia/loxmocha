@@ -52,6 +52,9 @@ public:
         throw bad_nullable_ptr();
     }
 
+    auto operator==(const nullable_ptr<T>& other) const -> bool { return ptr_ == other.ptr_; }
+    auto operator==(std::nullptr_t) const -> bool { return ptr_ == nullptr; }
+
 private:
     std::unique_ptr<T, std::default_delete<T>> ptr_;
 };
