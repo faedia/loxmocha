@@ -464,7 +464,7 @@ auto parser_t::record_expr() -> expr::expr_t
             if (!name) {
                 diagnostics_.emplace_back("Expected identifier for record field name");
                 has_error_ = true;
-                return expr::record_t::field_t{.name = *name, .value = expr::error_t{}};
+                return expr::record_t::field_t{.name = token_t::k_identifier("<error>"), .value = expr::error_t{}};
             }
 
             if (!expect_token<token_t::kind_e::p_colon>()) {

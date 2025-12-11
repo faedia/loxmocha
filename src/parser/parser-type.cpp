@@ -79,20 +79,20 @@ auto parser_t::tagged_type() -> type::type_t
     auto tags = parse_delimited<token_t::kind_e::k_end, token_t::kind_e::p_comma, type::tagged_t::tag_t>(
         [this]() -> type::tagged_t::tag_t {
             // Each tag consists of an identifier, a colon and a type.
-            auto name_token = expect_token<token_t::kind_e::k_identifier>();
-            if (!name_token) {
+            auto name = expect_token<token_t::kind_e::k_identifier>();
+            if (!name) {
                 has_error_ = true;
                 diagnostics_.emplace_back("Expected tag name in tagged type");
-                return type::tagged_t::tag_t{.name = token_t::k_identifier("ErrorTag"), .type = type::tuple_t{{}}};
+                return type::tagged_t::tag_t{.name = token_t::k_identifier("<error>"), .type = type::tuple_t{{}}};
             }
 
             if (!expect_token<token_t::kind_e::p_colon>()) {
                 has_error_ = true;
                 diagnostics_.emplace_back("Expected ':' after tag name in tagged type");
-                return type::tagged_t::tag_t{.name = *name_token, .type = type::tuple_t{{}}};
+                return type::tagged_t::tag_t{.name = *name, .type = type::tuple_t{{}}};
             }
 
-            return type::tagged_t::tag_t{.name = *name_token, .type = parse_type_internal()};
+            return type::tagged_t::tag_t{.name = *name, .type = parse_type_internal()};
         });
 
     // After parsing all the tags we must have an end token.

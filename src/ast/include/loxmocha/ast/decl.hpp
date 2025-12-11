@@ -176,7 +176,7 @@ private:
  * @class variable_t
  * @brief represents a variable declaration
  *
- * A function declaration consists of an identifier, a type, an initialiser expression.
+ * A variable declaration consists of an identifier, a type, an initialiser expression.
  * A variable's mutability is determined by the keyword used in the declaration:
  *   - `var` indicates a mutable variable.
  *   - `let` indicates an immutable variable.

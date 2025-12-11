@@ -65,15 +65,15 @@ auto parser_t::fun_decl() -> decl::decl_t
                     has_error_ = true;
                     diagnostics_.emplace_back("Expected parameter name in function declaration");
                     return decl::function_t::parameter_t{
-                        .name = token_t::k_identifier("ErrorParam"),
-                        .type = safe_ptr<type::type_t>::make(type::identifier_t{token_t::k_identifier("ErrorType")})};
+                        .name = token_t::k_identifier("<error>"),
+                        .type = safe_ptr<type::type_t>::make(type::identifier_t{token_t::k_identifier("<error>")})};
                 }
                 if (!expect_token<token_t::kind_e::p_colon>()) {
                     has_error_ = true;
                     diagnostics_.emplace_back("Expected ':' after parameter name in function declaration");
                     return decl::function_t::parameter_t{
                         .name = *param_name,
-                        .type = safe_ptr<type::type_t>::make(type::identifier_t{token_t::k_identifier("ErrorType")})};
+                        .type = safe_ptr<type::type_t>::make(type::identifier_t{token_t::k_identifier("<error>")})};
                 }
                 return decl::function_t::parameter_t{.name = *param_name,
                                                      .type = safe_ptr<type::type_t>::make(parse_type_internal())};
