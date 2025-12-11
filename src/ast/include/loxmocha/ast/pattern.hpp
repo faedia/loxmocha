@@ -65,7 +65,7 @@ private:
  *
  * They have the form:
  *
- * `"choice type_expression "." identifier pattern`
+ * `"choice" type_expression "." identifier pattern`
  */
 class tag_t {
 public:

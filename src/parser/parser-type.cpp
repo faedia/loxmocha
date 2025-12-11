@@ -186,7 +186,7 @@ auto parser_t::tuple_or_grouping_type() -> type::type_t
         return first_type;
     }
 
-    // We must have a comma to after the first time to indicate a tuple.
+    // We must have a comma after the first type to indicate a tuple.
     if (!expect_token<token_t::kind_e::p_comma>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected ',' or ')' in grouping type");

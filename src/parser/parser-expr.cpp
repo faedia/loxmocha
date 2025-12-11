@@ -50,7 +50,7 @@ auto parser_t::if_expr() -> expr::expr_t
     for (;;) {
         // Parse the condition.
         auto condition = or_expr();
-        // If we have an arrow then we paerse an expression.
+        // If we have an arrow then we parse an expression.
         // Otherwise we expect a 'then' and parse a block.
         // Otherwise we have an invalid if expression and we report an error.
         if (expect_token<token_t::kind_e::p_arrow>()) {

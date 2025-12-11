@@ -51,7 +51,7 @@ public:
 
     /**
      * @brief Base case visitor for when two node types do not match!
-     * This fails the test with a messaage outputting the expected and actual types.
+     * This fails the test with a message outputting the expected and actual types.
      *
      * @param actual The actual node.
      * @param expected The expected node.
@@ -412,7 +412,7 @@ public:
             a_branch.then_branch->visit(*this, *e_branch.then_branch);
         }
 
-        // If both actual and expected have else brnaches then compare them
+        // If both actual and expected have else branches then compare them
         // otherwise make sure that both are null
         if (actual.else_branch() && expected.else_branch()) {
             actual.else_branch()->visit(*this, *expected.else_branch());
