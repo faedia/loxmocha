@@ -6,6 +6,7 @@
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
+#include "loxmocha/ast/token.hpp"
 
 #include <utility>
 #include <vector>
@@ -170,19 +171,18 @@ private:
 
     static auto is_decl_start_token(const token_t& token) -> bool;
 
-    auto fun_decl() -> decl::decl_t;
-    auto item_decl(decl::variable_t::mut_e mut) -> decl::decl_t;
-    auto type_decl() -> decl::decl_t;
+    auto fun_decl(token_t fun) -> decl::decl_t;
+    auto item_decl(const token_t& let, decl::variable_t::mut_e mut) -> decl::decl_t;
+    auto type_decl(token_t type) -> decl::decl_t;
 
-    auto if_expr() -> expr::expr_t;
-    auto if_body() -> expr::expr_t;
+    auto if_expr(token_t if_tok) -> expr::expr_t;
     auto else_body() -> expr::expr_t;
     auto conditional_branch() -> expr::if_t::conditional_branch_t;
 
-    auto while_expr() -> expr::expr_t;
+    auto while_expr(token_t while_tok) -> expr::expr_t;
 
-    auto block_expr() -> expr::expr_t;
-    auto block_body() -> expr::expr_t;
+    auto block_expr(token_t begin) -> expr::expr_t;
+    auto block_body(token_t begin) -> expr::expr_t;
 
     auto or_expr() -> expr::expr_t;
     auto and_expr() -> expr::expr_t;
@@ -200,9 +200,9 @@ private:
     auto call_expr(expr::expr_t&& callee_expr) -> expr::expr_t;
     auto access_expr() -> expr::expr_t;
     auto primary_expr() -> expr::expr_t;
-    auto array_expr() -> expr::expr_t;
-    auto record_expr() -> expr::expr_t;
-    auto tuple_or_grouping_expr() -> expr::expr_t;
+    auto array_expr(const token_t& left_square) -> expr::expr_t;
+    auto record_expr(const token_t& left_brace) -> expr::expr_t;
+    auto tuple_or_grouping_expr(const token_t& left_paren) -> expr::expr_t;
 
     auto tag_pattern() -> pattern::pattern_t;
     auto primary_pattern() -> pattern::pattern_t;
@@ -210,14 +210,14 @@ private:
     auto expr_or_assign_stmt() -> stmt::stmt_t;
     auto decl_stmt() -> stmt::stmt_t;
 
-    auto fun_type() -> type::type_t;
-    auto ref_type() -> type::type_t;
-    auto mutable_type() -> type::type_t;
-    auto tagged_type() -> type::type_t;
-    auto record_type() -> type::type_t;
+    auto fun_type(const token_t& fun) -> type::type_t;
+    auto ref_type(const token_t& let) -> type::type_t;
+    auto mutable_type(const token_t& var) -> type::type_t;
+    auto tagged_type(const token_t& choice) -> type::type_t;
+    auto record_type(const token_t& rec) -> type::type_t;
     auto array_type() -> type::type_t;
     auto primary_type() -> type::type_t;
-    auto tuple_or_grouping_type() -> type::type_t;
+    auto tuple_or_grouping_type(const token_t& left_paren) -> type::type_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     lexer_t&                 lexer_;

@@ -2,7 +2,7 @@
 
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
-#include "loxmocha/node.hpp"
+#include "loxmocha/ast/base.hpp"
 
 namespace loxmocha::type {
 class type_t;
@@ -140,9 +140,9 @@ public:
  * @class pattern_t
  * @brief represents a pattern.
  */
-class pattern_t : public node_t<identifier_t, tag_t, error_t> {
+class pattern_t : public ast_node_t<identifier_t, tag_t, error_t> {
 public:
-    using node_t::node_t;
+    using ast_node_t::ast_node_t;
 
     pattern_t(const pattern_t&)     = delete;
     pattern_t(pattern_t&&) noexcept = default;

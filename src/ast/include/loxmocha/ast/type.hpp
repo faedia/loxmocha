@@ -1,8 +1,8 @@
 #pragma once
 
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
-#include "loxmocha/node.hpp"
 
 #include <vector>
 
@@ -412,9 +412,10 @@ private:
  * @class type_t
  * @brief represents a type expression.
  */
-class type_t : public node_t<identifier_t, array_t, tuple_t, record_t, tagged_t, reference_t, function_t, mutable_t> {
+class type_t
+    : public ast_node_t<identifier_t, array_t, tuple_t, record_t, tagged_t, reference_t, function_t, mutable_t> {
 public:
-    using node_t::node_t;
+    using ast_node_t::ast_node_t;
 
     type_t(const type_t&)     = delete;
     type_t(type_t&&) noexcept = default;

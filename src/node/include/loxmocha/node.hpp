@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <variant>
 
 /**
@@ -8,7 +9,7 @@
  *
  * @tparam Kinds The different kinds of nodes that can be held.
  */
-template<typename... Kinds>
+template<typename Base, typename... Kinds>
 class node_t {
 public:
     node_t() = delete;
@@ -20,70 +21,18 @@ public:
     auto operator=(const node_t&) -> node_t&     = default;
     auto operator=(node_t&&) noexcept -> node_t& = default;
 
-    /**
-     * @brief Assign a new value to the node.
-     *
-     * @tparam T The kind of the value to assign.
-     * @param value The value to assign.
-     */
-    template<typename T>
-    auto operator=(const T& value) -> node_t&
-    {
-        node_ = value;
-        return *this;
-    }
-
-    /**
-     * @brief Assign a new value to the node.
-     *
-     * @tparam T The kind of the value to assign.
-     * @param value The value to assign.
-     */
-    template<typename T>
-    auto operator=(T&& value) -> node_t&
-    {
-        node_ = std::forward<T>(value);
-        return *this;
-    }
-
-    /**
-     * @brief Constructs a node from a specific kind.
-     *
-     * @tparam T The specific kind to construct the node from.
-     * @param value The specific kind value.
-     */
-    template<typename T>
-    // cppcheck-suppress noExplicitConstructor
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload,hicpp-explicit-conversions)
-    node_t(const T& value) : node_(value)
+    template<typename... Args>
+    explicit node_t(const Base& base, Args&&... args) : base_(base), node_(std::forward<Args>(args)...)
     {
     }
 
-    /**
-     * @brief Constructs a node from a specific kind.
-     *
-     * @tparam T The specific kind to construct the node from.
-     * @param value The specific kind value.
-     */
-    template<typename T>
-    // cppcheck-suppress noExplicitConstructor
-    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload,hicpp-explicit-conversions)
-    node_t(T&& value) : node_(std::forward<T>(value))
+    template<typename... Args>
+    explicit node_t(Base&& base, Args&&... args) : base_(std::move(base)), node_(std::forward<Args>(args)...)
     {
     }
 
-    /**
-     * @brief Constructs a node in-place from the specified kind and arguments.
-     *
-     * @tparam T The specific kind.
-     * @tparam Args The types of the arguments to construct the kind.
-     * @param args The arguments to construct the kind.
-     */
-    template<typename T, typename... Args>
-    explicit node_t([[maybe_unused]] std::in_place_type_t<T> marker, Args&&... args)
-        : node_(std::in_place_type<T>, std::forward<Args>(args)...)
-    {
-    }
+    [[nodiscard]] auto base() const -> const Base& { return base_; }
+    [[nodiscard]] auto base() -> Base& { return base_; }
 
     /**
      * @brief Check if the node holds a specific kind.
@@ -151,5 +100,6 @@ public:
     }
 
 private:
+    Base                   base_;
     std::variant<Kinds...> node_;
 };

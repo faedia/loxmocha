@@ -1,8 +1,8 @@
 #pragma once
 
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
-#include "loxmocha/node.hpp"
 
 #include <vector>
 
@@ -958,35 +958,27 @@ public:
  * @brief represents an expression.
  */
 class expr_t
-    : public node_t<literal_t,
-                    identifier_t,
-                    binary_t,
-                    is_t,
-                    cast_t,
-                    unary_t,
-                    index_t,
-                    field_t,
-                    // closure_t,
-                    call_t,
-                    array_t,
-                    record_t,
-                    tuple_t,
-                    grouping_t,
-                    if_t,
-                    // for_t,
-                    while_t,
-                    block_t,
-                    error_t> {
+    : public ast_node_t<literal_t,
+                        identifier_t,
+                        binary_t,
+                        is_t,
+                        cast_t,
+                        unary_t,
+                        index_t,
+                        field_t,
+                        // closure_t,
+                        call_t,
+                        array_t,
+                        record_t,
+                        tuple_t,
+                        grouping_t,
+                        if_t,
+                        // for_t,
+                        while_t,
+                        block_t,
+                        error_t> {
 public:
-    using node_t::node_t;
-
-    expr_t(const expr_t&)     = delete;
-    expr_t(expr_t&&) noexcept = default;
-
-    ~expr_t() = default;
-
-    auto operator=(const expr_t&) -> expr_t&     = delete;
-    auto operator=(expr_t&&) noexcept -> expr_t& = default;
+    using ast_node_t::ast_node_t;
 };
 
 struct record_t::field_t {
@@ -1000,8 +992,8 @@ struct call_t::named_arg_t {
 };
 
 struct if_t::conditional_branch_t {
-    safe_ptr<expr_t> condition;
-    safe_ptr<expr_t> then_branch;
+    expr_t condition;
+    expr_t then_branch;
 };
 
 } // namespace loxmocha::expr

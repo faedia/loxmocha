@@ -1,7 +1,7 @@
 #pragma once
 
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
-#include "loxmocha/node.hpp"
 
 namespace loxmocha::expr {
 class expr_t;
@@ -158,9 +158,9 @@ private:
  * @class stmt_t
  * @brief represents a statement
  */
-class stmt_t : public node_t<expr_t, assign_t, decl_t> {
+class stmt_t : public ast_node_t<expr_t, assign_t, decl_t> {
 public:
-    using node_t::node_t;
+    using ast_node_t::ast_node_t;
 
     stmt_t(const stmt_t&)     = delete;
     stmt_t(stmt_t&&) noexcept = default;

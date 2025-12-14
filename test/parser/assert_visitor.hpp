@@ -164,7 +164,7 @@ public:
             EXPECT_EQ(a_param.name.kind(), loxmocha::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_param.name.kind(), e_param.name.kind());
             EXPECT_EQ(a_param.name.span(), e_param.name.span());
-            a_param.type->visit(*this, *e_param.type);
+            a_param.type.visit(*this, e_param.type);
         }
 
         // Make sure the return types and bodies are the same.
@@ -408,8 +408,8 @@ public:
         // Make sure each of the branches of the if match
         for (const auto& [a_branch, e_branch] :
              std::views::zip(actual.conditional_branches(), expected.conditional_branches())) {
-            a_branch.condition->visit(*this, *e_branch.condition);
-            a_branch.then_branch->visit(*this, *e_branch.then_branch);
+            a_branch.condition.visit(*this, e_branch.condition);
+            a_branch.then_branch.visit(*this, e_branch.then_branch);
         }
 
         // If both actual and expected have else branches then compare them

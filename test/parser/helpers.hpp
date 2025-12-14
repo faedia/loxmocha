@@ -14,29 +14,34 @@
 
 namespace loxmocha::test::helpers {
 
-[[nodiscard]] inline auto d(loxmocha::decl::decl_t&& decl) -> loxmocha::safe_ptr<loxmocha::decl::decl_t>
+template<typename... Args>
+[[nodiscard]] inline auto d(Args&&... decl) -> loxmocha::safe_ptr<loxmocha::decl::decl_t>
 {
-    return loxmocha::safe_ptr<loxmocha::decl::decl_t>::make(std::move(decl));
+    return loxmocha::safe_ptr<loxmocha::decl::decl_t>::make("", std::forward<Args>(decl)...);
 }
 
-[[nodiscard]] inline auto e(loxmocha::expr::expr_t&& expr) -> loxmocha::safe_ptr<loxmocha::expr::expr_t>
+template<typename... Args>
+[[nodiscard]] inline auto e(Args&&... expr) -> loxmocha::safe_ptr<loxmocha::expr::expr_t>
 {
-    return loxmocha::safe_ptr<loxmocha::expr::expr_t>::make(std::move(expr));
+    return loxmocha::safe_ptr<loxmocha::expr::expr_t>::make("", std::forward<Args>(expr)...);
 }
 
-[[nodiscard]] inline auto p(loxmocha::pattern::pattern_t&& pattern) -> loxmocha::safe_ptr<loxmocha::pattern::pattern_t>
+template<typename... Args>
+[[nodiscard]] inline auto p(Args&&... pattern) -> loxmocha::safe_ptr<loxmocha::pattern::pattern_t>
 {
-    return loxmocha::safe_ptr<loxmocha::pattern::pattern_t>::make(std::move(pattern));
+    return loxmocha::safe_ptr<loxmocha::pattern::pattern_t>::make("", std::forward<Args>(pattern)...);
 }
 
-[[nodiscard]] inline auto s(loxmocha::stmt::stmt_t&& stmt) -> loxmocha::safe_ptr<loxmocha::stmt::stmt_t>
+template<typename... Args>
+[[nodiscard]] inline auto s(Args&&... stmt) -> loxmocha::safe_ptr<loxmocha::stmt::stmt_t>
 {
-    return loxmocha::safe_ptr<loxmocha::stmt::stmt_t>::make(std::move(stmt));
+    return loxmocha::safe_ptr<loxmocha::stmt::stmt_t>::make("", std::forward<Args>(stmt)...);
 }
 
-[[nodiscard]] inline auto t(loxmocha::type::type_t&& type) -> loxmocha::safe_ptr<loxmocha::type::type_t>
+template<typename... Args>
+[[nodiscard]] inline auto t(Args&&... args) -> loxmocha::safe_ptr<loxmocha::type::type_t>
 {
-    return loxmocha::safe_ptr<loxmocha::type::type_t>::make(std::move(type));
+    return loxmocha::safe_ptr<loxmocha::type::type_t>::make("", std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
@@ -44,12 +49,20 @@ auto make_vector(Args&&... args) -> std::vector<T>
 {
     std::vector<T> vec;
     vec.reserve(sizeof...(Args));
+    (vec.emplace_back("", std::forward<Args>(args)), ...);
+    return vec;
+}
+
+template<typename T, typename... Args>
+auto make_vector2(Args&&... args) -> std::vector<T>
+{
+    std::vector<T> vec;
+    vec.reserve(sizeof...(Args));
     (vec.emplace_back(std::forward<Args>(args)), ...);
     return vec;
 }
 
-template<typename T>
-void base_test(const std::string& source, const T& expected, auto&& parse)
+void base_test(const std::string& source, const auto& expected, auto&& parse)
 {
     // NOLINTNEXTLINE(misc-const-correctness)
     lexer_t lexer{source};
@@ -64,25 +77,13 @@ void base_test(const std::string& source, const T& expected, auto&& parse)
     result.result().visit(assert_visitor{}, expected);
 }
 
-inline void decl_test(const std::string& source, const decl::decl_t& expected)
-{
-    base_test<decl::decl_t>(source, expected, parse_decl);
-}
+inline void decl_test(const std::string& source, const auto& expected) { base_test(source, expected, parse_decl); }
 
-inline void expr_test(const std::string& source, const expr::expr_t& expected)
-{
-    base_test<expr::expr_t>(source, expected, parse_expr);
-}
+inline void expr_test(const std::string& source, const auto& expected) { base_test(source, expected, parse_expr); }
 
-inline void stmt_test(const std::string& source, const stmt::stmt_t& expected)
-{
-    base_test<stmt::stmt_t>(source, expected, parse_stmt);
-}
+inline void stmt_test(const std::string& source, const auto& expected) { base_test(source, expected, parse_stmt); }
 
-inline void type_test(const std::string& source, const type::type_t& expected)
-{
-    base_test<type::type_t>(source, expected, parse_type);
-}
+inline void type_test(const std::string& source, const auto& expected) { base_test(source, expected, parse_type); }
 
 inline void
 rainy_day_test(const std::string& source, const std::vector<std::string>& expected_diagnostics, auto&& parse)
