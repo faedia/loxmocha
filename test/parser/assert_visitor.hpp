@@ -62,6 +62,11 @@ public:
                << demangle(typeid(expected).name()) << " got type: " << demangle(typeid(actual).name());
     }
 
+    void operator()([[maybe_unused]] const loxmocha::node_base_t& base, const auto& actual, const auto& expected)
+    {
+        this->operator()(actual, expected);
+    }
+
     /**
      * @brief Unwraps the expected node and then calls back into the visitor with the actual and expected nodes.
      *
@@ -70,10 +75,10 @@ public:
      */
     void operator()(const auto& actual, const loxmocha::decl::decl_t& expected)
     {
-        // Unwrap the expected declaration and visit again
-        expected.visit(
-            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
-            actual);
+        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
+                                          const auto&                         expected,
+                                          const auto& actual) -> void { visitor(actual, expected); },
+                       actual);
     }
 
     /**
@@ -84,9 +89,10 @@ public:
      */
     void operator()(const auto& actual, const loxmocha::expr::expr_t& expected)
     {
-        expected.visit(
-            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
-            actual);
+        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
+                                          const auto&                         expected,
+                                          const auto& actual) -> void { visitor(actual, expected); },
+                       actual);
     }
 
     /**
@@ -97,9 +103,10 @@ public:
      */
     void operator()(const auto& actual, const loxmocha::pattern::pattern_t& expected)
     {
-        expected.visit(
-            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
-            actual);
+        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
+                                          const auto&                         expected,
+                                          const auto& actual) -> void { visitor(actual, expected); },
+                       actual);
     }
 
     /**
@@ -110,9 +117,10 @@ public:
      */
     void operator()(const auto& actual, const loxmocha::stmt::stmt_t& expected)
     {
-        expected.visit(
-            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
-            actual);
+        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
+                                          const auto&                         expected,
+                                          const auto& actual) -> void { visitor(actual, expected); },
+                       actual);
     }
 
     /**
@@ -123,9 +131,10 @@ public:
      */
     void operator()(const auto& actual, const loxmocha::type::type_t& expected)
     {
-        expected.visit(
-            [&visitor = *this](const auto& expected, const auto& actual) -> void { visitor(actual, expected); },
-            actual);
+        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
+                                          const auto&                         expected,
+                                          const auto& actual) -> void { visitor(actual, expected); },
+                       actual);
     }
 
     /**
@@ -164,7 +173,7 @@ public:
             EXPECT_EQ(a_param.name.kind(), loxmocha::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_param.name.kind(), e_param.name.kind());
             EXPECT_EQ(a_param.name.span(), e_param.name.span());
-            a_param.type->visit(*this, *e_param.type);
+            a_param.type.visit(*this, e_param.type);
         }
 
         // Make sure the return types and bodies are the same.
@@ -408,8 +417,8 @@ public:
         // Make sure each of the branches of the if match
         for (const auto& [a_branch, e_branch] :
              std::views::zip(actual.conditional_branches(), expected.conditional_branches())) {
-            a_branch.condition->visit(*this, *e_branch.condition);
-            a_branch.then_branch->visit(*this, *e_branch.then_branch);
+            a_branch.condition.visit(*this, e_branch.condition);
+            a_branch.then_branch.visit(*this, e_branch.then_branch);
         }
 
         // If both actual and expected have else branches then compare them

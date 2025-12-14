@@ -1,3 +1,4 @@
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/parser.hpp"
@@ -21,7 +22,9 @@ auto parser_t::parse_stmt_internal() -> stmt::stmt_t
 {
     // If the first token is a start token for a declaration, parse a declaration statement.
     if (auto token = lexer_.peek_token(); token && is_decl_start_token(*token)) {
-        return stmt::decl_t{safe_ptr<decl::decl_t>::make(parse_decl_internal())};
+        auto decl = safe_ptr<decl::decl_t>::make(parse_decl_internal());
+        auto span = decl->base();
+        return stmt::stmt_t{span, stmt::decl_t{std::move(decl)}};
     }
 
     // Otherwise we will have some kind of expression or assignment statement.
@@ -29,11 +32,15 @@ auto parser_t::parse_stmt_internal() -> stmt::stmt_t
     auto expr = parse_expr_internal();
 
     if (expect_token<token_t::kind_e::p_equal>()) {
-        auto value_expr = parse_expr_internal();
-        return stmt::assign_t{safe_ptr<expr::expr_t>::make(std::move(expr)),
-                              safe_ptr<expr::expr_t>::make(std::move(value_expr))};
+        auto              value_expr = parse_expr_internal();
+        const node_base_t span{expr.base().begin(), value_expr.base().end()};
+        return stmt::stmt_t{span,
+                            stmt::assign_t{safe_ptr<expr::expr_t>::make(std::move(expr)),
+                                           safe_ptr<expr::expr_t>::make(std::move(value_expr))}};
     }
-    return stmt::expr_t{safe_ptr<expr::expr_t>::make(std::move(expr))};
+
+    auto span = expr.base();
+    return stmt::stmt_t{span, stmt::expr_t{safe_ptr<expr::expr_t>::make(std::move(expr))}};
 }
 
 } // namespace loxmocha::internal

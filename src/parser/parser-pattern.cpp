@@ -1,3 +1,4 @@
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/token.hpp"
@@ -33,7 +34,7 @@ auto parser_t::tag_pattern() -> pattern::pattern_t
     if (!expect_token<token_t::kind_e::p_period>()) {
         diagnostics_.emplace_back("Expected '.' after tag type in tag pattern");
         has_error_ = true;
-        return pattern::error_t{};
+        return pattern::pattern_t{"", pattern::error_t{}};
     }
 
     // Get the tag name.
@@ -41,21 +42,24 @@ auto parser_t::tag_pattern() -> pattern::pattern_t
     if (!name) {
         diagnostics_.emplace_back("Expected tag name in tag pattern");
         has_error_ = true;
-        return pattern::error_t{};
+        return pattern::pattern_t{"", pattern::error_t{}};
     }
 
     // Process the sub-pattern.
     auto pattern = primary_pattern();
 
-    return pattern::tag_t{
-        safe_ptr<type::type_t>::make(std::move(type)), *name, safe_ptr<pattern::pattern_t>::make(std::move(pattern))};
+    const node_base_t span{type.base().begin(), pattern.base().end()};
+    return pattern::pattern_t{span,
+                              pattern::tag_t{safe_ptr<type::type_t>::make(std::move(type)),
+                                             *name,
+                                             safe_ptr<pattern::pattern_t>::make(std::move(pattern))}};
 }
 
 auto parser_t::primary_pattern() -> pattern::pattern_t
 {
     // An identifier pattern is just an identifier.
     if (auto token = expect_token<token_t::kind_e::k_identifier>(); token) {
-        return pattern::identifier_t{*token};
+        return pattern::pattern_t{token->span(), pattern::identifier_t{*token}};
     }
     // Otherwise we have a paren to denote a nested pattern.
     if (expect_token<token_t::kind_e::p_left_paren>()) {
@@ -63,14 +67,14 @@ auto parser_t::primary_pattern() -> pattern::pattern_t
         if (!expect_token<token_t::kind_e::p_right_paren>()) {
             diagnostics_.emplace_back("Expected ')' after pattern");
             has_error_ = true;
-            return pattern::error_t{};
+            return pattern::pattern_t{"", pattern::error_t{}};
         }
         return pattern;
     }
 
     diagnostics_.emplace_back("Expected pattern");
     has_error_ = true;
-    return pattern::error_t{};
+    return pattern::pattern_t{"", pattern::error_t{}};
 }
 
 } // namespace loxmocha::internal

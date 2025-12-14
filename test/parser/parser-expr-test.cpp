@@ -300,27 +300,29 @@ TEST(ParserTest, ExprCallPositionalArgumentsTest)
 
 TEST(ParserTest, ExprCallNamedArgumentsTest)
 {
-    expr_test("setPosition(x: 100, y: 200)",
-              expr::call_t{e(expr::identifier_t{token_t::k_identifier("setPosition")}),
-                           {},
-                           make_vector<expr::call_t::named_arg_t>(
-                               expr::call_t::named_arg_t{.name  = token_t::k_identifier("x"),
-                                                         .value = expr::literal_t{token_t::l_integer("100")}},
-                               expr::call_t::named_arg_t{.name  = token_t::k_identifier("y"),
-                                                         .value = expr::literal_t{token_t::l_integer("200")}})});
+    expr_test(
+        "setPosition(x: 100, y: 200)",
+        expr::call_t{
+            e(expr::identifier_t{token_t::k_identifier("setPosition")}),
+            {},
+            make_vector2<expr::call_t::named_arg_t>(
+                expr::call_t::named_arg_t{.name  = token_t::k_identifier("x"),
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("100")}}},
+                expr::call_t::named_arg_t{.name  = token_t::k_identifier("y"),
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("200")}}})});
 }
 
 TEST(ParserTest, ExprCallMixedArgumentTest)
 {
     expr_test("drawCircle(x + 10, y, radius: 25)",
-              expr::call_t{
-                  e(expr::identifier_t{token_t::k_identifier("drawCircle")}),
-                  make_vector<expr::expr_t>(expr::binary_t{token_t::p_plus("+"),
-                                                           e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                           e(expr::literal_t{token_t::l_integer("10")})},
-                                            expr::identifier_t{token_t::k_identifier("y")}),
-                  make_vector<expr::call_t::named_arg_t>(expr::call_t::named_arg_t{
-                      .name = token_t::k_identifier("radius"), .value = expr::literal_t{token_t::l_integer("25")}})});
+              expr::call_t{e(expr::identifier_t{token_t::k_identifier("drawCircle")}),
+                           make_vector<expr::expr_t>(expr::binary_t{token_t::p_plus("+"),
+                                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                                    e(expr::literal_t{token_t::l_integer("10")})},
+                                                     expr::identifier_t{token_t::k_identifier("y")}),
+                           make_vector2<expr::call_t::named_arg_t>(expr::call_t::named_arg_t{
+                               .name  = token_t::k_identifier("radius"),
+                               .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("25")}}})});
 }
 
 TEST(ParserTest, ExprPositionalAfterNamedArgsTest)
@@ -476,11 +478,11 @@ TEST(ParserTest, ExprArrayPrecedenceTest)
 TEST(ParserTest, ExprRecordTest)
 {
     expr_test("{x: 10, y: 20}",
-              expr::record_t{make_vector<expr::record_t::field_t>(
+              expr::record_t{make_vector2<expr::record_t::field_t>(
                   expr::record_t::field_t{.name  = token_t::k_identifier("x"),
-                                          .value = expr::literal_t{token_t::l_integer("10")}},
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("10")}}},
                   expr::record_t::field_t{.name  = token_t::k_identifier("y"),
-                                          .value = expr::literal_t{token_t::l_integer("20")}})});
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("20")}}})});
 }
 
 TEST(ParserTest, ExprRecordEmptyTest) { expr_test("{}", expr::record_t{{}}); }
@@ -488,18 +490,19 @@ TEST(ParserTest, ExprRecordEmptyTest) { expr_test("{}", expr::record_t{{}}); }
 TEST(ParserTest, ExprRecordSingleFieldTest)
 {
     expr_test("{value: 42}",
-              expr::record_t{make_vector<expr::record_t::field_t>(expr::record_t::field_t{
-                  .name = token_t::k_identifier("value"), .value = expr::literal_t{token_t::l_integer("42")}})});
+              expr::record_t{make_vector2<expr::record_t::field_t>(
+                  expr::record_t::field_t{.name  = token_t::k_identifier("value"),
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("42")}}})});
 }
 
 TEST(ParserTest, ExprRecordTrailingCommaTest)
 {
     expr_test("{a: 1, b: 2, }",
-              expr::record_t{make_vector<expr::record_t::field_t>(
+              expr::record_t{make_vector2<expr::record_t::field_t>(
                   expr::record_t::field_t{.name  = token_t::k_identifier("a"),
-                                          .value = expr::literal_t{token_t::l_integer("1")}},
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("1")}}},
                   expr::record_t::field_t{.name  = token_t::k_identifier("b"),
-                                          .value = expr::literal_t{token_t::l_integer("2")}})});
+                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("2")}}})});
 }
 
 TEST(ParserTest, ExprRecordPrecedenceTest)
@@ -507,15 +510,19 @@ TEST(ParserTest, ExprRecordPrecedenceTest)
     expr_test(
         "{sum: a + b, product: c * d}.sum",
         expr::field_t{
-            e(expr::record_t{make_vector<expr::record_t::field_t>(
-                expr::record_t::field_t{.name  = token_t::k_identifier("sum"),
-                                        .value = expr::binary_t{token_t::p_plus("+"),
-                                                                e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                                e(expr::identifier_t{token_t::k_identifier("b")})}},
-                expr::record_t::field_t{.name  = token_t::k_identifier("product"),
-                                        .value = expr::binary_t{token_t::p_asterisk("*"),
-                                                                e(expr::identifier_t{token_t::k_identifier("c")}),
-                                                                e(expr::identifier_t{token_t::k_identifier("d")})}})}),
+            e(expr::record_t{make_vector2<expr::record_t::field_t>(
+                expr::record_t::field_t{
+                    .name  = token_t::k_identifier("sum"),
+                    .value = expr::expr_t{"",
+                                          expr::binary_t{token_t::p_plus("+"),
+                                                         e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("b")})}}},
+                expr::record_t::field_t{
+                    .name  = token_t::k_identifier("product"),
+                    .value = expr::expr_t{"",
+                                          expr::binary_t{token_t::p_asterisk("*"),
+                                                         e(expr::identifier_t{token_t::k_identifier("c")}),
+                                                         e(expr::identifier_t{token_t::k_identifier("d")})}}})}),
             token_t::k_identifier("sum")});
 }
 
@@ -558,11 +565,12 @@ TEST(ParserTest, ExprTuplePrecedenceTest)
 TEST(ParserTest, ExprIfTest)
 {
     expr_test("if a && b => c",
-              expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                  .condition   = e(expr::binary_t{token_t::p_and_and("&&"),
-                                                e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                e(expr::identifier_t{token_t::k_identifier("b")})}),
-                  .then_branch = e(expr::identifier_t{token_t::k_identifier("c")})})});
+              expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                  .condition   = expr::expr_t{"",
+                                            expr::binary_t{token_t::p_and_and("&&"),
+                                                           e(expr::identifier_t{token_t::k_identifier("a")}),
+                                                           e(expr::identifier_t{token_t::k_identifier("b")})}},
+                  .then_branch = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("c")}}})});
 }
 
 TEST(ParserTest, ExprIfElseIfTest)
@@ -571,17 +579,19 @@ TEST(ParserTest, ExprIfElseIfTest)
         if x < 10 => "small"
         else if x < 20 => "medium"
     )",
-              expr::if_t{make_vector<expr::if_t::conditional_branch_t>(
+              expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(
                   expr::if_t::conditional_branch_t{
-                      .condition   = e(expr::binary_t{token_t::p_less("<"),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::literal_t{token_t::l_integer("10")})}),
-                      .then_branch = e(expr::literal_t{token_t::l_string("\"small\"")})},
+                      .condition   = expr::expr_t{"",
+                                                expr::binary_t{token_t::p_less("<"),
+                                                               e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                               e(expr::literal_t{token_t::l_integer("10")})}},
+                      .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"small\"")}}},
                   expr::if_t::conditional_branch_t{
-                      .condition   = e(expr::binary_t{token_t::p_less("<"),
-                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                    e(expr::literal_t{token_t::l_integer("20")})}),
-                      .then_branch = e(expr::literal_t{token_t::l_string("\"medium\"")})})});
+                      .condition   = expr::expr_t{"",
+                                                expr::binary_t{token_t::p_less("<"),
+                                                               e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                               e(expr::literal_t{token_t::l_integer("20")})}},
+                      .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"medium\"")}}})});
 }
 
 TEST(ParserTest, ExprIfElseTest)
@@ -590,9 +600,9 @@ TEST(ParserTest, ExprIfElseTest)
         if isValid => "valid"
         else => "invalid"
     )",
-              expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                             .condition   = e(expr::identifier_t{token_t::k_identifier("isValid")}),
-                             .then_branch = e(expr::literal_t{token_t::l_string("\"valid\"")})}),
+              expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                             .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("isValid")}},
+                             .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"valid\"")}}}),
                          e(expr::literal_t{token_t::l_string("\"invalid\"")})});
 }
 
@@ -604,30 +614,34 @@ TEST(ParserTest, ExprIfElseIfElseTest)
         else if score >= 80 => "B"
         else => "C"
     )",
-        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(
-                       expr::if_t::conditional_branch_t{
-                           .condition   = e(expr::binary_t{token_t::p_greater_equal(">="),
-                                                         e(expr::identifier_t{token_t::k_identifier("score")}),
-                                                         e(expr::literal_t{token_t::l_integer("90")})}),
-                           .then_branch = e(expr::literal_t{token_t::l_string("\"A\"")})},
-                       expr::if_t::conditional_branch_t{
-                           .condition   = e(expr::binary_t{token_t::p_greater_equal(">="),
-                                                         e(expr::identifier_t{token_t::k_identifier("score")}),
-                                                         e(expr::literal_t{token_t::l_integer("80")})}),
-                           .then_branch = e(expr::literal_t{token_t::l_string("\"B\"")})}),
-                   e(expr::literal_t{token_t::l_string("\"C\"")})});
+        expr::if_t{
+            make_vector2<expr::if_t::conditional_branch_t>(
+                expr::if_t::conditional_branch_t{
+                    .condition   = expr::expr_t{"",
+                                              expr::binary_t{token_t::p_greater_equal(">="),
+                                                             e(expr::identifier_t{token_t::k_identifier("score")}),
+                                                             e(expr::literal_t{token_t::l_integer("90")})}},
+                    .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"A\"")}}},
+                expr::if_t::conditional_branch_t{
+                    .condition   = expr::expr_t{"",
+                                              expr::binary_t{token_t::p_greater_equal(">="),
+                                                             e(expr::identifier_t{token_t::k_identifier("score")}),
+                                                             e(expr::literal_t{token_t::l_integer("80")})}},
+                    .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"B\"")}}}),
+            e(expr::literal_t{token_t::l_string("\"C\"")})});
 }
 
 TEST(ParserTest, ExprIfBlockTest)
 {
-    expr_test(R"(
+    expr_test(
+        R"(
         if isReady then
             a
         end
     )",
-              expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                  .condition   = e(expr::identifier_t{token_t::k_identifier("isReady")}),
-                  .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})})});
+        expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+            .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("isReady")}},
+            .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})}}})});
 }
 
 TEST(ParserTest, ExprIfElseMixedBlockTest)
@@ -640,13 +654,14 @@ TEST(ParserTest, ExprIfElseMixedBlockTest)
             b + c
         end
     )",
-        expr::if_t{make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                       .condition   = e(expr::identifier_t{token_t::k_identifier("condition")}),
-                       .then_branch = e(expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})})}),
-                   e(expr::block_t{{},
-                                   e(expr::binary_t{token_t::p_plus("+"),
-                                                    e(expr::identifier_t{token_t::k_identifier("b")}),
-                                                    e(expr::identifier_t{token_t::k_identifier("c")})})})});
+        expr::if_t{
+            make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("condition")}},
+                .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})}}}),
+            e(expr::block_t{{},
+                            e(expr::binary_t{token_t::p_plus("+"),
+                                             e(expr::identifier_t{token_t::k_identifier("b")}),
+                                             e(expr::identifier_t{token_t::k_identifier("c")})})})});
 }
 
 TEST(ParserTest, ExprIfValueTest)
@@ -655,11 +670,12 @@ TEST(ParserTest, ExprIfValueTest)
               expr::binary_t{
                   token_t::p_asterisk("*"),
                   e(expr::grouping_t{e(expr::if_t{
-                      make_vector<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                          .condition   = e(expr::binary_t{token_t::p_greater(">"),
-                                                        e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                        e(expr::literal_t{token_t::l_integer("0")})}),
-                          .then_branch = e(expr::identifier_t{token_t::k_identifier("x")})}),
+                      make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                          .condition   = expr::expr_t{"",
+                                                    expr::binary_t{token_t::p_greater(">"),
+                                                                   e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                                   e(expr::literal_t{token_t::l_integer("0")})}},
+                          .then_branch = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("x")}}}),
                       e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("x")})})})}),
                   e(expr::literal_t{token_t::l_integer("2")})});
 }

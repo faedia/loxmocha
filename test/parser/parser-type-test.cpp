@@ -60,18 +60,19 @@ TEST(ParserTest, TypeRecordTest)
         b: string
     end
     )",
-        type::record_t{make_vector<type::record_t::field_t>(
+        type::record_t{make_vector2<type::record_t::field_t>(
             type::record_t::field_t{.name = token_t::k_identifier("a"),
-                                    .type = type::identifier_t{token_t::k_identifier("int")}},
+                                    .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}},
             type::record_t::field_t{.name = token_t::k_identifier("b"),
-                                    .type = type::identifier_t{token_t::k_identifier("string")}})});
+                                    .type = type::type_t{"", type::identifier_t{token_t::k_identifier("string")}}})});
 }
 
 TEST(ParserTest, TypeEmptyRecordTest) { type_test("rec end", type::record_t{{}}); }
 
 TEST(ParserTest, TypeTaggedTest)
 {
-    type_test(R"(
+    type_test(
+        R"(
     choice
         FirstTag: int,
         SecondTag: rec
@@ -80,27 +81,31 @@ TEST(ParserTest, TypeTaggedTest)
         end
     end
     )",
-              type::tagged_t{make_vector<type::tagged_t::tag_t>(
-                  type::tagged_t::tag_t{.name = token_t::k_identifier("FirstTag"),
-                                        .type = type::identifier_t{token_t::k_identifier("int")}},
-                  type::tagged_t::tag_t{
-                      .name = token_t::k_identifier("SecondTag"),
-                      .type = type::record_t{make_vector<type::record_t::field_t>(
-                          type::record_t::field_t{.name = token_t::k_identifier("name"),
-                                                  .type = type::identifier_t{token_t::k_identifier("string")}},
-                          type::record_t::field_t{.name = token_t::k_identifier("value"),
-                                                  .type = type::identifier_t{token_t::k_identifier("int")}})
+        type::tagged_t{make_vector2<type::tagged_t::tag_t>(
+            type::tagged_t::tag_t{.name = token_t::k_identifier("FirstTag"),
+                                  .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}},
+            type::tagged_t::tag_t{
+                .name = token_t::k_identifier("SecondTag"),
+                .type =
+                    type::type_t{"",
+                                 type::record_t{make_vector2<type::record_t::field_t>(
+                                     type::record_t::field_t{
+                                         .name = token_t::k_identifier("name"),
+                                         .type = type::type_t{"", type::identifier_t{token_t::k_identifier("string")}}},
+                                     type::record_t::field_t{
+                                         .name = token_t::k_identifier("value"),
+                                         .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}})}
 
-                      }}
+                    }}
 
-                  )});
+            )});
 }
 
 TEST(ParserTest, TypeSingleTaggedTest)
 {
     type_test("choice SingleTag: () end",
-              type::tagged_t{make_vector<type::tagged_t::tag_t>(
-                  type::tagged_t::tag_t{.name = token_t::k_identifier("SingleTag"), .type = type::tuple_t{{}}})});
+              type::tagged_t{make_vector2<type::tagged_t::tag_t>(type::tagged_t::tag_t{
+                  .name = token_t::k_identifier("SingleTag"), .type = type::type_t{"", type::tuple_t{{}}}})});
 }
 
 TEST(ParserTest, TypeReferenceTest)
@@ -154,15 +159,16 @@ TEST(ParserTest, TypeGroupingTest)
 
 TEST(ParserTest, TypeFunctionPrecedenceTest)
 {
-    type_test("fun(int[10], rec a: string end): arr[5]",
-              type::function_t{
-                  make_vector<type::type_t>(type::array_t{t(type::identifier_t{token_t::k_identifier("int")}),
-                                                          e(expr::literal_t{token_t::l_integer("10")})},
-                                            type::record_t{make_vector<type::record_t::field_t>(type::record_t::field_t{
-                                                .name = token_t::k_identifier("a"),
-                                                .type = type::identifier_t{token_t::k_identifier("string")}})}),
-                  t(type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
-                                  e(expr::literal_t{token_t::l_integer("5")})})});
+    type_test(
+        "fun(int[10], rec a: string end): arr[5]",
+        type::function_t{make_vector<type::type_t>(
+                             type::array_t{t(type::identifier_t{token_t::k_identifier("int")}),
+                                           e(expr::literal_t{token_t::l_integer("10")})},
+                             type::record_t{make_vector2<type::record_t::field_t>(type::record_t::field_t{
+                                 .name = token_t::k_identifier("a"),
+                                 .type = type::type_t{"", type::identifier_t{token_t::k_identifier("string")}}})}),
+                         t(type::array_t{t(type::identifier_t{token_t::k_identifier("arr")}),
+                                         e(expr::literal_t{token_t::l_integer("5")})})});
 }
 
 TEST(ParserTest, TypeFunctionArrayTest)

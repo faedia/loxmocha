@@ -1,11 +1,11 @@
 #pragma once
 
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
-#include "loxmocha/node.hpp"
 
 #include <utility>
 #include <vector>
@@ -104,8 +104,8 @@ public:
      * @brief Struct representing a function parameter.
      */
     struct parameter_t {
-        token_t                name;
-        safe_ptr<type::type_t> type;
+        token_t      name;
+        type::type_t type;
     };
 
     /**
@@ -308,9 +308,9 @@ private:
  *
  * A declaration is either a type declaration, function declaration or variable declaration.
  */
-class decl_t : public node_t<type_t, function_t, variable_t, error_t> {
+class decl_t : public ast_node_t<type_t, function_t, variable_t, error_t> {
 public:
-    using node_t::node_t;
+    using ast_node_t::ast_node_t;
 };
 
 } // namespace loxmocha::decl
