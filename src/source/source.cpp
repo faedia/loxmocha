@@ -57,12 +57,14 @@ auto source_info_t::find_span_location(std::string_view source_span) const
 auto source_view_t::find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>
 {
     // Find the the first line start position that is before input position.
-    auto line = std::ranges::lower_bound(
-        lines_.begin(), lines_.end(), pos, [](const std::string_view& line, const std::string_view& span) -> bool {
-            // Here we true if the line is before the span
-            // cppcheck-suppress mismatchingContainerExpression
-            return line.end() <= span.begin();
-        });
+    auto line = std::ranges::lower_bound(lines_.begin(),
+                                         lines_.end(),
+                                         std::string_view{pos, std::next(pos)},
+                                         [](const std::string_view& line, const std::string_view& span) -> bool {
+                                             // Here we return true if the line is before the span
+                                             // cppcheck-suppress mismatchingContainerExpression
+                                             return line.end() <= span.begin();
+                                         });
 
     // If we do not have lower bound then the position is not in the source.
     if (line == lines_.end()) {

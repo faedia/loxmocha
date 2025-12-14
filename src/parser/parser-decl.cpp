@@ -24,7 +24,6 @@ auto parser_t::parse_decl_internal() -> decl::decl_t
     case token_t::kind_e::k_var: lexer_.consume_token(); return item_decl(*token, decl::variable_t::mut_e::var);
     case token_t::kind_e::k_type: lexer_.consume_token(); return type_decl(*token);
     default:
-        lexer_.consume_token();
         has_error_ = true;
         diagnostics_.emplace_back("Expected declaration");
         return decl::decl_t{node_base_t{token->span()}, decl::error_t{"Invalid declaration"}};

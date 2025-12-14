@@ -159,7 +159,7 @@ class source_manager_t {
 public:
     /**
      * @class iterator_t
-     * @brief Iterator into the source files manages by source_manager_t.
+     * @brief Iterator into the source files managed by source_manager_t.
      * This iterator provides an access to source_view_t for the source file it points to.
      */
     class iterator_t {
