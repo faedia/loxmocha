@@ -116,22 +116,19 @@ auto lexer_t::next_token() -> std::expected<token_t, lex_error_t>
         // Advance to past the token error.
         current_iter_ = token.error().span().end();
     }
+    current_token_ = lex({current_iter_, input_.end()});
     return token;
 }
 
-auto lexer_t::peek_token() const -> std::expected<token_t, lex_error_t>
-{
-    if (current_iter_ == input_.end()) {
-        // If the current iterator is at the end of the input stream, return an EOF token.
-        return token_t::s_eof({current_iter_, current_iter_});
-    }
-
-    return lex({current_iter_, input_.end()});
-}
+auto lexer_t::peek_token() const -> std::expected<token_t, lex_error_t> { return current_token_; }
 
 void lexer_t::consume_token() { [[maybe_unused]] auto token = next_token(); }
 
-void lexer_t::reset_token(const token_t& token) { current_iter_ = token.span().begin(); }
+void lexer_t::reset_token(const token_t& token)
+{
+    current_token_ = token;
+    current_iter_  = token.span().begin();
+}
 
 auto lexer_t::source_location(std::string_view::iterator iter) const -> source_location_t
 {
