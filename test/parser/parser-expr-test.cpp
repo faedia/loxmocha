@@ -633,14 +633,15 @@ TEST(ParserTest, ExprIfElseIfElseTest)
 
 TEST(ParserTest, ExprIfBlockTest)
 {
-    expr_test(R"(
+    expr_test(
+        R"(
         if isReady then
             a
         end
     )",
-              expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                  .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("isReady")}},
-                  .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})}}})});
+        expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+            .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("isReady")}},
+            .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})}}})});
 }
 
 TEST(ParserTest, ExprIfElseMixedBlockTest)

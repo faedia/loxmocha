@@ -38,20 +38,24 @@ source_info_t::source_info_t(std::filesystem::path filepath, std::string&& conte
 {
 }
 
-auto source_info_t::find_location(std::string_view source_span) const -> std::optional<source_location_t>
+auto source_info_t::find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>
 {
-    return source_view_t{filepath_, content_, lines_}.find_location(source_span);
+    return source_view_t{filepath_, content_, lines_}.find_location(pos);
 }
 
-auto source_view_t::find_location(std::string_view source_span) const -> std::optional<source_location_t>
+auto source_info_t::find_span_location(std::string_view source_span) const
+    -> std::optional<std::pair<source_location_t, source_location_t>>
 {
-    auto line = std::ranges::lower_bound(lines_.begin(),
-                                         lines_.end(),
-                                         source_span,
-                                         [](const std::string_view& line, const std::string_view& span) -> bool {
-                                             // cppcheck-suppress mismatchingContainerExpression
-                                             return line.end() <= span.begin();
-                                         });
+    return source_view_t{filepath_, content_, lines_}.find_span_location(source_span);
+}
+
+auto source_view_t::find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>
+{
+    auto line = std::ranges::lower_bound(
+        lines_.begin(), lines_.end(), pos, [](const std::string_view& line, const std::string_view& span) -> bool {
+            // cppcheck-suppress mismatchingContainerExpression
+            return line.end() <= span.begin();
+        });
 
     if (line == lines_.end()) {
         return std::nullopt;
@@ -60,8 +64,25 @@ auto source_view_t::find_location(std::string_view source_span) const -> std::op
     return source_location_t{
         .line_span = *line,
         .line      = static_cast<std::size_t>(std::distance(lines_.begin(), line) + 1),
-        .column    = static_cast<std::size_t>(source_span.data() - line->data() + 1),
+        .column    = static_cast<std::size_t>(pos - line->data() + 1),
     };
+}
+
+auto source_view_t::find_span_location(std::string_view source_span) const
+    -> std::optional<std::pair<source_location_t, source_location_t>>
+{
+    auto start_loc = find_location(source_span.begin());
+    if (!start_loc) {
+        return std::nullopt;
+    }
+
+    auto end_loc = find_location(std::prev(source_span.end()));
+
+    if (!end_loc) {
+        return std::nullopt;
+    }
+
+    return std::make_pair(*start_loc, *end_loc);
 }
 
 auto source_manager_t::emplace(safe_ptr<source_info_t>&& source_info) -> std::pair<iterator_t, bool>
@@ -100,12 +121,12 @@ auto source_manager_t::find_source(std::string_view source_span) const -> source
     return source_manager_t::iterator_t{filepath_map_.end()};
 }
 
-auto source_manager_t::begin() -> source_manager_t::iterator_t
+auto source_manager_t::begin() const -> source_manager_t::iterator_t
 {
     return source_manager_t::iterator_t{filepath_map_.begin()};
 }
 
-auto source_manager_t::end() -> source_manager_t::iterator_t
+auto source_manager_t::end() const -> source_manager_t::iterator_t
 {
     return source_manager_t::iterator_t{filepath_map_.end()};
 }

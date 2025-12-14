@@ -55,7 +55,8 @@ TEST(ParserTest, DeclFunctionBlockBodyTest)
         decl::function_t{
             token_t::k_identifier("my_func"),
             make_vector2<decl::function_t::parameter_t>(decl::function_t::parameter_t{
-                .name = token_t::k_identifier("n"), .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}}),
+                .name = token_t::k_identifier("n"),
+                .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}}),
             t(type::identifier_t{token_t::k_identifier("int")}),
             e(expr::block_t{make_vector<stmt::stmt_t>(
                                 stmt::decl_t{d(decl::variable_t{decl::variable_t::mut_e::var,
@@ -87,14 +88,14 @@ TEST(ParserTest, DeclFunctionNoParametersTest)
 TEST(ParserTest, DeclFunctionNoReturnTypeTest)
 {
     decl_test("fun my_func(a: int) => print(a)",
-              decl::function_t{
-                  token_t::k_identifier("my_func"),
-                  make_vector2<decl::function_t::parameter_t>(decl::function_t::parameter_t{
-                      .name = token_t::k_identifier("a"), .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}}),
-                  t(type::tuple_t{{}}),
-                  e(expr::call_t{e(expr::identifier_t{token_t::k_identifier("print")}),
-                                 make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("a")}),
-                                 {}})});
+              decl::function_t{token_t::k_identifier("my_func"),
+                               make_vector2<decl::function_t::parameter_t>(decl::function_t::parameter_t{
+                                   .name = token_t::k_identifier("a"),
+                                   .type = type::type_t{"", type::identifier_t{token_t::k_identifier("int")}}}),
+                               t(type::tuple_t{{}}),
+                               e(expr::call_t{e(expr::identifier_t{token_t::k_identifier("print")}),
+                                              make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("a")}),
+                                              {}})});
 }
 
 TEST(ParserTest, DeclLetTest)

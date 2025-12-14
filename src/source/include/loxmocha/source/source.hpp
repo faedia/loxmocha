@@ -35,7 +35,9 @@ public:
     [[nodiscard]] auto filepath() const -> const std::filesystem::path& { return filepath_; }
     [[nodiscard]] auto content() const -> std::string_view { return content_; }
     [[nodiscard]] auto lines() const -> std::span<const std::string_view> { return lines_; }
-    [[nodiscard]] auto find_location(std::string_view source_span) const -> std::optional<source_location_t>;
+    [[nodiscard]] auto find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>;
+    [[nodiscard]] auto find_span_location(std::string_view source_span) const
+        -> std::optional<std::pair<source_location_t, source_location_t>>;
 
 private:
     std::filesystem::path         filepath_;
@@ -53,7 +55,9 @@ public:
     [[nodiscard]] auto filepath() const -> const std::filesystem::path& { return filepath_; }
     [[nodiscard]] auto content() const -> std::string_view { return content_; }
     [[nodiscard]] auto lines() const -> std::span<const std::string_view> { return lines_; }
-    [[nodiscard]] auto find_location(std::string_view source_span) const -> std::optional<source_location_t>;
+    [[nodiscard]] auto find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>;
+    [[nodiscard]] auto find_span_location(std::string_view source_span) const
+        -> std::optional<std::pair<source_location_t, source_location_t>>;
 
 private:
     std::filesystem::path             filepath_;
@@ -110,8 +114,8 @@ public:
     [[nodiscard]] auto find_source(std::string_view source_span) const -> iterator_t;
     [[nodiscard]] auto find_source(const std::filesystem::path& filepath) const -> iterator_t;
 
-    [[nodiscard]] auto begin() -> iterator_t;
-    [[nodiscard]] auto end() -> iterator_t;
+    [[nodiscard]] auto begin() const -> iterator_t;
+    [[nodiscard]] auto end() const -> iterator_t;
 
 private:
     std::unordered_map<std::filesystem::path, safe_ptr<source_info_t>> filepath_map_;

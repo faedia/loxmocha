@@ -104,7 +104,7 @@ public:
      * @brief Struct representing a function parameter.
      */
     struct parameter_t {
-        token_t                name;
+        token_t      name;
         type::type_t type;
     };
 

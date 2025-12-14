@@ -69,9 +69,8 @@ auto parser_t::if_expr(loxmocha::token_t if_tok) -> expr::expr_t
         } else if (auto then = expect_token<token_t::kind_e::k_then>(); then) {
             // Parse a block body.
             auto then_branch = block_body(*then);
-            conditional_branches.emplace_back(
-                expr::if_t::conditional_branch_t{.condition   = std::move(condition),
-                                                 .then_branch = std::move(then_branch)});
+            conditional_branches.emplace_back(expr::if_t::conditional_branch_t{.condition   = std::move(condition),
+                                                                               .then_branch = std::move(then_branch)});
 
             // If we have an end token then the if expression is complete.
             if (auto end = expect_token<token_t::kind_e::k_end>(); end) {
