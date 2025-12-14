@@ -47,9 +47,9 @@ auto main(int argc, char** argv) -> int
         source_manager.emplace(std::move(source_info));
 
         loxmocha::lexer_t lexer(source_manager.find_source(source_file).view().content());
-        auto start_time = std::chrono::high_resolution_clock::now();
+        auto              start_time   = std::chrono::high_resolution_clock::now();
         auto              parse_result = loxmocha::parse_decl(lexer);
-        auto end_time   = std::chrono::high_resolution_clock::now();
+        auto              end_time     = std::chrono::high_resolution_clock::now();
 
         std::println("Parsing took {} microseconds",
                      std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count());

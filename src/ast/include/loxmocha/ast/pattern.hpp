@@ -1,8 +1,8 @@
 #pragma once
 
+#include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
-#include "loxmocha/ast/base.hpp"
 
 namespace loxmocha::type {
 class type_t;

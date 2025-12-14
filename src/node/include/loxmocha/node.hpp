@@ -79,7 +79,7 @@ public:
     template<typename Visitor, typename... Args>
     auto visit(Visitor&& visitor, Args&&... args) const
     {
-        return std::visit([ &base = this->base_, &visitor, &args...](
+        return std::visit([&base = this->base_, &visitor, &args...](
                               auto&& arg) -> auto { return visitor(base, arg, std::forward<Args>(args)...); },
                           node_);
     }

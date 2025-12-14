@@ -133,7 +133,7 @@ public:
      * @return std::optional<source_location_t> The source location if found, or std::nullopt if not found.
      */
     [[nodiscard]] auto find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>;
-    
+
     /**
      * @brief Find the source locations corresponding to a span in the source content.
      * @param source_span A string view representing a span in the source content.
