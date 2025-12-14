@@ -15,6 +15,11 @@
 namespace loxmocha::source {
 
 namespace {
+    /**
+     * @brief Splits the given content into lines based on newline characters.
+     * @param content The content to split into lines.
+     * @return std::vector<std::string_view> A vector of string views, each representing a line in the content.
+     */
     auto make_lines(std::string_view content) -> std::vector<std::string_view>
     {
         std::vector<std::string_view> lines{};
@@ -51,16 +56,20 @@ auto source_info_t::find_span_location(std::string_view source_span) const
 
 auto source_view_t::find_location(std::string_view::iterator pos) const -> std::optional<source_location_t>
 {
+    // Find the the first line start position that is before input position.
     auto line = std::ranges::lower_bound(
         lines_.begin(), lines_.end(), pos, [](const std::string_view& line, const std::string_view& span) -> bool {
+            // Here we true if the line is before the span
             // cppcheck-suppress mismatchingContainerExpression
             return line.end() <= span.begin();
         });
 
+    // If we do not have lower bound then the position is not in the source.
     if (line == lines_.end()) {
         return std::nullopt;
     }
 
+    // Otherwise we have found the line and return the location.
     return source_location_t{
         .line_span = *line,
         .line      = static_cast<std::size_t>(std::distance(lines_.begin(), line) + 1),
@@ -82,6 +91,7 @@ auto source_view_t::find_span_location(std::string_view source_span) const
         return std::nullopt;
     }
 
+    // The pair of locations is only returned if both locations are found.
     return std::make_pair(*start_loc, *end_loc);
 }
 
@@ -108,16 +118,22 @@ auto source_manager_t::find_source(const std::filesystem::path& filepath) const 
 
 auto source_manager_t::find_source(std::string_view source_span) const -> source_manager_t::iterator_t
 {
+    // We use upper bound to find the first source file that starts after the given span.
     auto upper = source_map_.upper_bound(source_span);
+    // If the upper bound is the beginning then the span is before any source file.
+    // Therefore we do not have a source file for the span so we return end.
     if (upper == source_map_.begin()) {
         return source_manager_t::iterator_t{filepath_map_.end()};
     }
 
+    // Otherwise the span is in the source file before the upper bound.
     auto iter = std::prev(upper);
+    // Verify that all of the span is within the source file.
     if (iter->first.begin() <= source_span.begin() && source_span.end() <= iter->first.end()) {
         return source_manager_t::iterator_t{filepath_map_.find(iter->second.filepath())};
     }
 
+    // If not all the span is within the source file then we return end.
     return source_manager_t::iterator_t{filepath_map_.end()};
 }
 
