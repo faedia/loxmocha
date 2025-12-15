@@ -15,27 +15,6 @@
 namespace loxmocha::d2 {
 
 class d2_exporter_t {
-    static auto demangle(const char* name) -> std::string
-    {
-        // use __cxa_demangle to demangle the name given by typeid
-        // We save the pointer in a unique_ptr make sure it is freed after we copy it to a string
-        const std::unique_ptr<char, void (*)(void*)> demangled_ptr(abi::__cxa_demangle(name, nullptr, nullptr, nullptr),
-                                                                   std::free);
-        std::string                                  result = demangled_ptr ? demangled_ptr.get() : name;
-        return result;
-    }
-
-    static auto
-    node_label(node_base_t span, const auto& node, std::string_view name, const source::source_manager_t& source)
-        -> std::string
-    {
-        auto kind         = demangle(typeid(node).name());
-        auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
-            std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
-                                                                            {.line_span = "", .line = 0, .column = 0}});
-        return std::format(R"(:{}: {}\n at {}:{} - {}:{})", kind, name, start.line, start.column, end.line, end.column);
-    }
-
 public:
     static void export_ast(const decl::decl_t& root, const source::source_manager_t& source, std::ostream& stream)
     {
@@ -621,6 +600,28 @@ public:
         stream << "node" << next_id << " -> " << "node" << inner_child_id << '\n';
 
         return {next_id, final_next_id};
+    }
+
+private:
+    static auto demangle(const char* name) -> std::string
+    {
+        // use __cxa_demangle to demangle the name given by typeid
+        // We save the pointer in a unique_ptr make sure it is freed after we copy it to a string
+        const std::unique_ptr<char, void (*)(void*)> demangled_ptr(abi::__cxa_demangle(name, nullptr, nullptr, nullptr),
+                                                                   std::free);
+        std::string                                  result = demangled_ptr ? demangled_ptr.get() : name;
+        return result;
+    }
+
+    static auto
+    node_label(node_base_t span, const auto& node, std::string_view name, const source::source_manager_t& source)
+        -> std::string
+    {
+        auto kind         = demangle(typeid(node).name());
+        auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
+            std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
+                                                                            {.line_span = "", .line = 0, .column = 0}});
+        return std::format(R"(:{}: {}\n at {}:{} - {}:{})", kind, name, start.line, start.column, end.line, end.column);
     }
 };
 
