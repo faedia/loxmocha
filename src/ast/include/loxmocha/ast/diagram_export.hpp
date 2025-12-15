@@ -596,7 +596,8 @@ public:
 
         {
             auto [return_child_id, new_next_id] = type.return_type()->visit(*this, source, stream, final_next_id);
-            final_next_id                       = new_next_id;
+            Exporter::edge(next_id, return_child_id, stream);
+            final_next_id = new_next_id;
         }
 
         return {next_id, final_next_id};
