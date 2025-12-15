@@ -527,7 +527,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
     stream << make_indent(indent_stack_) << "┬Statements:\n";
     if (expr.statements().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent(indent_stack_) << "<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, statement] : std::views::enumerate(expr.statements())) {
@@ -784,7 +784,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
     stream << make_indent(indent_stack_) << "┬Parameter Types:\n";
     if (type.parameters().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent(indent_stack_) << "<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, param_type] : std::views::enumerate(type.parameters())) {

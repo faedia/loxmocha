@@ -15,6 +15,17 @@
 
 namespace loxmocha::diagram {
 
+template<typename T>
+auto type_name() -> std::string
+{
+    // use __cxa_demangle to demangle the name given by typeid
+    // We save the pointer in a unique_ptr make sure it is freed after we copy it to a string
+    const std::unique_ptr<char, void (*)(void*)> demangled_ptr(
+        abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr), std::free);
+    std::string result = demangled_ptr ? demangled_ptr.get() : typeid(T).name();
+    return result;
+}
+
 template<typename Exporter>
 class diagram_exporter_t {
 public:
@@ -290,7 +301,6 @@ public:
         for (const auto& element : expr.elements()) {
             auto [elem_child_id, new_next_id] = element.visit(*this, source, stream, final_next_id);
             Exporter::edge(next_id, elem_child_id, stream);
-            stream << "    node" << next_id << " -> " << "node" << elem_child_id << ";\n";
             final_next_id = new_next_id;
         }
 
@@ -586,8 +596,7 @@ public:
 
         {
             auto [return_child_id, new_next_id] = type.return_type()->visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << return_child_id << ";\n";
-            final_next_id = new_next_id;
+            final_next_id                       = new_next_id;
         }
 
         return {next_id, final_next_id};
@@ -603,7 +612,6 @@ public:
 
         auto [inner_child_id, final_next_id] = type.base_type()->visit(*this, source, stream, next_id + 1);
         Exporter::edge(next_id, inner_child_id, stream);
-        stream << "    node" << next_id << " -> " << "node" << inner_child_id << ";\n";
 
         return {next_id, final_next_id};
     }
@@ -611,18 +619,7 @@ public:
 
 class dot_exporter_helpers {
 public:
-    static auto demangle(const char* name) -> std::string
-    {
-        // use __cxa_demangle to demangle the name given by typeid
-        // We save the pointer in a unique_ptr make sure it is freed after we copy it to a string
-        const std::unique_ptr<char, void (*)(void*)> demangled_ptr(abi::__cxa_demangle(name, nullptr, nullptr, nullptr),
-                                                                   std::free);
-        std::string                                  result = demangled_ptr ? demangled_ptr.get() : name;
-        return result;
-    }
-
     static void header(std::ostream& stream) { stream << "digraph AST {\n"; }
-
     static void footer(std::ostream& stream) { stream << "}\n"; }
 
     static void node(node_base_t                     span,
@@ -632,12 +629,12 @@ public:
                      std::size_t                     node_id,
                      std::ostream&                   stream)
     {
-        auto kind         = demangle(typeid(node).name());
+        auto kind         = type_name<decltype(node)>();
         auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
             std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
                                                                             {.line_span = "", .line = 0, .column = 0}});
         const std::string label =
-            std::format("{}\\n{}:{} - {}:{}", kind, item_info, start.line, start.column, end.line, end.column);
+            std::format("{}: {}\\n{}:{} - {}:{}", kind, item_info, start.line, start.column, end.line, end.column);
         stream << "    node" << node_id << " [label=\"" << label << "\"];\n";
     }
 
@@ -651,16 +648,6 @@ using dot_exporter_t = diagram_exporter_t<dot_exporter_helpers>;
 
 class d2_exporter_helpers {
 public:
-    static auto demangle(const char* name) -> std::string
-    {
-        // use __cxa_demangle to demangle the name given by typeid
-        // We save the pointer in a unique_ptr make sure it is freed after we copy it to a string
-        const std::unique_ptr<char, void (*)(void*)> demangled_ptr(abi::__cxa_demangle(name, nullptr, nullptr, nullptr),
-                                                                   std::free);
-        std::string                                  result = demangled_ptr ? demangled_ptr.get() : name;
-        return result;
-    }
-
     static void header([[maybe_unused]] std::ostream& stream) {}
     static void footer([[maybe_unused]] std::ostream& stream) {}
 
@@ -671,12 +658,12 @@ public:
                      std::size_t                     node_id,
                      std::ostream&                   stream)
     {
-        auto kind         = demangle(typeid(node).name());
+        auto kind         = type_name<decltype(node)>();
         auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
             std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
                                                                             {.line_span = "", .line = 0, .column = 0}});
         const std::string label =
-            std::format("{}\\n{}:{} - {}:{}", kind, item_info, start.line, start.column, end.line, end.column);
+            std::format("{}: {}\\n{}:{} - {}:{}", kind, item_info, start.line, start.column, end.line, end.column);
         stream << "node" << node_id << ": " << label << "\n";
     }
 
