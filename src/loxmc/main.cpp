@@ -1,5 +1,4 @@
-#include "loxmocha/ast/d2_export.hpp"
-#include "loxmocha/ast/dot_export.hpp"
+#include "loxmocha/ast/diagram_export.hpp"
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pretty_printer.hpp"
@@ -92,7 +91,7 @@ auto main(int argc, char** argv) -> int
             }
 
             start_time = std::chrono::high_resolution_clock::now();
-            loxmocha::dot::dot_exporter_t::export_ast(parse_result.result(), source_manager, dot_stream);
+            loxmocha::diagram::dot_exporter_t::export_ast(parse_result.result(), source_manager, dot_stream);
             dot_stream.close();
             end_time = std::chrono::high_resolution_clock::now();
             std::println("DOT export took {} microseconds",
@@ -106,7 +105,7 @@ auto main(int argc, char** argv) -> int
             }
 
             start_time = std::chrono::high_resolution_clock::now();
-            loxmocha::d2::d2_exporter_t::export_ast(parse_result.result(), source_manager, d2_stream);
+            loxmocha::diagram::d2_exporter_t::export_ast(parse_result.result(), source_manager, d2_stream);
             d2_stream.close();
             end_time = std::chrono::high_resolution_clock::now();
             std::println("D2 export took {} microseconds",

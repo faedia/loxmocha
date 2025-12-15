@@ -10,18 +10,20 @@
 
 #include <cstddef>
 #include <cxxabi.h>
+#include <format>
 #include <ostream>
 
-namespace loxmocha::dot {
+namespace loxmocha::diagram {
 
-class dot_exporter_t {
+template<typename Exporter>
+class diagram_exporter_t {
 public:
-    static void export_ast(const decl::decl_t& root, const source::source_manager_t& source, std::ostream& stream)
+    static void export_ast(const auto& node, const source::source_manager_t& source, std::ostream& stream)
     {
-        dot_exporter_t exporter{};
-        stream << "digraph AST {\n";
-        root.visit(exporter, source, stream, 1);
-        stream << "}\n";
+        diagram_exporter_t<Exporter> exporter{};
+        Exporter::header(stream);
+        node.visit(exporter, source, stream, 1);
+        Exporter::footer(stream);
     }
 
     auto operator()(node_base_t                     span,
@@ -30,11 +32,9 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << current_id << ' ' << node_label(span, decl, decl.identifier().span(), source) << ";\n";
-
+        Exporter::node(span, decl, decl.identifier().span(), source, current_id, stream);
         auto [child_id, next_id] = decl.type()->visit(*this, source, stream, current_id + 1);
-
-        stream << "    node" << current_id << " -> " << "node" << child_id << ";\n";
+        Exporter::edge(current_id, child_id, stream);
         return {current_id, next_id};
     }
 
@@ -44,25 +44,24 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << current_id << ' ' << node_label(span, decl, decl.identifier().span(), source) << ";\n";
-
+        Exporter::node(span, decl, decl.identifier().span(), source, current_id, stream);
         std::size_t next_id = current_id + 1;
 
         for (const auto& param : decl.parameters()) {
             auto [child_id, new_next_id] = param.type.visit(*this, source, stream, next_id);
-            stream << "    node" << current_id << " -> " << "node" << child_id << ";\n";
+            Exporter::edge(current_id, child_id, stream);
             next_id = new_next_id;
         }
 
         {
             auto [child_id, new_next_id] = decl.return_type()->visit(*this, source, stream, next_id);
-            stream << "    node" << current_id << " -> " << "node" << child_id << ";\n";
+            Exporter::edge(current_id, child_id, stream);
             next_id = new_next_id;
         }
 
         {
             auto [child_id, new_next_id] = decl.body()->visit(*this, source, stream, next_id);
-            stream << "    node" << current_id << " -> " << "node" << child_id << ";\n";
+            Exporter::edge(current_id, child_id, stream);
             next_id = new_next_id;
         }
 
@@ -75,13 +74,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << current_id << ' ' << node_label(span, decl, decl.identifier().span(), source) << ";\n";
+        Exporter::node(span, decl, decl.identifier().span(), source, current_id, stream);
 
         auto [type_child_id, next_id] = decl.type()->visit(*this, source, stream, current_id + 1);
-        stream << "    node" << current_id << " -> " << "node" << type_child_id << ";\n";
+        Exporter::edge(current_id, type_child_id, stream);
 
         auto [init_child_id, final_next_id] = decl.initialiser()->visit(*this, source, stream, next_id);
-        stream << "    node" << current_id << " -> " << "node" << init_child_id << ";\n";
+        Exporter::edge(current_id, init_child_id, stream);
 
         return {current_id, final_next_id};
     }
@@ -92,7 +91,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, decl, "<error>", source) << ";\n";
+        Exporter::node(span, decl, "<error>", source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -102,7 +101,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, expr.value().span(), source) << ";\n";
+        Exporter::node(span, expr, expr.value().span(), source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -112,7 +111,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, expr.name().span(), source) << ";\n";
+        Exporter::node(span, expr, expr.name().span(), source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -122,13 +121,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, expr.op().span(), source) << ";\n";
+        Exporter::node(span, expr, expr.op().span(), source, next_id, stream);
 
         auto [left_child_id, next_id_after_left] = expr.left()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << left_child_id << ";\n";
+        Exporter::edge(next_id, left_child_id, stream);
 
         auto [right_child_id, final_next_id] = expr.right()->visit(*this, source, stream, next_id_after_left);
-        stream << "    node" << next_id << " -> " << "node" << right_child_id << ";\n";
+        Exporter::edge(next_id, right_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -139,12 +138,15 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "is", source) << ";\n";
+        Exporter::node(span, expr, "is", source, next_id, stream);
 
         auto [expr_child_id, next_id_after_expr] = expr.expr()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << expr_child_id << ";\n";
+        Exporter::edge(next_id, expr_child_id, stream);
 
-        return {next_id, next_id_after_expr};
+        auto [pattern_child_id, final_next_id] = expr.pattern()->visit(*this, source, stream, next_id_after_expr);
+        Exporter::edge(next_id, pattern_child_id, stream);
+
+        return {next_id, final_next_id};
     }
 
     auto operator()(node_base_t                     span,
@@ -153,13 +155,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "cast", source) << ";\n";
+        Exporter::node(span, expr, "cast", source, next_id, stream);
 
         auto [expr_child_id, next_id_after_expr] = expr.expr()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << expr_child_id << ";\n";
+        Exporter::edge(next_id, expr_child_id, stream);
 
         auto [type_child_id, final_next_id] = expr.type()->visit(*this, source, stream, next_id_after_expr);
-        stream << "    node" << next_id << " -> " << "node" << type_child_id << ";\n";
+        Exporter::edge(next_id, type_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -170,10 +172,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, expr.op().span(), source) << ";\n";
+        Exporter::node(span, expr, expr.op().span(), source, next_id, stream);
 
         auto [operand_child_id, final_next_id] = expr.operand()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << operand_child_id << ";\n";
+        Exporter::edge(next_id, operand_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -184,13 +186,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "index", source) << ";\n";
+        Exporter::node(span, expr, "index", source, next_id, stream);
 
         auto [array_child_id, next_id_after_array] = expr.base()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << array_child_id << ";\n";
+        Exporter::edge(next_id, array_child_id, stream);
 
         auto [index_child_id, final_next_id] = expr.index()->visit(*this, source, stream, next_id_after_array);
-        stream << "    node" << next_id << " -> " << "node" << index_child_id << ";\n";
+        Exporter::edge(next_id, index_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -201,10 +203,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, expr.field_name().span(), source) << ";\n";
+        Exporter::node(span, expr, expr.field_name().span(), source, next_id, stream);
 
         auto [base_child_id, final_next_id] = expr.base()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << base_child_id << ";\n";
+        Exporter::edge(next_id, base_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -215,22 +217,22 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "call", source) << ";\n";
+        Exporter::node(span, expr, "call", source, next_id, stream);
 
         auto [callee_child_id, next_id_after_callee] = expr.callee()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << callee_child_id << ";\n";
+        Exporter::edge(next_id, callee_child_id, stream);
 
         std::size_t final_next_id = next_id_after_callee;
 
         for (const auto& argument : expr.positional_args()) {
             auto [arg_child_id, new_next_id] = argument.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << arg_child_id << ";\n";
+            Exporter::edge(next_id, arg_child_id, stream);
             final_next_id = new_next_id;
         }
 
         for (const auto& argument : expr.named_args()) {
             auto [arg_child_id, new_next_id] = argument.value.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << arg_child_id << ";\n";
+            Exporter::edge(next_id, arg_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -243,13 +245,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "array", source) << ";\n";
+        Exporter::node(span, expr, "array", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& element : expr.elements()) {
             auto [elem_child_id, new_next_id] = element.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << elem_child_id << ";\n";
+            Exporter::edge(next_id, elem_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -262,13 +264,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "record", source) << ";\n";
+        Exporter::node(span, expr, "record", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& field : expr.fields()) {
             auto [field_child_id, new_next_id] = field.value.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << field_child_id << ";\n";
+            Exporter::edge(next_id, field_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -281,12 +283,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "tuple", source) << ";\n";
+        Exporter::node(span, expr, "tuple", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& element : expr.elements()) {
             auto [elem_child_id, new_next_id] = element.visit(*this, source, stream, final_next_id);
+            Exporter::edge(next_id, elem_child_id, stream);
             stream << "    node" << next_id << " -> " << "node" << elem_child_id << ";\n";
             final_next_id = new_next_id;
         }
@@ -300,10 +303,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "grouping", source) << ";\n";
+        Exporter::node(span, expr, "grouping", source, next_id, stream);
 
         auto [expr_child_id, final_next_id] = expr.expression()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << expr_child_id << ";\n";
+        Exporter::edge(next_id, expr_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -314,23 +317,23 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "if", source) << ";\n";
+        Exporter::node(span, expr, "if", source, next_id, stream);
 
         std::size_t current_id = next_id + 1;
 
         for (const auto& branch : expr.conditional_branches()) {
             auto [cond_child_id, next_id_after_cond] = branch.condition.visit(*this, source, stream, current_id);
-            stream << "    node" << next_id << " -> " << "node" << cond_child_id << ";\n";
+            Exporter::edge(next_id, cond_child_id, stream);
             current_id = next_id_after_cond;
 
             auto [then_child_id, next_id_after_then] = branch.then_branch.visit(*this, source, stream, current_id);
-            stream << "    node" << next_id << " -> " << "node" << then_child_id << ";\n";
+            Exporter::edge(next_id, then_child_id, stream);
             current_id = next_id_after_then;
         }
 
         if (expr.else_branch()) {
             auto [else_child_id, final_next_id] = expr.else_branch()->visit(*this, source, stream, current_id);
-            stream << "    node" << next_id << " -> " << "node" << else_child_id << ";\n";
+            Exporter::edge(next_id, else_child_id, stream);
             current_id = final_next_id;
         }
         return {next_id, current_id};
@@ -342,13 +345,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "while", source) << ";\n";
+        Exporter::node(span, expr, "while", source, next_id, stream);
 
         auto [cond_child_id, next_id_after_cond] = expr.condition()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << cond_child_id << ";\n";
+        Exporter::edge(next_id, cond_child_id, stream);
 
         auto [body_child_id, final_next_id] = expr.body()->visit(*this, source, stream, next_id_after_cond);
-        stream << "    node" << next_id << " -> " << "node" << body_child_id << ";\n";
+        Exporter::edge(next_id, body_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -359,19 +362,19 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "block", source) << ";\n";
+        Exporter::node(span, expr, "block", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& statement : expr.statements()) {
             auto [stmt_child_id, new_next_id] = statement.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << stmt_child_id << ";\n";
+            Exporter::edge(next_id, stmt_child_id, stream);
             final_next_id = new_next_id;
         }
 
         {
             auto [return_child_id, new_next_id] = expr.return_expr()->visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << return_child_id << ";\n";
+            Exporter::edge(next_id, return_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -384,7 +387,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, expr, "<error>", source) << ";\n";
+        Exporter::node(span, expr, "<error>", source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -394,7 +397,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, pattern, pattern.name().span(), source) << ";\n";
+        Exporter::node(span, pattern, pattern.name().span(), source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -404,13 +407,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, pattern, pattern.name().span(), source) << ";\n";
+        Exporter::node(span, pattern, pattern.name().span(), source, next_id, stream);
 
         auto [type_child_id, next_id_after_type] = pattern.type()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << type_child_id << ";\n";
+        Exporter::edge(next_id, type_child_id, stream);
 
         auto [inner_child_id, final_next_id] = pattern.pattern()->visit(*this, source, stream, next_id_after_type);
-        stream << "    node" << next_id << " -> " << "node" << inner_child_id << ";\n";
+        Exporter::edge(next_id, inner_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -421,7 +424,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, pattern, "<error>", source) << ";\n";
+        Exporter::node(span, pattern, "<error>", source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -431,10 +434,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, stmt, "expr", source) << ";\n";
+        Exporter::node(span, stmt, "expr", source, next_id, stream);
 
         auto [expr_child_id, final_next_id] = stmt.expr()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << expr_child_id << ";\n";
+        Exporter::edge(next_id, expr_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -445,13 +448,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, stmt, "assign", source) << ";\n";
+        Exporter::node(span, stmt, "assign", source, next_id, stream);
 
         auto [target_child_id, next_id_after_target] = stmt.target()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << target_child_id << ";\n";
+        Exporter::edge(next_id, target_child_id, stream);
 
         auto [value_child_id, final_next_id] = stmt.value()->visit(*this, source, stream, next_id_after_target);
-        stream << "    node" << next_id << " -> " << "node" << value_child_id << ";\n";
+        Exporter::edge(next_id, value_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -462,10 +465,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, stmt, "decl", source) << ";\n";
+        Exporter::node(span, stmt, "decl", source, next_id, stream);
 
         auto [decl_child_id, final_next_id] = stmt.declaration()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << decl_child_id << ";\n";
+        Exporter::edge(next_id, decl_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -476,7 +479,7 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, type.name().span(), source) << ";\n";
+        Exporter::node(span, type, type.name().span(), source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
@@ -486,10 +489,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "array", source) << ";\n";
+        Exporter::node(span, type, "array", source, next_id, stream);
 
         auto [element_child_id, final_next_id] = type.element_type()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << element_child_id << ";\n";
+        Exporter::edge(next_id, element_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -500,13 +503,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "tuple", source) << ";\n";
+        Exporter::node(span, type, "tuple", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& element_type : type.element_types()) {
             auto [elem_child_id, new_next_id] = element_type.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << elem_child_id << ";\n";
+            Exporter::edge(next_id, elem_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -519,13 +522,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "record", source) << ";\n";
+        Exporter::node(span, type, "record", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& field : type.fields()) {
             auto [field_child_id, new_next_id] = field.type.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << field_child_id << ";\n";
+            Exporter::edge(next_id, field_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -538,13 +541,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "choice", source) << ";\n";
+        Exporter::node(span, type, "choice", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& variant : type.tags()) {
             auto [variant_child_id, new_next_id] = variant.type.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << variant_child_id << ";\n";
+            Exporter::edge(next_id, variant_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -557,10 +560,10 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "reference", source) << ";\n";
+        Exporter::node(span, type, "reference", source, next_id, stream);
 
         auto [inner_child_id, final_next_id] = type.base_type()->visit(*this, source, stream, next_id + 1);
-        stream << "    node" << next_id << " -> " << "node" << inner_child_id << ";\n";
+        Exporter::edge(next_id, inner_child_id, stream);
 
         return {next_id, final_next_id};
     }
@@ -571,13 +574,13 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "function", source) << ";\n";
+        Exporter::node(span, type, "function", source, next_id, stream);
 
         std::size_t final_next_id = next_id + 1;
 
         for (const auto& param_type : type.parameters()) {
             auto [param_child_id, new_next_id] = param_type.visit(*this, source, stream, final_next_id);
-            stream << "    node" << next_id << " -> " << "node" << param_child_id << ";\n";
+            Exporter::edge(next_id, param_child_id, stream);
             final_next_id = new_next_id;
         }
 
@@ -596,15 +599,18 @@ public:
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
     {
-        stream << "    node" << next_id << ' ' << node_label(span, type, "mutable", source) << ";\n";
+        Exporter::node(span, type, "mutable", source, next_id, stream);
 
         auto [inner_child_id, final_next_id] = type.base_type()->visit(*this, source, stream, next_id + 1);
+        Exporter::edge(next_id, inner_child_id, stream);
         stream << "    node" << next_id << " -> " << "node" << inner_child_id << ";\n";
 
         return {next_id, final_next_id};
     }
+};
 
-private:
+class dot_exporter_helpers {
+public:
     static auto demangle(const char* name) -> std::string
     {
         // use __cxa_demangle to demangle the name given by typeid
@@ -615,17 +621,71 @@ private:
         return result;
     }
 
-    static auto
-    node_label(node_base_t span, const auto& node, std::string_view name, const source::source_manager_t& source)
-        -> std::string
+    static void header(std::ostream& stream) { stream << "digraph AST {\n"; }
+
+    static void footer(std::ostream& stream) { stream << "}\n"; }
+
+    static void node(node_base_t                     span,
+                     const auto&                     node,
+                     const auto&                     item_info,
+                     const source::source_manager_t& source,
+                     std::size_t                     node_id,
+                     std::ostream&                   stream)
     {
         auto kind         = demangle(typeid(node).name());
         auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
             std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
                                                                             {.line_span = "", .line = 0, .column = 0}});
-        return std::format(
-            R"([label="{}: {}\n at {}:{} - {}:{}"])", kind, name, start.line, start.column, end.line, end.column);
+        const std::string label =
+            std::format("{}\\n{}:{} - {}:{}", kind, item_info, start.line, start.column, end.line, end.column);
+        stream << "    node" << node_id << " [label=\"" << label << "\"];\n";
+    }
+
+    static void edge(std::size_t from_id, std::size_t to_id, std::ostream& stream)
+    {
+        stream << "    node" << from_id << " -> " << "node" << to_id << ";\n";
     }
 };
 
-} // namespace loxmocha::dot
+using dot_exporter_t = diagram_exporter_t<dot_exporter_helpers>;
+
+class d2_exporter_helpers {
+public:
+    static auto demangle(const char* name) -> std::string
+    {
+        // use __cxa_demangle to demangle the name given by typeid
+        // We save the pointer in a unique_ptr make sure it is freed after we copy it to a string
+        const std::unique_ptr<char, void (*)(void*)> demangled_ptr(abi::__cxa_demangle(name, nullptr, nullptr, nullptr),
+                                                                   std::free);
+        std::string                                  result = demangled_ptr ? demangled_ptr.get() : name;
+        return result;
+    }
+
+    static void header([[maybe_unused]] std::ostream& stream) {}
+    static void footer([[maybe_unused]] std::ostream& stream) {}
+
+    static void node(node_base_t                     span,
+                     const auto&                     node,
+                     const auto&                     item_info,
+                     const source::source_manager_t& source,
+                     std::size_t                     node_id,
+                     std::ostream&                   stream)
+    {
+        auto kind         = demangle(typeid(node).name());
+        auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
+            std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
+                                                                            {.line_span = "", .line = 0, .column = 0}});
+        const std::string label =
+            std::format("{}\\n{}:{} - {}:{}", kind, item_info, start.line, start.column, end.line, end.column);
+        stream << "node" << node_id << ": " << label << "\n";
+    }
+
+    static void edge(std::size_t from_id, std::size_t to_id, std::ostream& stream)
+    {
+        stream << "node" << from_id << " -> " << "node" << to_id << "\n";
+    }
+};
+
+using d2_exporter_t = diagram_exporter_t<d2_exporter_helpers>;
+
+} // namespace loxmocha::diagram
