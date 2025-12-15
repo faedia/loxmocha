@@ -9,17 +9,57 @@
 #include "loxmocha/source/source.hpp"
 
 #include <cstddef>
+#include <format>
 #include <ostream>
 #include <ranges>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace loxmocha {
+
+namespace {
+    [[nodiscard]] auto make_indent(const std::vector<bool>& indent_stack) -> std::string
+    {
+        std::string indent{};
+
+        for (const auto [index, isLast] : std::views::enumerate(indent_stack)) {
+            if (static_cast<std::size_t>(index) == indent_stack.size() - 1) {
+                indent += isLast ? "└──" : "├──";
+            } else {
+                indent += isLast ? "   " : "│  ";
+            }
+        }
+
+        return indent;
+    }
+
+    [[nodiscard]] auto get_location(const source::source_manager_t& source, std::string_view span) -> std::string
+    {
+        auto file = source.find_source(span);
+        if (file == source.end()) {
+            return "<unknown file>";
+        }
+
+        if (auto loc = file.view().find_span_location(span); loc) {
+            return std::format("{}:{}:{}-{}:{}",
+                               file.view().filepath().filename().string(),
+                               loc->first.line,
+                               loc->first.column,
+                               loc->second.line,
+                               loc->second.column);
+        }
+
+        return std::format("{}:<unknown location>", file.view().filepath().filename().string());
+    }
+} // namespace
 
 void pretty_printer_t::operator()(node_base_t                     span,
                                   const decl::type_t&             decl,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "─Type Declaration: name: \"" << decl.identifier().span() << "\" at "
+    stream << make_indent(indent_stack_) << "─Type Declaration: name: \"" << decl.identifier().span() << "\" at "
            << get_location(source, span) << '\n';
     indent_stack_.push_back(true);
     decl.type()->visit(*this, source, stream);
@@ -31,20 +71,20 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Function Declaration: name: \"" << decl.identifier().span() << "\" at "
+    stream << make_indent(indent_stack_) << "┬Function Declaration: name: \"" << decl.identifier().span() << "\" at "
            << get_location(source, span) << '\n';
 
     // Parameters
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Parameters:\n";
+    stream << make_indent(indent_stack_) << "┬Parameters:\n";
     if (decl.parameters().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, param] : std::views::enumerate(decl.parameters())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == decl.parameters().size() - 1);
-            stream << make_indent() << "┬Parameter: name: \"" << param.name.span() << "\" at "
+            stream << make_indent(indent_stack_) << "┬Parameter: name: \"" << param.name.span() << "\" at "
                    << get_location(source, param.name.span()) << '\n';
             indent_stack_.push_back(true);
             param.type.visit(*this, source, stream);
@@ -56,7 +96,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Return type
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Return Type:\n";
+    stream << make_indent(indent_stack_) << "┬Return Type:\n";
     indent_stack_.push_back(true);
     decl.return_type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -64,7 +104,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Body
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Function Body:\n";
+    stream << make_indent(indent_stack_) << "┬Function Body:\n";
     indent_stack_.push_back(true);
     decl.body()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -76,13 +116,13 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Variable Declaration: name: \"" << decl.identifier().span() << "\" ("
+    stream << make_indent(indent_stack_) << "┬Variable Declaration: name: \"" << decl.identifier().span() << "\" ("
            << (decl.mutability() == decl::variable_t::mut_e::let ? "let" : "var") << ") at "
            << get_location(source, span) << '\n';
 
     // Type
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Type:\n";
+    stream << make_indent(indent_stack_) << "┬Type:\n";
     indent_stack_.push_back(true);
     decl.type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -90,7 +130,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Initialiser
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Initialiser:\n";
+    stream << make_indent(indent_stack_) << "┬Initialiser:\n";
     indent_stack_.push_back(true);
     decl.initialiser()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -102,8 +142,8 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "─Error Declaration: \"" << decl.message() << "\" at " << get_location(source, span)
-           << '\n';
+    stream << make_indent(indent_stack_) << "─Error Declaration: \"" << decl.message() << "\" at "
+           << get_location(source, span) << '\n';
 }
 
 void pretty_printer_t::operator()(node_base_t                     span,
@@ -111,7 +151,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "─Literal Expression: value: \"" << expr.value().span() << "\" at "
+    stream << make_indent(indent_stack_) << "─Literal Expression: value: \"" << expr.value().span() << "\" at "
            << get_location(source, span) << '\n';
 }
 
@@ -120,7 +160,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "─Identifier Expression: name: \"" << expr.name().span() << "\" at "
+    stream << make_indent(indent_stack_) << "─Identifier Expression: name: \"" << expr.name().span() << "\" at "
            << get_location(source, span) << '\n';
 }
 
@@ -129,12 +169,12 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Binary Expression: operator: \"" << expr.op().span() << "\" at "
+    stream << make_indent(indent_stack_) << "┬Binary Expression: operator: \"" << expr.op().span() << "\" at "
            << get_location(source, span) << '\n';
 
     // Left operand
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Left Operand:\n";
+    stream << make_indent(indent_stack_) << "┬Left Operand:\n";
     indent_stack_.push_back(true);
     expr.left()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -142,7 +182,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Right operand
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Right Operand:\n";
+    stream << make_indent(indent_stack_) << "┬Right Operand:\n";
     indent_stack_.push_back(true);
     expr.right()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -154,11 +194,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Is Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Is Expression at " << get_location(source, span) << '\n';
 
     // Left expression
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Expression:\n";
     indent_stack_.push_back(true);
     expr.expr()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -166,7 +206,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Pattern
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Pattern:\n";
+    stream << make_indent(indent_stack_) << "┬Pattern:\n";
     indent_stack_.push_back(true);
     expr.pattern()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -178,11 +218,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Cast Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Cast Expression at " << get_location(source, span) << '\n';
 
     // Left expression
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Expression:\n";
     indent_stack_.push_back(true);
     expr.expr()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -190,7 +230,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Type
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Type:\n";
+    stream << make_indent(indent_stack_) << "┬Type:\n";
     indent_stack_.push_back(true);
     expr.type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -202,12 +242,12 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Unary Expression: operator: \"" << expr.op().span() << "\" at "
+    stream << make_indent(indent_stack_) << "┬Unary Expression: operator: \"" << expr.op().span() << "\" at "
            << get_location(source, span) << '\n';
 
     // Operand
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Operand:\n";
+    stream << make_indent(indent_stack_) << "┬Operand:\n";
     indent_stack_.push_back(true);
     expr.operand()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -219,11 +259,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Index Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Index Expression at " << get_location(source, span) << '\n';
 
     // Base expression
     indent_stack_.push_back(false);
-    stream << make_indent() << "─Base Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Base Expression:\n";
     indent_stack_.push_back(true);
     expr.base()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -231,7 +271,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Index expression
     indent_stack_.push_back(true);
-    stream << make_indent() << "─Index Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Index Expression:\n";
     indent_stack_.push_back(true);
     expr.index()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -243,12 +283,12 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Field Access Expression: field name: \"" << expr.field_name().span() << "\" at "
-           << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Field Access Expression: field name: \"" << expr.field_name().span()
+           << "\" at " << get_location(source, span) << '\n';
 
     // Base expression
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Base Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Base Expression:\n";
     indent_stack_.push_back(true);
     expr.base()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -260,11 +300,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Call Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Call Expression at " << get_location(source, span) << '\n';
 
     // Callee expression
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Callee Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Callee Expression:\n";
     indent_stack_.push_back(true);
     expr.callee()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -272,15 +312,15 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Positional arguments
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Positional Arguments:\n";
+    stream << make_indent(indent_stack_) << "┬Positional Arguments:\n";
     if (expr.positional_args().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, arg] : std::views::enumerate(expr.positional_args())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == expr.positional_args().size() - 1);
-            stream << make_indent() << "┬Argument " << index << ":\n";
+            stream << make_indent(indent_stack_) << "┬Argument " << index << ":\n";
             indent_stack_.push_back(true);
             arg.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -291,15 +331,15 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Named arguments
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Named Arguments:\n";
+    stream << make_indent(indent_stack_) << "┬Named Arguments:\n";
     if (expr.named_args().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, arg] : std::views::enumerate(expr.named_args())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == expr.named_args().size() - 1);
-            stream << make_indent() << "┬Argument \"" << arg.name.span() << "\":\n";
+            stream << make_indent(indent_stack_) << "┬Argument \"" << arg.name.span() << "\":\n";
             indent_stack_.push_back(true);
             arg.value.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -314,19 +354,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Array Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Array Expression at " << get_location(source, span) << '\n';
 
     // Elements
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Elements:\n";
+    stream << make_indent(indent_stack_) << "┬Elements:\n";
     if (expr.elements().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, element] : std::views::enumerate(expr.elements())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == expr.elements().size() - 1);
-            stream << make_indent() << "┬Element " << index << ":\n";
+            stream << make_indent(indent_stack_) << "┬Element " << index << ":\n";
             indent_stack_.push_back(true);
             element.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -341,19 +381,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Record Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Record Expression at " << get_location(source, span) << '\n';
 
     // Fields
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Fields:\n";
+    stream << make_indent(indent_stack_) << "┬Fields:\n";
     if (expr.fields().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, field] : std::views::enumerate(expr.fields())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == expr.fields().size() - 1);
-            stream << make_indent() << "┬Field \"" << field.name.span() << "\":\n";
+            stream << make_indent(indent_stack_) << "┬Field \"" << field.name.span() << "\":\n";
             indent_stack_.push_back(true);
             field.value.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -368,19 +408,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Tuple Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Tuple Expression at " << get_location(source, span) << '\n';
 
     // Elements
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Elements:\n";
+    stream << make_indent(indent_stack_) << "┬Elements:\n";
     if (expr.elements().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, element] : std::views::enumerate(expr.elements())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == expr.elements().size() - 1);
-            stream << make_indent() << "┬Element " << index << ":\n";
+            stream << make_indent(indent_stack_) << "┬Element " << index << ":\n";
             indent_stack_.push_back(true);
             element.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -395,11 +435,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Grouping Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Grouping Expression at " << get_location(source, span) << '\n';
 
     // Inner expression
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Inner Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Inner Expression:\n";
     indent_stack_.push_back(true);
     expr.expression()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -411,18 +451,18 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬If Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬If Expression at " << get_location(source, span) << '\n';
 
     // Conditional branches
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Conditional Branches:\n";
+    stream << make_indent(indent_stack_) << "┬Conditional Branches:\n";
     for (const auto& [index, branch] : std::views::enumerate(expr.conditional_branches())) {
         indent_stack_.push_back(static_cast<std::size_t>(index) == expr.conditional_branches().size() - 1);
-        stream << make_indent() << "┬Branch " << index << ":\n";
+        stream << make_indent(indent_stack_) << "┬Branch " << index << ":\n";
 
         // Condition
         indent_stack_.push_back(false);
-        stream << make_indent() << "┬Condition:\n";
+        stream << make_indent(indent_stack_) << "┬Condition:\n";
         indent_stack_.push_back(true);
         branch.condition.visit(*this, source, stream);
         indent_stack_.pop_back();
@@ -430,7 +470,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
         // Then branch
         indent_stack_.push_back(true);
-        stream << make_indent() << "┬Then Branch:\n";
+        stream << make_indent(indent_stack_) << "┬Then Branch:\n";
         indent_stack_.push_back(true);
         branch.then_branch.visit(*this, source, stream);
         indent_stack_.pop_back();
@@ -443,7 +483,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
     // Else branch
     if (expr.else_branch()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "┬Else Branch:\n";
+        stream << make_indent(indent_stack_) << "┬Else Branch:\n";
         indent_stack_.push_back(true);
         expr.else_branch()->visit(*this, source, stream);
         indent_stack_.pop_back();
@@ -456,11 +496,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬While Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬While Expression at " << get_location(source, span) << '\n';
 
     // Condition
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Condition:\n";
+    stream << make_indent(indent_stack_) << "┬Condition:\n";
     indent_stack_.push_back(true);
     expr.condition()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -468,7 +508,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Body
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Body:\n";
+    stream << make_indent(indent_stack_) << "┬Body:\n";
     indent_stack_.push_back(true);
     expr.body()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -480,19 +520,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Block Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Block Expression at " << get_location(source, span) << '\n';
 
     // Statements
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Statements:\n";
+    stream << make_indent(indent_stack_) << "┬Statements:\n";
     if (expr.statements().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "<none>\n";
+        stream << make_indent(indent_stack_) << "<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, statement] : std::views::enumerate(expr.statements())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == expr.statements().size() - 1);
-            stream << make_indent() << "┬Statement " << index << ":\n";
+            stream << make_indent(indent_stack_) << "┬Statement " << index << ":\n";
             indent_stack_.push_back(true);
             statement.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -503,7 +543,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Return expression
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Return Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Return Expression:\n";
     indent_stack_.push_back(true);
     expr.return_expr()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -515,7 +555,7 @@ void pretty_printer_t::operator()(node_base_t                           span,
                                   const source::source_manager_t&       source,
                                   std::ostream&                         stream)
 {
-    stream << make_indent() << "─Error Expression at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "─Error Expression at " << get_location(source, span) << '\n';
 }
 
 void pretty_printer_t::operator()(node_base_t                     span,
@@ -523,7 +563,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "─Identifier Pattern: name: \"" << pattern.name().span() << "\" at "
+    stream << make_indent(indent_stack_) << "─Identifier Pattern: name: \"" << pattern.name().span() << "\" at "
            << get_location(source, span) << '\n';
 }
 
@@ -532,12 +572,12 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Tag Pattern: tag name: \"" << pattern.name().span() << "\" at "
+    stream << make_indent(indent_stack_) << "┬Tag Pattern: tag name: \"" << pattern.name().span() << "\" at "
            << get_location(source, span) << '\n';
 
     // Type
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Type:\n";
+    stream << make_indent(indent_stack_) << "┬Type:\n";
     indent_stack_.push_back(true);
     pattern.type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -545,7 +585,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Inner pattern
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Inner Pattern:\n";
+    stream << make_indent(indent_stack_) << "┬Inner Pattern:\n";
     indent_stack_.push_back(true);
     pattern.pattern()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -557,7 +597,7 @@ void pretty_printer_t::operator()(node_base_t                              span,
                                   const source::source_manager_t&          source,
                                   std::ostream&                            stream)
 {
-    stream << make_indent() << "─Error Pattern at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "─Error Pattern at " << get_location(source, span) << '\n';
 }
 
 void pretty_printer_t::operator()(node_base_t                     span,
@@ -565,11 +605,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Expression Statement at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Expression Statement at " << get_location(source, span) << '\n';
 
     // Expression
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Expression:\n";
+    stream << make_indent(indent_stack_) << "┬Expression:\n";
     indent_stack_.push_back(true);
     stmt.expr()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -581,11 +621,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Assignment Statement at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Assignment Statement at " << get_location(source, span) << '\n';
 
     // Target
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Target:\n";
+    stream << make_indent(indent_stack_) << "┬Target:\n";
     indent_stack_.push_back(true);
     stmt.target()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -593,7 +633,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Value
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Value:\n";
+    stream << make_indent(indent_stack_) << "┬Value:\n";
     indent_stack_.push_back(true);
     stmt.value()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -605,11 +645,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Declaration Statement at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Declaration Statement at " << get_location(source, span) << '\n';
 
     // Declaration
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Declaration:\n";
+    stream << make_indent(indent_stack_) << "┬Declaration:\n";
     indent_stack_.push_back(true);
     stmt.declaration()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -621,7 +661,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "─Identifier Type: name: \"" << type.name().span() << "\" at "
+    stream << make_indent(indent_stack_) << "─Identifier Type: name: \"" << type.name().span() << "\" at "
            << get_location(source, span) << '\n';
 }
 
@@ -630,11 +670,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Array Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Array Type at " << get_location(source, span) << '\n';
 
     // Element type
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Element Type:\n";
+    stream << make_indent(indent_stack_) << "┬Element Type:\n";
     indent_stack_.push_back(true);
     type.element_type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -646,19 +686,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Tuple Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Tuple Type at " << get_location(source, span) << '\n';
 
     // Element types
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Element Types:\n";
+    stream << make_indent(indent_stack_) << "┬Element Types:\n";
     if (type.element_types().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, element_type] : std::views::enumerate(type.element_types())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == type.element_types().size() - 1);
-            stream << make_indent() << "┬Element Type " << index << ":\n";
+            stream << make_indent(indent_stack_) << "┬Element Type " << index << ":\n";
             indent_stack_.push_back(true);
             element_type.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -673,19 +713,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Record Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Record Type at " << get_location(source, span) << '\n';
 
     // Fields
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Fields:\n";
+    stream << make_indent(indent_stack_) << "┬Fields:\n";
     if (type.fields().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "─<none>\n";
+        stream << make_indent(indent_stack_) << "─<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, field] : std::views::enumerate(type.fields())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == type.fields().size() - 1);
-            stream << make_indent() << "┬Field \"" << field.name.span() << "\":\n";
+            stream << make_indent(indent_stack_) << "┬Field \"" << field.name.span() << "\":\n";
             indent_stack_.push_back(true);
             field.type.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -700,14 +740,14 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Tagged Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Tagged Type at " << get_location(source, span) << '\n';
 
     // Choices
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Choices:\n";
+    stream << make_indent(indent_stack_) << "┬Choices:\n";
     for (const auto& [index, tag] : std::views::enumerate(type.tags())) {
         indent_stack_.push_back(static_cast<std::size_t>(index) == type.tags().size() - 1);
-        stream << make_indent() << "┬Choice \"" << tag.name.span() << "\":\n";
+        stream << make_indent(indent_stack_) << "┬Choice \"" << tag.name.span() << "\":\n";
         indent_stack_.push_back(true);
         tag.type.visit(*this, source, stream);
         indent_stack_.pop_back();
@@ -721,11 +761,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Reference Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Reference Type at " << get_location(source, span) << '\n';
 
     // Referenced type
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Referenced Type:\n";
+    stream << make_indent(indent_stack_) << "┬Referenced Type:\n";
     indent_stack_.push_back(true);
     type.base_type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -737,19 +777,19 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Function Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Function Type at " << get_location(source, span) << '\n';
 
     // Parameter types
     indent_stack_.push_back(false);
-    stream << make_indent() << "┬Parameter Types:\n";
+    stream << make_indent(indent_stack_) << "┬Parameter Types:\n";
     if (type.parameters().empty()) {
         indent_stack_.push_back(true);
-        stream << make_indent() << "<none>\n";
+        stream << make_indent(indent_stack_) << "<none>\n";
         indent_stack_.pop_back();
     } else {
         for (const auto& [index, param_type] : std::views::enumerate(type.parameters())) {
             indent_stack_.push_back(static_cast<std::size_t>(index) == type.parameters().size() - 1);
-            stream << make_indent() << "┬Parameter Type " << index << ":\n";
+            stream << make_indent(indent_stack_) << "┬Parameter Type " << index << ":\n";
             indent_stack_.push_back(true);
             param_type.visit(*this, source, stream);
             indent_stack_.pop_back();
@@ -760,7 +800,7 @@ void pretty_printer_t::operator()(node_base_t                     span,
 
     // Return type
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Return Type:\n";
+    stream << make_indent(indent_stack_) << "┬Return Type:\n";
     indent_stack_.push_back(true);
     type.return_type()->visit(*this, source, stream);
     indent_stack_.pop_back();
@@ -772,11 +812,11 @@ void pretty_printer_t::operator()(node_base_t                     span,
                                   const source::source_manager_t& source,
                                   std::ostream&                   stream)
 {
-    stream << make_indent() << "┬Mutable Type at " << get_location(source, span) << '\n';
+    stream << make_indent(indent_stack_) << "┬Mutable Type at " << get_location(source, span) << '\n';
 
     // Inner type
     indent_stack_.push_back(true);
-    stream << make_indent() << "┬Inner Type:\n";
+    stream << make_indent(indent_stack_) << "┬Inner Type:\n";
     indent_stack_.push_back(true);
     type.base_type()->visit(*this, source, stream);
     indent_stack_.pop_back();
