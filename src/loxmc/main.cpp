@@ -1,5 +1,5 @@
-#include "loxmocha/ast/d2-export.hpp"
-#include "loxmocha/ast/dot-export.hpp"
+#include "loxmocha/ast/d2_export.hpp"
+#include "loxmocha/ast/dot_export.hpp"
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pretty_printer.hpp"
