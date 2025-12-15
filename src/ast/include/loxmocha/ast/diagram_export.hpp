@@ -630,7 +630,8 @@ public:
                      std::size_t                     node_id,
                      std::ostream&                   stream)
     {
-        auto kind         = type_name<decltype(node)>();
+        auto kind = type_name<decltype(node)>();
+        // cppcheck-suppress internalAstError
         auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
             std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
                                                                             {.line_span = "", .line = 0, .column = 0}});
@@ -659,7 +660,8 @@ public:
                      std::size_t                     node_id,
                      std::ostream&                   stream)
     {
-        auto kind         = type_name<decltype(node)>();
+        auto kind = type_name<decltype(node)>();
+        // cppcheck-suppress internalAstError
         auto [start, end] = source.find_source(span).view().find_span_location(span).value_or(
             std::pair<source::source_location_t, source::source_location_t>{{.line_span = "", .line = 0, .column = 0},
                                                                             {.line_span = "", .line = 0, .column = 0}});
