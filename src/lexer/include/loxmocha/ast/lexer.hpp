@@ -123,7 +123,9 @@ public:
      *
      * @param input The input string to be lexed.
      */
-    explicit lexer_t(std::string_view input) : input_(input), current_iter_{input_.begin()} {}
+    explicit lexer_t(std::string_view input) : input_(input), current_iter_{input_.begin()}, current_token_{lex(input)}
+    {
+    }
 
     /**
      * @brief Get the next token from the input stream, and advance the lexer's current position on both success and
@@ -146,6 +148,8 @@ public:
 private:
     std::string_view           input_;        // The input string to be lexed.
     std::string_view::iterator current_iter_; // The current position in the input string.
+    std::expected<token_t, lex_error_t>
+        current_token_; // The current token being processed. This is returned by peek_token().
 
     /**
      * @brief Lexes the input string and returns the next token.
