@@ -7,11 +7,8 @@
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/source/source.hpp"
 
-#include <cstddef>
-#include <optional>
 #include <ostream>
-#include <ranges>
-#include <utility>
+#include <vector>
 
 namespace loxmocha {
 
@@ -189,36 +186,6 @@ public:
                     std::ostream&                   stream);
 
 private:
-    [[nodiscard]] auto make_indent() -> std::string
-    {
-        std::string indent{};
-
-        for (const auto [index, isLast] : std::views::enumerate(indent_stack_)) {
-            if (static_cast<std::size_t>(index) == indent_stack_.size() - 1) {
-                indent += isLast ? "└──" : "├──";
-            } else {
-                indent += isLast ? "   " : "│  ";
-            }
-        }
-
-        return indent;
-    }
-
-    [[nodiscard]] static auto get_location(const source::source_manager_t& source, std::string_view span) -> std::string
-    {
-        auto file = source.find_source(span);
-        if (file == source.end()) {
-            return "<unknown file>";
-        }
-
-        if (auto loc = file.view().find_span_location(span); loc) {
-            return std::format(
-                "{}:{}:{}", file.view().filepath().filename().string(), loc->first.line, loc->first.column);
-        }
-
-        return std::format("{}:<unknown location>", file.view().filepath().filename().string());
-    }
-
     std::vector<bool> indent_stack_;
 };
 
