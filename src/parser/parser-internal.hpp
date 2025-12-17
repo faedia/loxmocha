@@ -3,6 +3,7 @@
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
 #include "loxmocha/ast/lexer.hpp"
+#include "loxmocha/ast/module.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
@@ -28,6 +29,7 @@ public:
 
     auto parse_decl() -> parser_result_t<decl::decl_t>;
     auto parse_expr() -> parser_result_t<expr::expr_t>;
+    auto parse_module() -> parser_result_t<module::module_t>;
     auto parse_pattern() -> parser_result_t<pattern::pattern_t>;
     auto parse_stmt() -> parser_result_t<stmt::stmt_t>;
     auto parse_type() -> parser_result_t<type::type_t>;
@@ -165,6 +167,7 @@ private:
 
     auto parse_decl_internal() -> decl::decl_t;
     auto parse_expr_internal() -> expr::expr_t;
+    auto parse_module_internal() -> module::module_t;
     auto parse_pattern_internal() -> pattern::pattern_t;
     auto parse_stmt_internal() -> stmt::stmt_t;
     auto parse_type_internal() -> type::type_t;

@@ -9,15 +9,13 @@
 #include "loxmocha/ast/type.hpp"
 #include "parser-internal.hpp"
 
-#include <vector>
-
 namespace loxmocha {
 
 auto parse_decl(lexer_t& lexer) -> parser_result_t<decl::decl_t> { return internal::parser_t{lexer}.parse_decl(); }
 
 auto parse_module([[maybe_unused]] lexer_t& lexer) -> parser_result_t<module::module_t>
 {
-    return parser_result_t<module::module_t>{module::module_t{}, true, {"Not implemented"}};
+    return internal::parser_t{lexer}.parse_module();
 }
 
 auto parse_stmt(lexer_t& lexer) -> parser_result_t<stmt::stmt_t> { return internal::parser_t{lexer}.parse_stmt(); }

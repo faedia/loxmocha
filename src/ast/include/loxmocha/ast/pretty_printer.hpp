@@ -6,6 +6,7 @@
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/source/source.hpp"
+#include "loxmocha/ast/module.hpp"
 
 #include <ostream>
 #include <vector>
@@ -14,6 +15,11 @@ namespace loxmocha {
 
 class pretty_printer_t {
 public:
+    void operator()(node_base_t                     span,
+                    const module::module_t&         module,
+                    const source::source_manager_t& source,
+                    std::ostream&                   stream);
+
     void operator()(node_base_t                     span,
                     const decl::type_t&             decl,
                     const source::source_manager_t& source,
