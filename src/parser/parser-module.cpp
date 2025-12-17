@@ -3,8 +3,8 @@
 #include "loxmocha/ast/parser.hpp"
 #include "parser-internal.hpp"
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace loxmocha::internal {
 auto parser_t::parse_module() -> parser_result_t<module::module_t>
