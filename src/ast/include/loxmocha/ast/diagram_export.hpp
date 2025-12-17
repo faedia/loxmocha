@@ -3,6 +3,7 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/module.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/type.hpp"
@@ -35,6 +36,24 @@ public:
         Exporter::header(stream);
         node.visit(exporter, source, stream, 1);
         Exporter::footer(stream);
+    }
+
+    auto operator()(node_base_t                     span,
+                    const module::module_t&         module,
+                    const source::source_manager_t& source,
+                    std::ostream&                   stream,
+                    std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
+    {
+        Exporter::node(span, module, "module", source, current_id, stream);
+        std::size_t next_id = current_id + 1;
+
+        for (const auto& decl : module.declarations()) {
+            auto [child_id, new_next_id] = decl.visit(*this, source, stream, next_id);
+            Exporter::edge(current_id, child_id, stream);
+            next_id = new_next_id;
+        }
+
+        return {current_id, next_id};
     }
 
     auto operator()(node_base_t                     span,

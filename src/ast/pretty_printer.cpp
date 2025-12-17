@@ -3,6 +3,7 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/module.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/type.hpp"
@@ -53,6 +54,20 @@ namespace {
         return std::format("{}:<unknown location>", file.view().filepath().filename().string());
     }
 } // namespace
+
+void pretty_printer_t::operator()(node_base_t                     span,
+                                  const module::module_t&         module,
+                                  const source::source_manager_t& source,
+                                  std::ostream&                   stream)
+{
+    stream << make_indent(indent_stack_) << "┬Module: at " << get_location(source, span) << '\n';
+
+    for (const auto& [index, decl] : std::views::enumerate(module.declarations())) {
+        indent_stack_.push_back(static_cast<std::size_t>(index) == module.declarations().size() - 1);
+        decl.visit(*this, source, stream);
+        indent_stack_.pop_back();
+    }
+}
 
 void pretty_printer_t::operator()(node_base_t                     span,
                                   const decl::type_t&             decl,

@@ -145,6 +145,13 @@ public:
 
     void reset_token(const token_t& token);
 
+    /**
+     * @brief Get the current position in the input stream.
+     *
+     * @return std::string_view::iterator The current position in the input stream.
+     */
+    [[nodiscard]] auto current_pos() const -> std::string_view::iterator { return current_iter_; }
+
 private:
     std::string_view           input_;        // The input string to be lexed.
     std::string_view::iterator current_iter_; // The current position in the input string.
