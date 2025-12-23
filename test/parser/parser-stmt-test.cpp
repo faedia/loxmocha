@@ -26,20 +26,19 @@ TEST_F(ParserTest, StmtAssignTest)
 
 TEST_F(ParserTest, StmtComplexTargetAssignTest)
 {
-    stmt_test(
-        "my_array[2 + index].field = another_func(arg1, arg2)",
-        stmt::assign_t{
-            e(expr::field_t{e(expr::index_t{e(expr::identifier_t{ident_gen.ident("my_array")}),
-                                            e(expr::binary_t{token_t::p_plus("+"),
-                                                             e(expr::literal_t{token_t::l_integer("2")}),
-                                                             e(expr::identifier_t{ident_gen.ident("index")})})}),
-                            ident_gen.ident("field")}),
-            e(expr::call_t{e(expr::identifier_t{ident_gen.ident("another_func")}),
-                           make_vector<expr::expr_t>(
+    stmt_test("my_array[2 + index].field = another_func(arg1, arg2)",
+              stmt::assign_t{
+                  e(expr::field_t{e(expr::index_t{e(expr::identifier_t{ident_gen.ident("my_array")}),
+                                                  e(expr::binary_t{token_t::p_plus("+"),
+                                                                   e(expr::literal_t{token_t::l_integer("2")}),
+                                                                   e(expr::identifier_t{ident_gen.ident("index")})})}),
+                                  ident_gen.ident("field")}),
+                  e(expr::call_t{
+                      e(expr::identifier_t{ident_gen.ident("another_func")}),
+                      make_vector<expr::expr_t>(
 
-                               expr::identifier_t{ident_gen.ident("arg1")},
-                               expr::identifier_t{ident_gen.ident("arg2")}),
-                           {}})});
+                          expr::identifier_t{ident_gen.ident("arg1")}, expr::identifier_t{ident_gen.ident("arg2")}),
+                      {}})});
 }
 
 TEST_F(ParserTest, StmtDeclTest)

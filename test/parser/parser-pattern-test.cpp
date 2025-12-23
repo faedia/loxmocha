@@ -16,7 +16,8 @@ TEST_F(ParserTest, PatternIdentifierTest)
     using namespace loxmocha;
     ident_map_t ident_map{};
     lexer_t     lexer{"my_var", ident_map};
-    parse_pattern(lexer).result().visit(test::assert_visitor{ident_map, ident_gen.map()}, pattern::identifier_t{ident_gen.ident("my_var")});
+    parse_pattern(lexer).result().visit(test::assert_visitor{ident_map, ident_gen.map()},
+                                        pattern::identifier_t{ident_gen.ident("my_var")});
 }
 
 TEST_F(ParserTest, PatternTagTest)

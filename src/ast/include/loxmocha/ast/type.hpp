@@ -428,12 +428,12 @@ public:
 
 struct record_t::field_t {
     lexer::token_t name;
-    type_t  type;
+    type_t         type;
 };
 
 struct tagged_t::tag_t {
     lexer::token_t name;
-    type_t  type;
+    type_t         type;
 };
 
-} // namespace loxmocha::type
+} // namespace loxmocha::ast::type

@@ -33,4 +33,4 @@ variable_t::variable_t(variable_t::mut_e        mut,
 {
 }
 
-} // namespace loxmocha::decl
+} // namespace loxmocha::ast::decl

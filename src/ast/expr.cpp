@@ -74,4 +74,4 @@ block_t::block_t(std::vector<stmt::stmt_t>&& statements, safe_ptr<expr_t>&& retu
 
 grouping_t::grouping_t(safe_ptr<expr_t>&& expression) : expression_(std::move(expression)) {}
 
-} // namespace loxmocha::expr
+} // namespace loxmocha::ast::expr

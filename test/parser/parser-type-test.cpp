@@ -15,9 +15,9 @@ TEST_F(ParserTest, TypeIdentifierTest) { type_test("my_type", type::identifier_t
 
 TEST_F(ParserTest, TypeArrayTest)
 {
-    type_test("MyType[5]",
-              type::array_t{t(type::identifier_t{ident_gen.ident("MyType")}),
-                            e(expr::literal_t{token_t::l_integer("5")})});
+    type_test(
+        "MyType[5]",
+        type::array_t{t(type::identifier_t{ident_gen.ident("MyType")}), e(expr::literal_t{token_t::l_integer("5")})});
 }
 
 TEST_F(ParserTest, TypeMultiDimensionalArrayTest)
@@ -161,25 +161,23 @@ TEST_F(ParserTest, TypeGroupingTest)
 
 TEST_F(ParserTest, TypeFunctionPrecedenceTest)
 {
-    type_test(
-        "fun(int[10], rec a: string end): arr[5]",
-        type::function_t{make_vector<type::type_t>(
-                             type::array_t{t(type::identifier_t{ident_gen.ident("int")}),
-                                           e(expr::literal_t{token_t::l_integer("10")})},
-                             type::record_t{make_vector2<type::record_t::field_t>(type::record_t::field_t{
-                                 .name = ident_gen.ident("a"),
-                                 .type = type::type_t{"", type::identifier_t{ident_gen.ident("string")}}})}),
-                         t(type::array_t{t(type::identifier_t{ident_gen.ident("arr")}),
-                                         e(expr::literal_t{token_t::l_integer("5")})})});
+    type_test("fun(int[10], rec a: string end): arr[5]",
+              type::function_t{make_vector<type::type_t>(
+                                   type::array_t{t(type::identifier_t{ident_gen.ident("int")}),
+                                                 e(expr::literal_t{token_t::l_integer("10")})},
+                                   type::record_t{make_vector2<type::record_t::field_t>(type::record_t::field_t{
+                                       .name = ident_gen.ident("a"),
+                                       .type = type::type_t{"", type::identifier_t{ident_gen.ident("string")}}})}),
+                               t(type::array_t{t(type::identifier_t{ident_gen.ident("arr")}),
+                                               e(expr::literal_t{token_t::l_integer("5")})})});
 }
 
 TEST_F(ParserTest, TypeFunctionArrayTest)
 {
-    type_test(
-        "(fun(int):int)[3]",
-        type::array_t{t(type::function_t{make_vector<type::type_t>(type::identifier_t{ident_gen.ident("int")}),
-                                         t(type::identifier_t{ident_gen.ident("int")})}),
-                      e(expr::literal_t{token_t::l_integer("3")})});
+    type_test("(fun(int):int)[3]",
+              type::array_t{t(type::function_t{make_vector<type::type_t>(type::identifier_t{ident_gen.ident("int")}),
+                                               t(type::identifier_t{ident_gen.ident("int")})}),
+                            e(expr::literal_t{token_t::l_integer("3")})});
 };
 
 // TODO: Add negative testing cases!
