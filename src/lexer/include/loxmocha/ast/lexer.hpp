@@ -123,6 +123,7 @@ public:
      * @brief Constructs a lexer for a given input string.
      *
      * @param input The input string to be lexed.
+     * @param ident_map The identifier map to use for storing identifiers.
      */
     explicit lexer_t(std::string_view input, ident_map_t& ident_map)
         : input_(input), current_iter_{input_.begin()}, ident_map_{ident_map}, current_token_{lex(input)}
