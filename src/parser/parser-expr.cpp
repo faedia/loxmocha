@@ -1,5 +1,6 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/ident_map.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
@@ -14,6 +15,10 @@
 #include <vector>
 
 namespace loxmocha::internal {
+
+using namespace lexer;
+using namespace ast;
+
 namespace {
     auto construct_binary_expr(const token_t& op, expr::expr_t left, expr::expr_t right) -> expr::expr_t
     {
@@ -43,7 +48,7 @@ auto parser_t::parse_expr_internal() -> expr::expr_t
     }
 }
 
-auto parser_t::if_expr(loxmocha::token_t if_tok) -> expr::expr_t
+auto parser_t::if_expr(const token_t& if_tok) -> expr::expr_t
 {
     // If expression parsing is complicated due to the multiple forms and mixing of block or expression bodies.
     // Along with optional dangling else branches, and the flat else-if structure.
@@ -121,7 +126,7 @@ auto parser_t::else_body() -> expr::expr_t
     return expr::expr_t{"", expr::error_t{}};
 }
 
-auto parser_t::while_expr(loxmocha::token_t while_tok) -> expr::expr_t
+auto parser_t::while_expr(const token_t& while_tok) -> expr::expr_t
 {
     auto condition = or_expr();
 
@@ -149,7 +154,7 @@ auto parser_t::while_expr(loxmocha::token_t while_tok) -> expr::expr_t
                                       safe_ptr<expr::expr_t>::make(std::move(body))}};
 }
 
-auto parser_t::block_expr(loxmocha::token_t begin) -> expr::expr_t
+auto parser_t::block_expr(const token_t& begin) -> expr::expr_t
 {
     // A block expression has already consumed its entry token.
     // This can be a begin token from an explicit block or a then token from an if or while expression.
@@ -167,7 +172,7 @@ auto parser_t::block_expr(loxmocha::token_t begin) -> expr::expr_t
     return block;
 }
 
-auto parser_t::block_body(loxmocha::token_t begin) -> expr::expr_t
+auto parser_t::block_body(const token_t& begin) -> expr::expr_t
 {
     std::vector<stmt::stmt_t> statements{};
     // The default return expression is an empty tuple.
@@ -500,7 +505,7 @@ auto parser_t::record_expr(const token_t& left_brace) -> expr::expr_t
             if (!name) {
                 diagnostics_.emplace_back("Expected identifier for record field name");
                 has_error_ = true;
-                return expr::record_t::field_t{.name  = token_t::k_identifier("<error>"),
+                return expr::record_t::field_t{.name  = token_t::k_identifier("<error>", ident_t{0}),
                                                .value = expr::expr_t{"", expr::error_t{}}};
             }
 

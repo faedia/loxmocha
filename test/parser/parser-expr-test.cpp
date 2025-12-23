@@ -10,355 +10,352 @@
 #include <vector>
 
 using namespace loxmocha;
+using namespace loxmocha::ast;
+using namespace loxmocha::lexer;
 using namespace loxmocha::test::helpers;
 
-TEST(ParserTest, ExprLiteralStringTest)
+TEST_F(ParserTest, ExprLiteralStringTest)
 {
     expr_test(R"("this is a string")", expr::literal_t{token_t::l_string(R"("this is a string")")});
 }
 
-TEST(ParserTest, ExprLiteralCharTest) { expr_test(R"('c')", expr::literal_t{token_t::l_char(R"('c')")}); }
+TEST_F(ParserTest, ExprLiteralCharTest) { expr_test(R"('c')", expr::literal_t{token_t::l_char(R"('c')")}); }
 
-TEST(ParserTest, ExprLiteralIntegerTest) { expr_test("12345", expr::literal_t{token_t::l_integer("12345")}); }
+TEST_F(ParserTest, ExprLiteralIntegerTest) { expr_test("12345", expr::literal_t{token_t::l_integer("12345")}); }
 
-TEST(ParserTest, ExprIdentifierTest)
-{
-    expr_test("my_variable", expr::identifier_t{token_t::k_identifier("my_variable")});
-}
+TEST_F(ParserTest, ExprIdentifierTest) { expr_test("my_variable", expr::identifier_t{ident_gen.ident("my_variable")}); }
 
-TEST(ParserTest, ExprLiteralTrueTest) { expr_test("true", expr::literal_t{token_t::k_true("true")}); }
+TEST_F(ParserTest, ExprLiteralTrueTest) { expr_test("true", expr::literal_t{token_t::k_true("true")}); }
 
-TEST(ParserTest, ExprLiteralFalseTest) { expr_test("false", expr::literal_t{token_t::k_false("false")}); }
+TEST_F(ParserTest, ExprLiteralFalseTest) { expr_test("false", expr::literal_t{token_t::k_false("false")}); }
 
-TEST(ParserTest, ExprAndTest)
+TEST_F(ParserTest, ExprAndTest)
 {
     expr_test("a && b",
               expr::binary_t{token_t::p_and_and("&&"),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::identifier_t{token_t::k_identifier("b")})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprOrTest)
+TEST_F(ParserTest, ExprOrTest)
 {
     expr_test("x || y",
               expr::binary_t{token_t::p_pipe_pipe("||"),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::identifier_t{token_t::k_identifier("y")})});
+                             e(expr::identifier_t{ident_gen.ident("x")}),
+                             e(expr::identifier_t{ident_gen.ident("y")})});
 }
 
-TEST(ParserTest, ExprMultipleLogicalTest)
+TEST_F(ParserTest, ExprMultipleLogicalTest)
 {
     expr_test("a && b || c && d",
               expr::binary_t{token_t::p_pipe_pipe("||"),
                              e(expr::binary_t{token_t::p_and_and("&&"),
-                                              e(expr::identifier_t{token_t::k_identifier("a")}),
-                                              e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("a")}),
+                                              e(expr::identifier_t{ident_gen.ident("b")})}),
                              e(expr::binary_t{token_t::p_and_and("&&"),
-                                              e(expr::identifier_t{token_t::k_identifier("c")}),
-                                              e(expr::identifier_t{token_t::k_identifier("d")})})});
+                                              e(expr::identifier_t{ident_gen.ident("c")}),
+                                              e(expr::identifier_t{ident_gen.ident("d")})})});
 }
 
-TEST(ParserTest, ExprEqualityTest)
+TEST_F(ParserTest, ExprEqualityTest)
 {
     expr_test("a == b",
               expr::binary_t{token_t::p_equal_equal("=="),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::identifier_t{token_t::k_identifier("b")})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprInequalityTest)
+TEST_F(ParserTest, ExprInequalityTest)
 {
     expr_test("x != y",
               expr::binary_t{token_t::p_not_equal("!="),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::identifier_t{token_t::k_identifier("y")})});
+                             e(expr::identifier_t{ident_gen.ident("x")}),
+                             e(expr::identifier_t{ident_gen.ident("y")})});
 }
 
-TEST(ParserTest, ExprMultipleEqualityTest)
+TEST_F(ParserTest, ExprMultipleEqualityTest)
 {
-    expr_test("a == b != c == d != e",
-              expr::binary_t{token_t::p_not_equal("!="),
-                             e(expr::binary_t{
-                                 token_t::p_equal_equal("=="),
-                                 e(expr::binary_t{token_t::p_not_equal("!="),
-                                                  e(expr::binary_t{token_t::p_equal_equal("=="),
-                                                                   e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                                   e(expr::identifier_t{token_t::k_identifier("b")})}),
-                                                  e(expr::identifier_t{token_t::k_identifier("c")})}),
-                                 e(expr::identifier_t{token_t::k_identifier("d")})}),
-                             e(expr::identifier_t{token_t::k_identifier("e")})});
+    expr_test(
+        "a == b != c == d != e",
+        expr::binary_t{token_t::p_not_equal("!="),
+                       e(expr::binary_t{token_t::p_equal_equal("=="),
+                                        e(expr::binary_t{token_t::p_not_equal("!="),
+                                                         e(expr::binary_t{token_t::p_equal_equal("=="),
+                                                                          e(expr::identifier_t{ident_gen.ident("a")}),
+                                                                          e(expr::identifier_t{ident_gen.ident("b")})}),
+                                                         e(expr::identifier_t{ident_gen.ident("c")})}),
+                                        e(expr::identifier_t{ident_gen.ident("d")})}),
+                       e(expr::identifier_t{ident_gen.ident("e")})});
 }
 
-TEST(ParserTest, ExprEqualityPrecedenceTest)
+TEST_F(ParserTest, ExprEqualityPrecedenceTest)
 {
     expr_test("a == b && c != d",
               expr::binary_t{token_t::p_and_and("&&"),
                              e(expr::binary_t{token_t::p_equal_equal("=="),
-                                              e(expr::identifier_t{token_t::k_identifier("a")}),
-                                              e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("a")}),
+                                              e(expr::identifier_t{ident_gen.ident("b")})}),
                              e(expr::binary_t{token_t::p_not_equal("!="),
-                                              e(expr::identifier_t{token_t::k_identifier("c")}),
-                                              e(expr::identifier_t{token_t::k_identifier("d")})})});
+                                              e(expr::identifier_t{ident_gen.ident("c")}),
+                                              e(expr::identifier_t{ident_gen.ident("d")})})});
 }
 
-TEST(ParserTest, ExprLessThanTest)
+TEST_F(ParserTest, ExprLessThanTest)
 {
     expr_test("a < b",
               expr::binary_t{token_t::p_less("<"),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::identifier_t{token_t::k_identifier("b")})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprLessThanOrEqualTest)
+TEST_F(ParserTest, ExprLessThanOrEqualTest)
 {
     expr_test("x <= y",
               expr::binary_t{token_t::p_less_equal("<="),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::identifier_t{token_t::k_identifier("y")})});
+                             e(expr::identifier_t{ident_gen.ident("x")}),
+                             e(expr::identifier_t{ident_gen.ident("y")})});
 }
 
-TEST(ParserTest, ExprGreaterThanTest)
+TEST_F(ParserTest, ExprGreaterThanTest)
 {
     expr_test("a > b",
               expr::binary_t{token_t::p_greater(">"),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::identifier_t{token_t::k_identifier("b")})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprGreaterThanOrEqualTest)
+TEST_F(ParserTest, ExprGreaterThanOrEqualTest)
 {
     expr_test("x >= y",
               expr::binary_t{token_t::p_greater_equal(">="),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::identifier_t{token_t::k_identifier("y")})});
+                             e(expr::identifier_t{ident_gen.ident("x")}),
+                             e(expr::identifier_t{ident_gen.ident("y")})});
 }
 
-TEST(ParserTest, ExprMultipleComparisonTest)
+TEST_F(ParserTest, ExprMultipleComparisonTest)
 {
-    expr_test("a < b <= c > d >= e",
-              expr::binary_t{token_t::p_greater_equal(">="),
-                             e(expr::binary_t{
-                                 token_t::p_greater(">"),
-                                 e(expr::binary_t{token_t::p_less_equal("<="),
-                                                  e(expr::binary_t{token_t::p_less("<"),
-                                                                   e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                                   e(expr::identifier_t{token_t::k_identifier("b")})}),
-                                                  e(expr::identifier_t{token_t::k_identifier("c")})}),
-                                 e(expr::identifier_t{token_t::k_identifier("d")})}),
-                             e(expr::identifier_t{token_t::k_identifier("e")})});
+    expr_test(
+        "a < b <= c > d >= e",
+        expr::binary_t{token_t::p_greater_equal(">="),
+                       e(expr::binary_t{token_t::p_greater(">"),
+                                        e(expr::binary_t{token_t::p_less_equal("<="),
+                                                         e(expr::binary_t{token_t::p_less("<"),
+                                                                          e(expr::identifier_t{ident_gen.ident("a")}),
+                                                                          e(expr::identifier_t{ident_gen.ident("b")})}),
+                                                         e(expr::identifier_t{ident_gen.ident("c")})}),
+                                        e(expr::identifier_t{ident_gen.ident("d")})}),
+                       e(expr::identifier_t{ident_gen.ident("e")})});
 }
 
-TEST(ParserTest, ExprComparisonPrecedenceTest)
+TEST_F(ParserTest, ExprComparisonPrecedenceTest)
 {
     expr_test("a < b == b > c",
               expr::binary_t{token_t::p_equal_equal("=="),
                              e(expr::binary_t{token_t::p_less("<"),
-                                              e(expr::identifier_t{token_t::k_identifier("a")}),
-                                              e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("a")}),
+                                              e(expr::identifier_t{ident_gen.ident("b")})}),
                              e(expr::binary_t{token_t::p_greater(">"),
-                                              e(expr::identifier_t{token_t::k_identifier("b")}),
-                                              e(expr::identifier_t{token_t::k_identifier("c")})})});
+                                              e(expr::identifier_t{ident_gen.ident("b")}),
+                                              e(expr::identifier_t{ident_gen.ident("c")})})});
 }
 
-TEST(ParserTest, ExprAdditionTest)
+TEST_F(ParserTest, ExprAdditionTest)
 {
     expr_test("a + b",
               expr::binary_t{token_t::p_plus("+"),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::identifier_t{token_t::k_identifier("b")})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprSubtractionTest)
+TEST_F(ParserTest, ExprSubtractionTest)
 {
     expr_test("x - y",
               expr::binary_t{token_t::p_minus("-"),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::identifier_t{token_t::k_identifier("y")})});
+                             e(expr::identifier_t{ident_gen.ident("x")}),
+                             e(expr::identifier_t{ident_gen.ident("y")})});
 }
 
-TEST(ParserTest, ExprMultipleAdditionTest)
+TEST_F(ParserTest, ExprMultipleAdditionTest)
 {
     expr_test("a + b - c + d",
               expr::binary_t{token_t::p_plus("+"),
                              e(expr::binary_t{token_t::p_minus("-"),
                                               e(expr::binary_t{token_t::p_plus("+"),
-                                                               e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                               e(expr::identifier_t{token_t::k_identifier("b")})}),
-                                              e(expr::identifier_t{token_t::k_identifier("c")})}),
-                             e(expr::identifier_t{token_t::k_identifier("d")})});
+                                                               e(expr::identifier_t{ident_gen.ident("a")}),
+                                                               e(expr::identifier_t{ident_gen.ident("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("c")})}),
+                             e(expr::identifier_t{ident_gen.ident("d")})});
 }
 
-TEST(ParserTest, ExprAdditionPrecedenceTest)
+TEST_F(ParserTest, ExprAdditionPrecedenceTest)
 {
     expr_test("a + b < c - d",
               expr::binary_t{token_t::p_less("<"),
                              e(expr::binary_t{token_t::p_plus("+"),
-                                              e(expr::identifier_t{token_t::k_identifier("a")}),
-                                              e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("a")}),
+                                              e(expr::identifier_t{ident_gen.ident("b")})}),
                              e(expr::binary_t{token_t::p_minus("-"),
-                                              e(expr::identifier_t{token_t::k_identifier("c")}),
-                                              e(expr::identifier_t{token_t::k_identifier("d")})})});
+                                              e(expr::identifier_t{ident_gen.ident("c")}),
+                                              e(expr::identifier_t{ident_gen.ident("d")})})});
 }
 
-TEST(ParserTest, ExprMultiplicationTest)
+TEST_F(ParserTest, ExprMultiplicationTest)
 {
     expr_test("a * b",
               expr::binary_t{token_t::p_asterisk("*"),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::identifier_t{token_t::k_identifier("b")})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprDivisionTest)
+TEST_F(ParserTest, ExprDivisionTest)
 {
     expr_test("x / y",
               expr::binary_t{token_t::p_slash("/"),
-                             e(expr::identifier_t{token_t::k_identifier("x")}),
-                             e(expr::identifier_t{token_t::k_identifier("y")})});
+                             e(expr::identifier_t{ident_gen.ident("x")}),
+                             e(expr::identifier_t{ident_gen.ident("y")})});
 }
 
-TEST(ParserTest, ExprMultipleMultiplicationTest)
+TEST_F(ParserTest, ExprMultipleMultiplicationTest)
 {
     expr_test("a * b / c * d",
               expr::binary_t{token_t::p_asterisk("*"),
                              e(expr::binary_t{token_t::p_slash("/"),
                                               e(expr::binary_t{token_t::p_asterisk("*"),
-                                                               e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                               e(expr::identifier_t{token_t::k_identifier("b")})}),
-                                              e(expr::identifier_t{token_t::k_identifier("c")})}),
-                             e(expr::identifier_t{token_t::k_identifier("d")})});
+                                                               e(expr::identifier_t{ident_gen.ident("a")}),
+                                                               e(expr::identifier_t{ident_gen.ident("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("c")})}),
+                             e(expr::identifier_t{ident_gen.ident("d")})});
 }
 
-TEST(ParserTest, ExprMultiplicationPrecedenceTest)
+TEST_F(ParserTest, ExprMultiplicationPrecedenceTest)
 {
     expr_test("a * b + c / d",
               expr::binary_t{token_t::p_plus("+"),
                              e(expr::binary_t{token_t::p_asterisk("*"),
-                                              e(expr::identifier_t{token_t::k_identifier("a")}),
-                                              e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                              e(expr::identifier_t{ident_gen.ident("a")}),
+                                              e(expr::identifier_t{ident_gen.ident("b")})}),
                              e(expr::binary_t{token_t::p_slash("/"),
-                                              e(expr::identifier_t{token_t::k_identifier("c")}),
-                                              e(expr::identifier_t{token_t::k_identifier("d")})})});
+                                              e(expr::identifier_t{ident_gen.ident("c")}),
+                                              e(expr::identifier_t{ident_gen.ident("d")})})});
 }
 
-TEST(ParserTest, ExprNegationTest)
+TEST_F(ParserTest, ExprNegationTest)
 {
     expr_test("-42", expr::unary_t{token_t::p_minus("-"), e(expr::literal_t{token_t::l_integer("42")})});
 }
 
-TEST(ParserTest, ExprLogicalNotTest)
+TEST_F(ParserTest, ExprLogicalNotTest)
 {
     expr_test("!true", expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_true("true")})});
 }
 
-TEST(ParserTest, ExprMultipleUnaryTest)
+TEST_F(ParserTest, ExprMultipleUnaryTest)
 {
     expr_test("-!false",
               expr::unary_t{token_t::p_minus("-"),
                             e(expr::unary_t{token_t::p_bang("!"), e(expr::literal_t{token_t::k_false("false")})})});
 }
 
-TEST(ParserTest, ExprUnaryPrecedenceTest)
+TEST_F(ParserTest, ExprUnaryPrecedenceTest)
 {
-    expr_test(
-        "-a * !b",
-        expr::binary_t{token_t::p_asterisk("*"),
-                       e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("a")})}),
-                       e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("b")})})});
+    expr_test("-a * !b",
+              expr::binary_t{token_t::p_asterisk("*"),
+                             e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{ident_gen.ident("a")})}),
+                             e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{ident_gen.ident("b")})})});
 }
 
-TEST(ParserTest, ExprFieldAccessTest)
+TEST_F(ParserTest, ExprFieldAccessTest)
 {
-    expr_test(
-        "a.b.c",
-        expr::field_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")}),
-                      token_t::k_identifier("c")});
+    expr_test("a.b.c",
+              expr::field_t{e(expr::field_t{e(expr::identifier_t{ident_gen.ident("a")}), ident_gen.ident("b")}),
+                            ident_gen.ident("c")});
 }
 
-TEST(ParserTest, ExprIndexAccessTest)
+TEST_F(ParserTest, ExprIndexAccessTest)
 {
     expr_test("matrix[i + 2][j]",
-              expr::index_t{e(expr::index_t{e(expr::identifier_t{token_t::k_identifier("matrix")}),
+              expr::index_t{e(expr::index_t{e(expr::identifier_t{ident_gen.ident("matrix")}),
                                             e(expr::binary_t{token_t::p_plus("+"),
-                                                             e(expr::identifier_t{token_t::k_identifier("i")}),
+                                                             e(expr::identifier_t{ident_gen.ident("i")}),
                                                              e(expr::literal_t{token_t::l_integer("2")})})}),
-                            e(expr::identifier_t{token_t::k_identifier("j")})});
+                            e(expr::identifier_t{ident_gen.ident("j")})});
 }
 
-TEST(ParserTest, ExprCallNoArgumentsTest)
+TEST_F(ParserTest, ExprCallNoArgumentsTest)
 {
-    expr_test("func()", expr::call_t{e(expr::identifier_t{token_t::k_identifier("func")}), {}, {}});
+    expr_test("func()", expr::call_t{e(expr::identifier_t{ident_gen.ident("func")}), {}, {}});
 }
 
-TEST(ParserTest, ExprCallPositionalArgumentsTest)
+TEST_F(ParserTest, ExprCallPositionalArgumentsTest)
 {
     expr_test("add(5, 10)",
-              expr::call_t{e(expr::identifier_t{token_t::k_identifier("add")}),
+              expr::call_t{e(expr::identifier_t{ident_gen.ident("add")}),
                            make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("5")},
                                                      expr::literal_t{token_t::l_integer("10")}),
                            {}});
 }
 
-TEST(ParserTest, ExprCallNamedArgumentsTest)
+TEST_F(ParserTest, ExprCallNamedArgumentsTest)
 {
     expr_test(
         "setPosition(x: 100, y: 200)",
         expr::call_t{
-            e(expr::identifier_t{token_t::k_identifier("setPosition")}),
+            e(expr::identifier_t{ident_gen.ident("setPosition")}),
             {},
             make_vector2<expr::call_t::named_arg_t>(
-                expr::call_t::named_arg_t{.name  = token_t::k_identifier("x"),
+                expr::call_t::named_arg_t{.name  = ident_gen.ident("x"),
                                           .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("100")}}},
-                expr::call_t::named_arg_t{.name  = token_t::k_identifier("y"),
+                expr::call_t::named_arg_t{.name  = ident_gen.ident("y"),
                                           .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("200")}}})});
 }
 
-TEST(ParserTest, ExprCallMixedArgumentTest)
+TEST_F(ParserTest, ExprCallMixedArgumentTest)
 {
     expr_test("drawCircle(x + 10, y, radius: 25)",
-              expr::call_t{e(expr::identifier_t{token_t::k_identifier("drawCircle")}),
+              expr::call_t{e(expr::identifier_t{ident_gen.ident("drawCircle")}),
                            make_vector<expr::expr_t>(expr::binary_t{token_t::p_plus("+"),
-                                                                    e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                                    e(expr::identifier_t{ident_gen.ident("x")}),
                                                                     e(expr::literal_t{token_t::l_integer("10")})},
-                                                     expr::identifier_t{token_t::k_identifier("y")}),
+                                                     expr::identifier_t{ident_gen.ident("y")}),
                            make_vector2<expr::call_t::named_arg_t>(expr::call_t::named_arg_t{
-                               .name  = token_t::k_identifier("radius"),
+                               .name  = ident_gen.ident("radius"),
                                .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("25")}}})});
 }
 
-TEST(ParserTest, ExprPositionalAfterNamedArgsTest)
+TEST_F(ParserTest, ExprPositionalAfterNamedArgsTest)
 {
     rainy_day_expr_test("func(a, b: 2, c)", {"Expected ':' after named argument identifier"});
 }
 
-TEST(ParserTest, ExprNestedCallsTest)
+TEST_F(ParserTest, ExprNestedCallsTest)
 {
     expr_test("outer(inner(1, 2), another(3))",
-              expr::call_t{e(expr::identifier_t{token_t::k_identifier("outer")}),
+              expr::call_t{e(expr::identifier_t{ident_gen.ident("outer")}),
                            make_vector<expr::expr_t>(
-                               expr::call_t{e(expr::identifier_t{token_t::k_identifier("inner")}),
+                               expr::call_t{e(expr::identifier_t{ident_gen.ident("inner")}),
                                             make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
                                                                       expr::literal_t{token_t::l_integer("2")}),
                                             {}},
-                               expr::call_t{e(expr::identifier_t{token_t::k_identifier("another")}),
+                               expr::call_t{e(expr::identifier_t{ident_gen.ident("another")}),
                                             make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("3")}),
                                             {}}),
                            {}});
 }
 
-TEST(ParserTest, ExprMixedAccessTest)
+TEST_F(ParserTest, ExprMixedAccessTest)
 {
-    expr_test("obj.field[index](arg1, arg2).anotherField",
-              expr::field_t{
-                  e(expr::call_t{e(expr::index_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("obj")}),
-                                                                 token_t::k_identifier("field")}),
-                                                 e(expr::identifier_t{token_t::k_identifier("index")})}),
-                                 make_vector<expr::expr_t>(expr::identifier_t{token_t::k_identifier("arg1")},
-                                                           expr::identifier_t{token_t::k_identifier("arg2")}),
-                                 {}}),
-                  token_t::k_identifier("anotherField")});
+    expr_test(
+        "obj.field[index](arg1, arg2).anotherField",
+        expr::field_t{e(expr::call_t{e(expr::index_t{e(expr::field_t{e(expr::identifier_t{ident_gen.ident("obj")}),
+                                                                     ident_gen.ident("field")}),
+                                                     e(expr::identifier_t{ident_gen.ident("index")})}),
+                                     make_vector<expr::expr_t>(expr::identifier_t{ident_gen.ident("arg1")},
+                                                               expr::identifier_t{ident_gen.ident("arg2")}),
+                                     {}}),
+                      ident_gen.ident("anotherField")});
 }
 
-TEST(ParserTest, ExprAccessPrecedenceTest)
+TEST_F(ParserTest, ExprAccessPrecedenceTest)
 {
     expr_test(
         "-a.b + c.d[e.f] - -g.h()",
@@ -366,78 +363,73 @@ TEST(ParserTest, ExprAccessPrecedenceTest)
             token_t::p_minus("-"),
             e(expr::binary_t{
                 token_t::p_plus("+"),
-                e(expr::unary_t{
-                    token_t::p_minus("-"),
-                    e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")})}),
-                e(expr::index_t{
-                    e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("c")}), token_t::k_identifier("d")}),
-                    e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("e")}), token_t::k_identifier("f")})})}),
-            e(expr::unary_t{token_t::p_minus("-"),
-                            e(expr::call_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("g")}),
-                                                           token_t::k_identifier("h")}),
-                                           {},
-                                           {}})})});
+                e(expr::unary_t{token_t::p_minus("-"),
+                                e(expr::field_t{e(expr::identifier_t{ident_gen.ident("a")}), ident_gen.ident("b")})}),
+                e(expr::index_t{e(expr::field_t{e(expr::identifier_t{ident_gen.ident("c")}), ident_gen.ident("d")}),
+                                e(expr::field_t{e(expr::identifier_t{ident_gen.ident("e")}), ident_gen.ident("f")})})}),
+            e(expr::unary_t{
+                token_t::p_minus("-"),
+                e(expr::call_t{
+                    e(expr::field_t{e(expr::identifier_t{ident_gen.ident("g")}), ident_gen.ident("h")}), {}, {}})})});
 }
 
-TEST(ParserTest, ExprGroupingTest)
+TEST_F(ParserTest, ExprGroupingTest)
 {
-    expr_test("(a)", expr::grouping_t{e(expr::identifier_t{token_t::k_identifier("a")})});
+    expr_test("(a)", expr::grouping_t{e(expr::identifier_t{ident_gen.ident("a")})});
 }
 
-TEST(ParserTest, ExprIsTest)
+TEST_F(ParserTest, ExprIsTest)
 {
     expr_test("a is b",
-              expr::is_t{e(expr::identifier_t{token_t::k_identifier("a")}),
-                         p(pattern::identifier_t{token_t::k_identifier("b")})});
+              expr::is_t{e(expr::identifier_t{ident_gen.ident("a")}), p(pattern::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprIsPrecedenceTest)
+TEST_F(ParserTest, ExprIsPrecedenceTest)
 {
     expr_test("!a is b",
-              expr::is_t{e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{token_t::k_identifier("a")})}),
-                         p(pattern::identifier_t{token_t::k_identifier("b")})});
+              expr::is_t{e(expr::unary_t{token_t::p_bang("!"), e(expr::identifier_t{ident_gen.ident("a")})}),
+                         p(pattern::identifier_t{ident_gen.ident("b")})});
 }
 
-TEST(ParserTest, ExprIsPrecedenceWithGroupingTest)
+TEST_F(ParserTest, ExprIsPrecedenceWithGroupingTest)
 {
     expr_test("!(a is b)",
               expr::unary_t{token_t::p_bang("!"),
-                            e(expr::grouping_t{e(expr::is_t{e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                            p(pattern::identifier_t{token_t::k_identifier("b")})})})});
+                            e(expr::grouping_t{e(expr::is_t{e(expr::identifier_t{ident_gen.ident("a")}),
+                                                            p(pattern::identifier_t{ident_gen.ident("b")})})})});
 }
 
-TEST(ParserTest, ExprIsPrecedenceWithAccessTest)
+TEST_F(ParserTest, ExprIsPrecedenceWithAccessTest)
 {
-    expr_test(
-        "a.b is c",
-        expr::is_t{e(expr::field_t{e(expr::identifier_t{token_t::k_identifier("a")}), token_t::k_identifier("b")}),
-                   p(pattern::identifier_t{token_t::k_identifier("c")})});
+    expr_test("a.b is c",
+              expr::is_t{e(expr::field_t{e(expr::identifier_t{ident_gen.ident("a")}), ident_gen.ident("b")}),
+                         p(pattern::identifier_t{ident_gen.ident("c")})});
 }
 
-TEST(ParserTest, ExprIsPrecedenceWithAndTest)
+TEST_F(ParserTest, ExprIsPrecedenceWithAndTest)
 {
     expr_test("a && b is c",
               expr::binary_t{token_t::p_and_and("&&"),
-                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                             e(expr::is_t{e(expr::identifier_t{token_t::k_identifier("b")}),
-                                          p(pattern::identifier_t{token_t::k_identifier("c")})})});
+                             e(expr::identifier_t{ident_gen.ident("a")}),
+                             e(expr::is_t{e(expr::identifier_t{ident_gen.ident("b")}),
+                                          p(pattern::identifier_t{ident_gen.ident("c")})})});
 }
 
-TEST(ParserTest, ExprCastTest)
+TEST_F(ParserTest, ExprCastTest)
 {
-    expr_test("a as MyType",
-              expr::cast_t{e(expr::identifier_t{token_t::k_identifier("a")}),
-                           t(type::identifier_t{token_t::k_identifier("MyType")})});
+    expr_test(
+        "a as MyType",
+        expr::cast_t{e(expr::identifier_t{ident_gen.ident("a")}), t(type::identifier_t{ident_gen.ident("MyType")})});
 }
 
-TEST(ParserTest, ExprCastPrecedenceTest)
+TEST_F(ParserTest, ExprCastPrecedenceTest)
 {
     expr_test("-a as MyType",
-              expr::cast_t{e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("a")})}),
-                           t(type::identifier_t{token_t::k_identifier("MyType")})});
+              expr::cast_t{e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{ident_gen.ident("a")})}),
+                           t(type::identifier_t{ident_gen.ident("MyType")})});
 }
 
-TEST(ParserTest, ExprArrayTest)
+TEST_F(ParserTest, ExprArrayTest)
 {
     expr_test("[1, 2, 3]",
               expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
@@ -445,14 +437,14 @@ TEST(ParserTest, ExprArrayTest)
                                                       expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ExprArrayEmptyTest) { expr_test("[]", expr::array_t{{}}); }
+TEST_F(ParserTest, ExprArrayEmptyTest) { expr_test("[]", expr::array_t{{}}); }
 
-TEST(ParserTest, ExprArraySingleElementTest)
+TEST_F(ParserTest, ExprArraySingleElementTest)
 {
     expr_test("[42]", expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
 }
 
-TEST(ParserTest, ExprArrayTrailingCommaTest)
+TEST_F(ParserTest, ExprArrayTrailingCommaTest)
 {
     expr_test("[1, 2, 3, ]",
               expr::array_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
@@ -460,73 +452,72 @@ TEST(ParserTest, ExprArrayTrailingCommaTest)
                                                       expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ExprArrayPrecedenceTest)
+TEST_F(ParserTest, ExprArrayPrecedenceTest)
 {
     expr_test("[a + b, c * d][i - 1]",
               expr::index_t{e(expr::array_t{make_vector<expr::expr_t>(
                                 expr::binary_t{token_t::p_plus("+"),
-                                               e(expr::identifier_t{token_t::k_identifier("a")}),
-                                               e(expr::identifier_t{token_t::k_identifier("b")})},
+                                               e(expr::identifier_t{ident_gen.ident("a")}),
+                                               e(expr::identifier_t{ident_gen.ident("b")})},
                                 expr::binary_t{token_t::p_asterisk("*"),
-                                               e(expr::identifier_t{token_t::k_identifier("c")}),
-                                               e(expr::identifier_t{token_t::k_identifier("d")})})}),
+                                               e(expr::identifier_t{ident_gen.ident("c")}),
+                                               e(expr::identifier_t{ident_gen.ident("d")})})}),
                             e(expr::binary_t{token_t::p_minus("-"),
-                                             e(expr::identifier_t{token_t::k_identifier("i")}),
+                                             e(expr::identifier_t{ident_gen.ident("i")}),
                                              e(expr::literal_t{token_t::l_integer("1")})})});
 }
 
-TEST(ParserTest, ExprRecordTest)
+TEST_F(ParserTest, ExprRecordTest)
 {
     expr_test("{x: 10, y: 20}",
               expr::record_t{make_vector2<expr::record_t::field_t>(
-                  expr::record_t::field_t{.name  = token_t::k_identifier("x"),
+                  expr::record_t::field_t{.name  = ident_gen.ident("x"),
                                           .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("10")}}},
-                  expr::record_t::field_t{.name  = token_t::k_identifier("y"),
+                  expr::record_t::field_t{.name  = ident_gen.ident("y"),
                                           .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("20")}}})});
 }
 
-TEST(ParserTest, ExprRecordEmptyTest) { expr_test("{}", expr::record_t{{}}); }
+TEST_F(ParserTest, ExprRecordEmptyTest) { expr_test("{}", expr::record_t{{}}); }
 
-TEST(ParserTest, ExprRecordSingleFieldTest)
+TEST_F(ParserTest, ExprRecordSingleFieldTest)
 {
-    expr_test("{value: 42}",
-              expr::record_t{make_vector2<expr::record_t::field_t>(
-                  expr::record_t::field_t{.name  = token_t::k_identifier("value"),
-                                          .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("42")}}})});
+    expr_test(
+        "{value: 42}",
+        expr::record_t{make_vector2<expr::record_t::field_t>(expr::record_t::field_t{
+            .name = ident_gen.ident("value"), .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("42")}}})});
 }
 
-TEST(ParserTest, ExprRecordTrailingCommaTest)
+TEST_F(ParserTest, ExprRecordTrailingCommaTest)
 {
     expr_test("{a: 1, b: 2, }",
               expr::record_t{make_vector2<expr::record_t::field_t>(
-                  expr::record_t::field_t{.name  = token_t::k_identifier("a"),
+                  expr::record_t::field_t{.name  = ident_gen.ident("a"),
                                           .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("1")}}},
-                  expr::record_t::field_t{.name  = token_t::k_identifier("b"),
+                  expr::record_t::field_t{.name  = ident_gen.ident("b"),
                                           .value = expr::expr_t{"", expr::literal_t{token_t::l_integer("2")}}})});
 }
 
-TEST(ParserTest, ExprRecordPrecedenceTest)
+TEST_F(ParserTest, ExprRecordPrecedenceTest)
 {
     expr_test(
         "{sum: a + b, product: c * d}.sum",
-        expr::field_t{
-            e(expr::record_t{make_vector2<expr::record_t::field_t>(
-                expr::record_t::field_t{
-                    .name  = token_t::k_identifier("sum"),
-                    .value = expr::expr_t{"",
-                                          expr::binary_t{token_t::p_plus("+"),
-                                                         e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                         e(expr::identifier_t{token_t::k_identifier("b")})}}},
-                expr::record_t::field_t{
-                    .name  = token_t::k_identifier("product"),
-                    .value = expr::expr_t{"",
-                                          expr::binary_t{token_t::p_asterisk("*"),
-                                                         e(expr::identifier_t{token_t::k_identifier("c")}),
-                                                         e(expr::identifier_t{token_t::k_identifier("d")})}}})}),
-            token_t::k_identifier("sum")});
+        expr::field_t{e(expr::record_t{make_vector2<expr::record_t::field_t>(
+                          expr::record_t::field_t{
+                              .name  = ident_gen.ident("sum"),
+                              .value = expr::expr_t{"",
+                                                    expr::binary_t{token_t::p_plus("+"),
+                                                                   e(expr::identifier_t{ident_gen.ident("a")}),
+                                                                   e(expr::identifier_t{ident_gen.ident("b")})}}},
+                          expr::record_t::field_t{
+                              .name  = ident_gen.ident("product"),
+                              .value = expr::expr_t{"",
+                                                    expr::binary_t{token_t::p_asterisk("*"),
+                                                                   e(expr::identifier_t{ident_gen.ident("c")}),
+                                                                   e(expr::identifier_t{ident_gen.ident("d")})}}})}),
+                      ident_gen.ident("sum")});
 }
 
-TEST(ParserTest, ExprTupleTest)
+TEST_F(ParserTest, ExprTupleTest)
 {
     expr_test("(1, 2, 3)",
               expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
@@ -534,14 +525,14 @@ TEST(ParserTest, ExprTupleTest)
                                                       expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ExprTupleEmptyTest) { expr_test("()", expr::tuple_t{{}}); }
+TEST_F(ParserTest, ExprTupleEmptyTest) { expr_test("()", expr::tuple_t{{}}); }
 
-TEST(ParserTest, ExprTupleSingleElementTest)
+TEST_F(ParserTest, ExprTupleSingleElementTest)
 {
     expr_test("(42,)", expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("42")})});
 }
 
-TEST(ParserTest, ExprTupleTrailingCommaTest)
+TEST_F(ParserTest, ExprTupleTrailingCommaTest)
 {
     expr_test("(1, 2, 3, )",
               expr::tuple_t{make_vector<expr::expr_t>(expr::literal_t{token_t::l_integer("1")},
@@ -549,31 +540,31 @@ TEST(ParserTest, ExprTupleTrailingCommaTest)
                                                       expr::literal_t{token_t::l_integer("3")})});
 }
 
-TEST(ParserTest, ExprTuplePrecedenceTest)
+TEST_F(ParserTest, ExprTuplePrecedenceTest)
 {
     expr_test("(a + b, c * d)[1]",
               expr::index_t{e(expr::tuple_t{make_vector<expr::expr_t>(
                                 expr::binary_t{token_t::p_plus("+"),
-                                               e(expr::identifier_t{token_t::k_identifier("a")}),
-                                               e(expr::identifier_t{token_t::k_identifier("b")})},
+                                               e(expr::identifier_t{ident_gen.ident("a")}),
+                                               e(expr::identifier_t{ident_gen.ident("b")})},
                                 expr::binary_t{token_t::p_asterisk("*"),
-                                               e(expr::identifier_t{token_t::k_identifier("c")}),
-                                               e(expr::identifier_t{token_t::k_identifier("d")})})}),
+                                               e(expr::identifier_t{ident_gen.ident("c")}),
+                                               e(expr::identifier_t{ident_gen.ident("d")})})}),
                             e(expr::literal_t{token_t::l_integer("1")})});
 }
 
-TEST(ParserTest, ExprIfTest)
+TEST_F(ParserTest, ExprIfTest)
 {
     expr_test("if a && b => c",
               expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
                   .condition   = expr::expr_t{"",
                                             expr::binary_t{token_t::p_and_and("&&"),
-                                                           e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                           e(expr::identifier_t{token_t::k_identifier("b")})}},
-                  .then_branch = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("c")}}})});
+                                                           e(expr::identifier_t{ident_gen.ident("a")}),
+                                                           e(expr::identifier_t{ident_gen.ident("b")})}},
+                  .then_branch = expr::expr_t{"", expr::identifier_t{ident_gen.ident("c")}}})});
 }
 
-TEST(ParserTest, ExprIfElseIfTest)
+TEST_F(ParserTest, ExprIfElseIfTest)
 {
     expr_test(R"(
         if x < 10 => "small"
@@ -583,30 +574,30 @@ TEST(ParserTest, ExprIfElseIfTest)
                   expr::if_t::conditional_branch_t{
                       .condition   = expr::expr_t{"",
                                                 expr::binary_t{token_t::p_less("<"),
-                                                               e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                               e(expr::identifier_t{ident_gen.ident("x")}),
                                                                e(expr::literal_t{token_t::l_integer("10")})}},
                       .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"small\"")}}},
                   expr::if_t::conditional_branch_t{
                       .condition   = expr::expr_t{"",
                                                 expr::binary_t{token_t::p_less("<"),
-                                                               e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                               e(expr::identifier_t{ident_gen.ident("x")}),
                                                                e(expr::literal_t{token_t::l_integer("20")})}},
                       .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"medium\"")}}})});
 }
 
-TEST(ParserTest, ExprIfElseTest)
+TEST_F(ParserTest, ExprIfElseTest)
 {
     expr_test(R"(
         if isValid => "valid"
         else => "invalid"
     )",
               expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                             .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("isValid")}},
+                             .condition   = expr::expr_t{"", expr::identifier_t{ident_gen.ident("isValid")}},
                              .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"valid\"")}}}),
                          e(expr::literal_t{token_t::l_string("\"invalid\"")})});
 }
 
-TEST(ParserTest, ExprIfElseIfElseTest)
+TEST_F(ParserTest, ExprIfElseIfElseTest)
 {
     expr_test(
         R"(
@@ -614,24 +605,23 @@ TEST(ParserTest, ExprIfElseIfElseTest)
         else if score >= 80 => "B"
         else => "C"
     )",
-        expr::if_t{
-            make_vector2<expr::if_t::conditional_branch_t>(
-                expr::if_t::conditional_branch_t{
-                    .condition   = expr::expr_t{"",
-                                              expr::binary_t{token_t::p_greater_equal(">="),
-                                                             e(expr::identifier_t{token_t::k_identifier("score")}),
-                                                             e(expr::literal_t{token_t::l_integer("90")})}},
-                    .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"A\"")}}},
-                expr::if_t::conditional_branch_t{
-                    .condition   = expr::expr_t{"",
-                                              expr::binary_t{token_t::p_greater_equal(">="),
-                                                             e(expr::identifier_t{token_t::k_identifier("score")}),
-                                                             e(expr::literal_t{token_t::l_integer("80")})}},
-                    .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"B\"")}}}),
-            e(expr::literal_t{token_t::l_string("\"C\"")})});
+        expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(
+                       expr::if_t::conditional_branch_t{
+                           .condition   = expr::expr_t{"",
+                                                     expr::binary_t{token_t::p_greater_equal(">="),
+                                                                    e(expr::identifier_t{ident_gen.ident("score")}),
+                                                                    e(expr::literal_t{token_t::l_integer("90")})}},
+                           .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"A\"")}}},
+                       expr::if_t::conditional_branch_t{
+                           .condition   = expr::expr_t{"",
+                                                     expr::binary_t{token_t::p_greater_equal(">="),
+                                                                    e(expr::identifier_t{ident_gen.ident("score")}),
+                                                                    e(expr::literal_t{token_t::l_integer("80")})}},
+                           .then_branch = expr::expr_t{"", expr::literal_t{token_t::l_string("\"B\"")}}}),
+                   e(expr::literal_t{token_t::l_string("\"C\"")})});
 }
 
-TEST(ParserTest, ExprIfBlockTest)
+TEST_F(ParserTest, ExprIfBlockTest)
 {
     expr_test(
         R"(
@@ -640,11 +630,11 @@ TEST(ParserTest, ExprIfBlockTest)
         end
     )",
         expr::if_t{make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-            .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("isReady")}},
-            .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})}}})});
+            .condition   = expr::expr_t{"", expr::identifier_t{ident_gen.ident("isReady")}},
+            .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{ident_gen.ident("a")})}}})});
 }
 
-TEST(ParserTest, ExprIfElseMixedBlockTest)
+TEST_F(ParserTest, ExprIfElseMixedBlockTest)
 {
     expr_test(
         R"(
@@ -656,42 +646,42 @@ TEST(ParserTest, ExprIfElseMixedBlockTest)
     )",
         expr::if_t{
             make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                .condition   = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("condition")}},
-                .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{token_t::k_identifier("a")})}}}),
+                .condition   = expr::expr_t{"", expr::identifier_t{ident_gen.ident("condition")}},
+                .then_branch = expr::expr_t{"", expr::block_t{{}, e(expr::identifier_t{ident_gen.ident("a")})}}}),
             e(expr::block_t{{},
                             e(expr::binary_t{token_t::p_plus("+"),
-                                             e(expr::identifier_t{token_t::k_identifier("b")}),
-                                             e(expr::identifier_t{token_t::k_identifier("c")})})})});
+                                             e(expr::identifier_t{ident_gen.ident("b")}),
+                                             e(expr::identifier_t{ident_gen.ident("c")})})})});
 }
 
-TEST(ParserTest, ExprIfValueTest)
+TEST_F(ParserTest, ExprIfValueTest)
 {
-    expr_test("(if x > 0 => x else => -x) * 2",
-              expr::binary_t{
-                  token_t::p_asterisk("*"),
-                  e(expr::grouping_t{e(expr::if_t{
-                      make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
-                          .condition   = expr::expr_t{"",
-                                                    expr::binary_t{token_t::p_greater(">"),
-                                                                   e(expr::identifier_t{token_t::k_identifier("x")}),
-                                                                   e(expr::literal_t{token_t::l_integer("0")})}},
-                          .then_branch = expr::expr_t{"", expr::identifier_t{token_t::k_identifier("x")}}}),
-                      e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{token_t::k_identifier("x")})})})}),
-                  e(expr::literal_t{token_t::l_integer("2")})});
+    expr_test(
+        "(if x > 0 => x else => -x) * 2",
+        expr::binary_t{token_t::p_asterisk("*"),
+                       e(expr::grouping_t{e(expr::if_t{
+                           make_vector2<expr::if_t::conditional_branch_t>(expr::if_t::conditional_branch_t{
+                               .condition   = expr::expr_t{"",
+                                                         expr::binary_t{token_t::p_greater(">"),
+                                                                        e(expr::identifier_t{ident_gen.ident("x")}),
+                                                                        e(expr::literal_t{token_t::l_integer("0")})}},
+                               .then_branch = expr::expr_t{"", expr::identifier_t{ident_gen.ident("x")}}}),
+                           e(expr::unary_t{token_t::p_minus("-"), e(expr::identifier_t{ident_gen.ident("x")})})})}),
+                       e(expr::literal_t{token_t::l_integer("2")})});
 }
 
-TEST(ParserTest, ExprWhileTest)
+TEST_F(ParserTest, ExprWhileTest)
 {
     expr_test("while a < b => a + 1",
               expr::while_t{e(expr::binary_t{token_t::p_less("<"),
-                                             e(expr::identifier_t{token_t::k_identifier("a")}),
-                                             e(expr::identifier_t{token_t::k_identifier("b")})}),
+                                             e(expr::identifier_t{ident_gen.ident("a")}),
+                                             e(expr::identifier_t{ident_gen.ident("b")})}),
                             e(expr::binary_t{token_t::p_plus("+"),
-                                             e(expr::identifier_t{token_t::k_identifier("a")}),
+                                             e(expr::identifier_t{ident_gen.ident("a")}),
                                              e(expr::literal_t{token_t::l_integer("1")})})});
 }
 
-TEST(ParserTest, ExprWhileBlockTest)
+TEST_F(ParserTest, ExprWhileBlockTest)
 {
     expr_test(
         R"(
@@ -700,29 +690,29 @@ TEST(ParserTest, ExprWhileBlockTest)
         end
     )",
         expr::while_t{e(expr::binary_t{token_t::p_greater(">"),
-                                       e(expr::identifier_t{token_t::k_identifier("count")}),
+                                       e(expr::identifier_t{ident_gen.ident("count")}),
                                        e(expr::literal_t{token_t::l_integer("0")})}),
                       e(expr::block_t{{},
                                       e(expr::binary_t{token_t::p_minus("-"),
-                                                       e(expr::identifier_t{token_t::k_identifier("count")}),
+                                                       e(expr::identifier_t{ident_gen.ident("count")}),
                                                        e(expr::literal_t{token_t::l_integer("1")})})})});
 }
 
-TEST(ParserTest, ExprWhileValueTest)
+TEST_F(ParserTest, ExprWhileValueTest)
 {
     expr_test("(while n > 0 => n - 1) + 10",
               expr::binary_t{
                   token_t::p_plus("+"),
                   e(expr::grouping_t{e(expr::while_t{e(expr::binary_t{token_t::p_greater(">"),
-                                                                      e(expr::identifier_t{token_t::k_identifier("n")}),
+                                                                      e(expr::identifier_t{ident_gen.ident("n")}),
                                                                       e(expr::literal_t{token_t::l_integer("0")})}),
                                                      e(expr::binary_t{token_t::p_minus("-"),
-                                                                      e(expr::identifier_t{token_t::k_identifier("n")}),
+                                                                      e(expr::identifier_t{ident_gen.ident("n")}),
                                                                       e(expr::literal_t{token_t::l_integer("1")})})})}),
                   e(expr::literal_t{token_t::l_integer("10")})});
 }
 
-TEST(ParserTest, ExprBlockTest)
+TEST_F(ParserTest, ExprBlockTest)
 {
     expr_test(R"(
         begin
@@ -731,18 +721,18 @@ TEST(ParserTest, ExprBlockTest)
         end
     )",
               expr::block_t{make_vector<stmt::stmt_t>(
-                                stmt::assign_t{e(expr::identifier_t{token_t::k_identifier("x")}),
+                                stmt::assign_t{e(expr::identifier_t{ident_gen.ident("x")}),
                                                e(expr::binary_t{token_t::p_plus("+"),
-                                                                e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                                e(expr::identifier_t{ident_gen.ident("x")}),
                                                                 e(expr::literal_t{token_t::l_integer("1")})})}),
                             e(expr::binary_t{token_t::p_plus("+"),
-                                             e(expr::identifier_t{token_t::k_identifier("x")}),
+                                             e(expr::identifier_t{ident_gen.ident("x")}),
                                              e(expr::literal_t{token_t::l_integer("2")})})});
 }
 
-TEST(ParserTest, ExprBlockEmptyTest) { expr_test("begin end", expr::block_t{{}, e(expr::tuple_t{{}})}); }
+TEST_F(ParserTest, ExprBlockEmptyTest) { expr_test("begin end", expr::block_t{{}, e(expr::tuple_t{{}})}); }
 
-TEST(ParserTest, ExprBlockValueTest)
+TEST_F(ParserTest, ExprBlockValueTest)
 {
     expr_test(
         R"(
@@ -752,12 +742,12 @@ TEST(ParserTest, ExprBlockValueTest)
             token_t::p_plus("+"),
             e(expr::grouping_t{e(expr::block_t{{},
                                                e(expr::binary_t{token_t::p_plus("+"),
-                                                                e(expr::identifier_t{token_t::k_identifier("a")}),
-                                                                e(expr::identifier_t{token_t::k_identifier("b")})})})}),
+                                                                e(expr::identifier_t{ident_gen.ident("a")}),
+                                                                e(expr::identifier_t{ident_gen.ident("b")})})})}),
             e(expr::literal_t{token_t::l_integer("2")})});
 }
 
-TEST(ParserTest, ExprBlockNoReturnTest)
+TEST_F(ParserTest, ExprBlockNoReturnTest)
 {
     expr_test(
         R"(
@@ -767,44 +757,47 @@ TEST(ParserTest, ExprBlockNoReturnTest)
         end
     )",
         expr::block_t{
-            make_vector<stmt::stmt_t>(stmt::assign_t{e(expr::identifier_t{token_t::k_identifier("x")}),
+            make_vector<stmt::stmt_t>(stmt::assign_t{e(expr::identifier_t{ident_gen.ident("x")}),
                                                      e(expr::binary_t{token_t::p_plus("+"),
-                                                                      e(expr::identifier_t{token_t::k_identifier("x")}),
+                                                                      e(expr::identifier_t{ident_gen.ident("x")}),
                                                                       e(expr::literal_t{token_t::l_integer("1")})})},
-                                      stmt::assign_t{e(expr::identifier_t{token_t::k_identifier("y")}),
+                                      stmt::assign_t{e(expr::identifier_t{ident_gen.ident("y")}),
                                                      e(expr::binary_t{token_t::p_plus("+"),
-                                                                      e(expr::identifier_t{token_t::k_identifier("y")}),
+                                                                      e(expr::identifier_t{ident_gen.ident("y")}),
                                                                       e(expr::literal_t{token_t::l_integer("2")})})}),
             e(expr::tuple_t{{}})});
 }
 
-TEST(ParserTest, ExprNoRHSLogicalTest) { rainy_day_expr_test("a &&", {"Unexpected end of input"}); }
+TEST_F(ParserTest, ExprNoRHSLogicalTest) { rainy_day_expr_test("a &&", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprNoRHSEqualityTest) { rainy_day_expr_test("a ==", {"Unexpected end of input"}); }
+TEST_F(ParserTest, ExprNoRHSEqualityTest) { rainy_day_expr_test("a ==", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprNoRHSComparisonTest) { rainy_day_expr_test("a >", {"Unexpected end of input"}); }
+TEST_F(ParserTest, ExprNoRHSComparisonTest) { rainy_day_expr_test("a >", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprNoRHSAdditionTest) { rainy_day_expr_test("a +", {"Unexpected end of input"}); }
+TEST_F(ParserTest, ExprNoRHSAdditionTest) { rainy_day_expr_test("a +", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprNoRHSMultiplicationTest) { rainy_day_expr_test("a *", {"Unexpected end of input"}); }
+TEST_F(ParserTest, ExprNoRHSMultiplicationTest) { rainy_day_expr_test("a *", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprFieldNoIdentifierTest) { rainy_day_expr_test("obj.", {"Expected identifier after '.'"}); }
+TEST_F(ParserTest, ExprFieldNoIdentifierTest) { rainy_day_expr_test("obj.", {"Expected identifier after '.'"}); }
 
-TEST(ParserTest, ExprIndexAccessNoExpressionTest)
+TEST_F(ParserTest, ExprIndexAccessNoExpressionTest)
 {
     rainy_day_expr_test("arr[2)", {"Expected ']' after index expression"});
 }
 
-TEST(ParserTest, ExprCallNoClosingParenTest)
+TEST_F(ParserTest, ExprCallNoClosingParenTest)
 {
     rainy_day_expr_test("func(2, 3]", {"Expected identifier for named argument", "Expected ')' after arguments"});
 }
 
-TEST(ParserTest, ExprGroupingNoClosingParenTest)
+TEST_F(ParserTest, ExprGroupingNoClosingParenTest)
 {
     rainy_day_expr_test("(a + b]", {"Expected ',' or ')' after expression"});
 }
 
-TEST(ParserTest, ExprEmptyInputTest) { rainy_day_expr_test("", {"Unexpected end of input"}); }
+TEST_F(ParserTest, ExprEmptyInputTest) { rainy_day_expr_test("", {"Unexpected end of input"}); }
 
-TEST(ParserTest, ExprInvalidTokenTest) { rainy_day_expr_test("+", {"Unexpected token: +", "Unexpected end of input"}); }
+TEST_F(ParserTest, ExprInvalidTokenTest)
+{
+    rainy_day_expr_test("+", {"Unexpected token: +", "Unexpected end of input"});
+}

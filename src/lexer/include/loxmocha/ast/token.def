@@ -8,6 +8,11 @@
 #define LOXMOCHA_KEYWORD(name, example, value) LOXMOCHA_TOKEN(name, example, value)
 #endif
 
+#ifndef LOXMOCHA_IDENT
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_IDENT(name, example, value) LOXMOCHA_TOKEN(name, example, value)
+#endif
+
 #ifndef LOXMOCHA_LITERAL
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define LOXMOCHA_LITERAL(name, example, value) LOXMOCHA_TOKEN(name, example, value)
@@ -74,7 +79,7 @@ LOXMOCHA_KEYWORD(k_then, "then", 119)
 LOXMOCHA_TOKEN(c_line_comment, "// This is a comment", 200)
 LOXMOCHA_TOKEN(c_block_comment, "/* This is \n a block comment*/", 201)
 
-LOXMOCHA_TOKEN(k_identifier, "my_identifier", 199)
+LOXMOCHA_IDENT(k_identifier, "my_identifier", 199)
 
 LOXMOCHA_LITERAL(l_integer, "12345", 210)
 LOXMOCHA_LITERAL(l_char, "'c'", 230)
@@ -84,5 +89,6 @@ LOXMOCHA_FAKE_TOKEN(s_eof, "EOF", 0)
 
 #undef LOXMOCHA_TOKEN
 #undef LOXMOCHA_KEYWORD
+#undef LOXMOCHA_IDENT
 #undef LOXMOCHA_LITERAL
 #undef LOXMOCHA_FAKE_TOKEN

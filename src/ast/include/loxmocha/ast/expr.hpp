@@ -6,19 +6,19 @@
 
 #include <vector>
 
-namespace loxmocha::stmt {
+namespace loxmocha::ast::stmt {
 class stmt_t;
 }
 
-namespace loxmocha::type {
+namespace loxmocha::ast::type {
 class type_t;
 }
 
-namespace loxmocha::pattern {
+namespace loxmocha::ast::pattern {
 class pattern_t;
 }
 
-namespace loxmocha::expr {
+namespace loxmocha::ast::expr {
 
 class expr_t;
 
@@ -48,21 +48,21 @@ public:
      *
      * @param value The token representing the literal value.
      */
-    explicit literal_t(const token_t& value) : value_(value) {}
+    explicit literal_t(const lexer::token_t& value) : value_(value) {}
 
     /**
      * @brief Get the token value of the literal expression.
-     * @return const token_t& The token value of the literal expression.
+     * @return const lexer::token_t& The token value of the literal expression.
      */
-    [[nodiscard]] auto value() const -> const token_t& { return value_; }
+    [[nodiscard]] auto value() const -> const lexer::token_t& { return value_; }
     /**
      * @brief Get the token value of the literal expression.
-     * @return token_t& The token value of the literal expression.
+     * @return lexer::token_t& The token value of the literal expression.
      */
-    [[nodiscard]] auto value() -> token_t& { return value_; }
+    [[nodiscard]] auto value() -> lexer::token_t& { return value_; }
 
 private:
-    token_t value_;
+    lexer::token_t value_;
 };
 
 /**
@@ -91,21 +91,21 @@ public:
      *
      * @param name The token representing the identifier name.
      */
-    explicit identifier_t(const token_t& name) : name_(name) {}
+    explicit identifier_t(const lexer::token_t& name) : name_(name) {}
 
     /**
      * @brief Get the token name of the identifier expression.
-     * @return const token_t& The token name of the identifier expression.
+     * @return const lexer::token_t& The token name of the identifier expression.
      */
-    [[nodiscard]] auto name() const -> const token_t& { return name_; }
+    [[nodiscard]] auto name() const -> const lexer::token_t& { return name_; }
     /**
      * @brief Get the token name of the identifier expression.
-     * @return token_t& The token name of the identifier expression.
+     * @return lexer::token_t& The token name of the identifier expression.
      */
-    [[nodiscard]] auto name() -> token_t& { return name_; }
+    [[nodiscard]] auto name() -> lexer::token_t& { return name_; }
 
 private:
-    token_t name_;
+    lexer::token_t name_;
 };
 
 /**
@@ -137,18 +137,18 @@ public:
      * @param left The left operand expression.
      * @param right The right operand expression.
      */
-    binary_t(const token_t& op, safe_ptr<expr_t>&& left, safe_ptr<expr_t>&& right);
+    binary_t(const lexer::token_t& op, safe_ptr<expr_t>&& left, safe_ptr<expr_t>&& right);
 
     /**
      * @brief Get the operator token of the binary expression.
-     * @return const token_t& The operator token of the binary expression.
+     * @return const lexer::token_t& The operator token of the binary expression.
      */
-    [[nodiscard]] auto op() const -> const token_t& { return op_; }
+    [[nodiscard]] auto op() const -> const lexer::token_t& { return op_; }
     /**
      * @brief Get the operator token of the binary expression.
-     * @return token_t& The operator token of the binary expression.
+     * @return lexer::token_t& The operator token of the binary expression.
      */
-    [[nodiscard]] auto op() -> token_t& { return op_; }
+    [[nodiscard]] auto op() -> lexer::token_t& { return op_; }
 
     /**
      * @brief Get the left operand expression of the binary expression.
@@ -173,7 +173,7 @@ public:
     [[nodiscard]] auto right() -> safe_ptr<expr_t>& { return right_; }
 
 private:
-    token_t          op_;
+    lexer::token_t   op_;
     safe_ptr<expr_t> left_;
     safe_ptr<expr_t> right_;
 };
@@ -206,18 +206,18 @@ public:
      * @param op The token representing the unary operator.
      * @param operand The operand expression.
      */
-    unary_t(const token_t& op, safe_ptr<expr_t>&& operand);
+    unary_t(const lexer::token_t& op, safe_ptr<expr_t>&& operand);
 
     /**
      * @brief Get the operator token of the unary expression.
-     * @return const token_t& The operator token of the unary expression.
+     * @return const lexer::token_t& The operator token of the unary expression.
      */
-    [[nodiscard]] auto op() const -> const token_t& { return op_; }
+    [[nodiscard]] auto op() const -> const lexer::token_t& { return op_; }
     /**
      * @brief Get the operator token of the unary expression.
-     * @return token_t& The operator token of the unary expression.
+     * @return lexer::token_t& The operator token of the unary expression.
      */
-    [[nodiscard]] auto op() -> token_t& { return op_; }
+    [[nodiscard]] auto op() -> lexer::token_t& { return op_; }
 
     /**
      * @brief Get the operand expression of the unary expression.
@@ -231,7 +231,7 @@ public:
     [[nodiscard]] auto operand() -> safe_ptr<expr_t>& { return operand_; }
 
 private:
-    token_t          op_;
+    lexer::token_t   op_;
     safe_ptr<expr_t> operand_;
 };
 
@@ -576,7 +576,7 @@ public:
      * @param base The base expression representing the record.
      * @param field_name The token representing the field name to access.
      */
-    field_t(safe_ptr<expr_t>&& base, const token_t& field_name);
+    field_t(safe_ptr<expr_t>&& base, const lexer::token_t& field_name);
 
     /**
      * @brief Get the base expression representing the record.
@@ -591,18 +591,18 @@ public:
 
     /**
      * @brief Get the field name token.
-     * @return const token_t& The field name token.
+     * @return const lexer::token_t& The field name token.
      */
-    [[nodiscard]] auto field_name() const -> const token_t& { return field_name_; }
+    [[nodiscard]] auto field_name() const -> const lexer::token_t& { return field_name_; }
     /**
      * @brief Get the field name token.
-     * @return token_t& The field name token.
+     * @return lexer::token_t& The field name token.
      */
-    [[nodiscard]] auto field_name() -> token_t& { return field_name_; }
+    [[nodiscard]] auto field_name() -> lexer::token_t& { return field_name_; }
 
 private:
     safe_ptr<expr_t> base_;
-    token_t          field_name_;
+    lexer::token_t   field_name_;
 };
 
 // TODO: Closure expression
@@ -982,13 +982,13 @@ public:
 };
 
 struct record_t::field_t {
-    token_t name;
-    expr_t  value;
+    lexer::token_t name;
+    expr_t         value;
 };
 
 struct call_t::named_arg_t {
-    token_t name;
-    expr_t  value;
+    lexer::token_t name;
+    expr_t         value;
 };
 
 struct if_t::conditional_branch_t {
@@ -996,4 +996,4 @@ struct if_t::conditional_branch_t {
     expr_t then_branch;
 };
 
-} // namespace loxmocha::expr
+} // namespace loxmocha::ast::expr

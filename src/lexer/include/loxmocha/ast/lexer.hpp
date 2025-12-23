@@ -1,12 +1,13 @@
 #pragma once
 
+#include "loxmocha/ast/ident_map.hpp"
 #include "token.hpp"
 
 #include <expected>
 #include <format>
 #include <ostream>
 
-namespace loxmocha {
+namespace loxmocha::lexer {
 
 /**
  * @class source_location_t
@@ -122,8 +123,10 @@ public:
      * @brief Constructs a lexer for a given input string.
      *
      * @param input The input string to be lexed.
+     * @param ident_map The identifier map to use for storing identifiers.
      */
-    explicit lexer_t(std::string_view input) : input_(input), current_iter_{input_.begin()}, current_token_{lex(input)}
+    explicit lexer_t(std::string_view input, ident_map_t& ident_map)
+        : input_(input), current_iter_{input_.begin()}, ident_map_{ident_map}, current_token_{lex(input)}
     {
     }
 
@@ -155,6 +158,8 @@ public:
 private:
     std::string_view           input_;        // The input string to be lexed.
     std::string_view::iterator current_iter_; // The current position in the input string.
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+    ident_map_t& ident_map_;
     std::expected<token_t, lex_error_t>
         current_token_; // The current token being processed. This is returned by peek_token().
 
@@ -201,4 +206,4 @@ private:
     [[nodiscard]] auto lex_string(std::string_view input) const -> std::expected<token_t, lex_error_t>;
 };
 
-} // namespace loxmocha
+} // namespace loxmocha::lexer

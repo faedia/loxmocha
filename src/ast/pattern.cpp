@@ -6,7 +6,9 @@
 
 #include <utility>
 
-namespace loxmocha::pattern {
+namespace loxmocha::ast::pattern {
+
+using namespace loxmocha::lexer;
 
 tag_t::tag_t(safe_ptr<type::type_t>&& type, const token_t& name, safe_ptr<pattern_t>&& pattern)
     : type_(std::move(type)), name_(name), pattern_(std::move(pattern))
@@ -15,4 +17,4 @@ tag_t::tag_t(safe_ptr<type::type_t>&& type, const token_t& name, safe_ptr<patter
 
 tag_t::~tag_t() = default;
 
-} // namespace loxmocha::pattern
+} // namespace loxmocha::ast::pattern

@@ -9,6 +9,7 @@
 #include <vector>
 
 using namespace loxmocha;
+using namespace loxmocha::lexer;
 
 class LexerTest
     : public testing::TestWithParam<std::tuple<std::string_view, token_t::kind_e, std::string, std::string>> {};
@@ -23,8 +24,9 @@ TEST_P(LexerTest, SingleTokenTest)
     const auto& [input, expected_kind, expected_span, _] = GetParam();
 
     // Lex the first token in the input string.
-    auto lexer  = lexer_t{input};
-    auto result = lexer.next_token();
+    auto ident_map = ident_map_t{};
+    auto lexer     = lexer_t{input, ident_map};
+    auto result    = lexer.next_token();
 
     // Check if the result is a valid token.
     ASSERT_TRUE(result.has_value()) << "Failed to lex token: " << result.error().message();
@@ -94,8 +96,9 @@ TEST_P(LexerErrorTest, LexErrorTest)
     const auto& [input, expected_reason, expected_location, expected_span, _] = GetParam();
 
     // Lex the first token in the input string.
-    auto lexer  = lexer_t{input};
-    auto result = lexer.next_token();
+    auto ident_map = ident_map_t{};
+    auto lexer     = lexer_t{input, ident_map};
+    auto result    = lexer.next_token();
 
     // Check if the result is an error.
     ASSERT_FALSE(result.has_value()) << "Expected a lexical error, but got a token: " << result.value();
@@ -184,7 +187,8 @@ TEST_P(LexerMultiTokenTest, MultiTokenTest)
     const auto& [input, expected_tokens, _] = GetParam();
 
     // Lex the input string.
-    auto lexer = lexer_t{input};
+    auto ident_map = ident_map_t{};
+    auto lexer     = lexer_t{input, ident_map};
 
     std::vector<token_t> tokens{};
 
@@ -216,12 +220,12 @@ INSTANTIATE_TEST_SUITE_P(MultiTokenTest,
                                            std::make_tuple("if (x > 0) { x }",
                                                            std::vector<token_t>{token_t::k_if("if"),
                                                                                 token_t::p_left_paren("("),
-                                                                                token_t::k_identifier("x"),
+                                                                                token_t::k_identifier("x", ident_t{0}),
                                                                                 token_t::p_greater(">"),
                                                                                 token_t::l_integer("0"),
                                                                                 token_t::p_right_paren(")"),
                                                                                 token_t::p_left_brace("{"),
-                                                                                token_t::k_identifier("x"),
+                                                                                token_t::k_identifier("x", ident_t{0}),
                                                                                 token_t::p_right_brace("}"),
                                                                                 token_t::s_eof("")},
                                                            "multi_token_if_statement")),

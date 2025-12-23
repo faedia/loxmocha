@@ -1,5 +1,6 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
+#include "loxmocha/ast/ident_map.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
@@ -8,6 +9,9 @@
 #include <utility>
 
 namespace loxmocha::internal {
+
+using namespace lexer;
+using namespace ast;
 
 auto parser_t::parse_decl() -> parser_result_t<decl::decl_t>
 {
@@ -41,7 +45,7 @@ auto parser_t::is_decl_start_token(const token_t& token) -> bool
     }
 }
 
-auto parser_t::fun_decl(loxmocha::token_t fun) -> decl::decl_t
+auto parser_t::fun_decl(const token_t& fun) -> decl::decl_t
 {
     // We expect a function to start with an identifier and an opening paren.
     auto name = expect_token<token_t::kind_e::k_identifier>();
@@ -66,15 +70,15 @@ auto parser_t::fun_decl(loxmocha::token_t fun) -> decl::decl_t
                     has_error_ = true;
                     diagnostics_.emplace_back("Expected parameter name in function declaration");
                     return decl::function_t::parameter_t{
-                        .name = token_t::k_identifier("<error>"),
-                        .type = type::type_t{"", type::identifier_t{token_t::k_identifier("<error>")}}};
+                        .name = token_t::k_identifier("<error>", ident_t{0}),
+                        .type = type::type_t{"", type::identifier_t{token_t::k_identifier("<error>", ident_t{0})}}};
                 }
                 if (!expect_token<token_t::kind_e::p_colon>()) {
                     has_error_ = true;
                     diagnostics_.emplace_back("Expected ':' after parameter name in function declaration");
                     return decl::function_t::parameter_t{
                         .name = *param_name,
-                        .type = type::type_t{"", type::identifier_t{token_t::k_identifier("<error>")}}};
+                        .type = type::type_t{"", type::identifier_t{token_t::k_identifier("<error>", ident_t{0})}}};
                 }
                 return decl::function_t::parameter_t{.name = *param_name, .type = parse_type_internal()};
             });
@@ -152,7 +156,7 @@ auto parser_t::item_decl(const token_t& let, decl::variable_t::mut_e mut) -> dec
                         decl::variable_t{mut, *name, std::move(type), std::move(initialiser)}};
 }
 
-auto parser_t::type_decl(loxmocha::token_t type) -> decl::decl_t
+auto parser_t::type_decl(const token_t& type) -> decl::decl_t
 {
     // We expect a type to start with an identifier, an 'is' keyword and a type.
     auto name = expect_token<token_t::kind_e::k_identifier>();

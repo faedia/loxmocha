@@ -11,6 +11,9 @@
 
 namespace loxmocha {
 
+using namespace lexer;
+using namespace ast;
+
 auto parse_decl(lexer_t& lexer) -> parser_result_t<decl::decl_t> { return internal::parser_t{lexer}.parse_decl(); }
 
 auto parse_module([[maybe_unused]] lexer_t& lexer) -> parser_result_t<module::module_t>

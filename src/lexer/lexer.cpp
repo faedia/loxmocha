@@ -10,7 +10,7 @@
 #include <iterator>
 #include <string_view>
 
-namespace loxmocha {
+namespace loxmocha::lexer {
 
 namespace {
     /**
@@ -264,7 +264,13 @@ auto lexer_t::lex_ident(std::string_view input) const -> std::expected<token_t, 
     iter = std::next(iter);
     for (; iter != input.end() && is_ident_char(*iter); iter = std::next(iter)) {}
 
-    return token_t::keyword_or_ident({token_begin, iter});
+    // Attempt to make a keyword token.
+    if (auto token = token_t::keyword_token({token_begin, iter}); token.has_value()) {
+        return *token;
+    }
+
+    // Otherwise we have an identifier.
+    return token_t::k_identifier({token_begin, iter}, ident_map_.emplace({token_begin, iter}));
 }
 
 auto lexer_t::lex_char(std::string_view input) const -> std::expected<token_t, lex_error_t>
@@ -331,4 +337,4 @@ auto lexer_t::lex_string(std::string_view input) const -> std::expected<token_t,
         lex_error_t{lex_error_t::reason_e::eof_error, {token_begin, iter}, source_location(token_begin)});
 }
 
-} // namespace loxmocha
+} // namespace loxmocha::lexer

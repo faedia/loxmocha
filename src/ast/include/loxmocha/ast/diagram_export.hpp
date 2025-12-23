@@ -38,8 +38,8 @@ public:
         Exporter::footer(stream);
     }
 
-    auto operator()(node_base_t                     span,
-                    const module::module_t&         module,
+    auto operator()(ast::node_base_t                span,
+                    const ast::module::module_t&    module,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
@@ -56,8 +56,8 @@ public:
         return {current_id, next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const decl::type_t&             decl,
+    auto operator()(ast::node_base_t                span,
+                    const ast::decl::type_t&        decl,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
@@ -68,8 +68,8 @@ public:
         return {current_id, next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const decl::function_t&         decl,
+    auto operator()(ast::node_base_t                span,
+                    const ast::decl::function_t&    decl,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
@@ -98,8 +98,8 @@ public:
         return {current_id, next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const decl::variable_t&         decl,
+    auto operator()(ast::node_base_t                span,
+                    const ast::decl::variable_t&    decl,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     current_id) -> std::pair<std::size_t, std::size_t>
@@ -115,8 +115,8 @@ public:
         return {current_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const decl::error_t&            decl,
+    auto operator()(ast::node_base_t                span,
+                    const ast::decl::error_t&       decl,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -125,8 +125,8 @@ public:
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::literal_t&          expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::literal_t&     expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -135,8 +135,8 @@ public:
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::identifier_t&       expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::identifier_t&  expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -145,8 +145,8 @@ public:
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::binary_t&           expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::binary_t&      expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -162,8 +162,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::is_t&               expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::is_t&          expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -179,8 +179,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::cast_t&             expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::cast_t&        expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -196,8 +196,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::unary_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::unary_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -210,8 +210,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::index_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::index_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -227,8 +227,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::field_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::field_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -241,8 +241,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::call_t&             expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::call_t&        expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -269,8 +269,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::array_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::array_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -288,8 +288,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::record_t&           expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::record_t&      expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -307,8 +307,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::tuple_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::tuple_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -326,8 +326,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::grouping_t&         expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::grouping_t&    expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -340,8 +340,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::if_t&               expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::if_t&          expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -368,8 +368,8 @@ public:
         return {next_id, current_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::while_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::while_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -385,8 +385,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::block_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::block_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -410,8 +410,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const expr::error_t&            expr,
+    auto operator()(ast::node_base_t                span,
+                    const ast::expr::error_t&       expr,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -420,18 +420,18 @@ public:
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const pattern::identifier_t&    pattern,
-                    const source::source_manager_t& source,
-                    std::ostream&                   stream,
-                    std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
+    auto operator()(ast::node_base_t                  span,
+                    const ast::pattern::identifier_t& pattern,
+                    const source::source_manager_t&   source,
+                    std::ostream&                     stream,
+                    std::size_t                       next_id) -> std::pair<std::size_t, std::size_t>
     {
         Exporter::node(span, pattern, pattern.name().span(), source, next_id, stream);
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const pattern::tag_t&           pattern,
+    auto operator()(ast::node_base_t                span,
+                    const ast::pattern::tag_t&      pattern,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -447,8 +447,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const pattern::error_t&         pattern,
+    auto operator()(ast::node_base_t                span,
+                    const ast::pattern::error_t&    pattern,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -457,8 +457,8 @@ public:
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const stmt::expr_t&             stmt,
+    auto operator()(ast::node_base_t                span,
+                    const ast::stmt::expr_t&        stmt,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -471,8 +471,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const stmt::assign_t&           stmt,
+    auto operator()(ast::node_base_t                span,
+                    const ast::stmt::assign_t&      stmt,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -488,8 +488,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const stmt::decl_t&             stmt,
+    auto operator()(ast::node_base_t                span,
+                    const ast::stmt::decl_t&        stmt,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -502,8 +502,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::identifier_t&       type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::identifier_t&  type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -512,8 +512,8 @@ public:
         return {next_id, next_id + 1};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::array_t&            type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::array_t&       type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -526,8 +526,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::tuple_t&            type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::tuple_t&       type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -545,8 +545,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::record_t&           type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::record_t&      type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -564,8 +564,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::tagged_t&           type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::tagged_t&      type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -583,8 +583,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::reference_t&        type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::reference_t&   type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -597,8 +597,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::function_t&         type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::function_t&    type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -622,8 +622,8 @@ public:
         return {next_id, final_next_id};
     }
 
-    auto operator()(node_base_t                     span,
-                    const type::mutable_t&          type,
+    auto operator()(ast::node_base_t                span,
+                    const ast::type::mutable_t&     type,
                     const source::source_manager_t& source,
                     std::ostream&                   stream,
                     std::size_t                     next_id) -> std::pair<std::size_t, std::size_t>
@@ -642,7 +642,7 @@ public:
     static void header(std::ostream& stream) { stream << "digraph AST {\n"; }
     static void footer(std::ostream& stream) { stream << "}\n"; }
 
-    static void node(node_base_t                     span,
+    static void node(ast::node_base_t                span,
                      const auto&                     node,
                      const auto&                     item_info,
                      const source::source_manager_t& source,
@@ -672,7 +672,7 @@ public:
     static void header([[maybe_unused]] std::ostream& stream) {}
     static void footer([[maybe_unused]] std::ostream& stream) {}
 
-    static void node(node_base_t                     span,
+    static void node(ast::node_base_t                span,
                      const auto&                     node,
                      const auto&                     item_info,
                      const source::source_manager_t& source,

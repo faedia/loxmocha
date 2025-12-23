@@ -3,15 +3,15 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 
-namespace loxmocha::expr {
+namespace loxmocha::ast::expr {
 class expr_t;
 }
 
-namespace loxmocha::decl {
+namespace loxmocha::ast::decl {
 class decl_t;
 }
 
-namespace loxmocha::stmt {
+namespace loxmocha::ast::stmt {
 
 /**
  * @brief Represents an expression statement.
@@ -171,4 +171,4 @@ public:
     auto operator=(stmt_t&&) noexcept -> stmt_t& = default;
 };
 
-} // namespace loxmocha::stmt
+} // namespace loxmocha::ast::stmt

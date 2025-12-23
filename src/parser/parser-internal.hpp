@@ -25,14 +25,14 @@ namespace loxmocha::internal {
  */
 class parser_t {
 public:
-    explicit parser_t(lexer_t& lexer) : lexer_(lexer) {}
+    explicit parser_t(lexer::lexer_t& lexer) : lexer_(lexer) {}
 
-    auto parse_decl() -> parser_result_t<decl::decl_t>;
-    auto parse_expr() -> parser_result_t<expr::expr_t>;
-    auto parse_module() -> parser_result_t<module::module_t>;
-    auto parse_pattern() -> parser_result_t<pattern::pattern_t>;
-    auto parse_stmt() -> parser_result_t<stmt::stmt_t>;
-    auto parse_type() -> parser_result_t<type::type_t>;
+    auto parse_decl() -> parser_result_t<ast::decl::decl_t>;
+    auto parse_expr() -> parser_result_t<ast::expr::expr_t>;
+    auto parse_module() -> parser_result_t<ast::module::module_t>;
+    auto parse_pattern() -> parser_result_t<ast::pattern::pattern_t>;
+    auto parse_stmt() -> parser_result_t<ast::stmt::stmt_t>;
+    auto parse_type() -> parser_result_t<ast::type::type_t>;
 
 private:
     /**
@@ -42,8 +42,8 @@ private:
      * @param token The token to check.
      * @return true if the token matches any of the specified kinds, false otherwise.
      */
-    template<token_t::kind_e... Kinds>
-    auto match(const token_t& token) -> bool
+    template<lexer::token_t::kind_e... Kinds>
+    auto match(const lexer::token_t& token) -> bool
     {
         static_assert(sizeof...(Kinds) > 0, "At least one kind must be provided");
         // cppcheck-suppress internalAstError
@@ -57,10 +57,10 @@ private:
      * Otherwise, std::nullopt is returned.
      *
      * @tparam Kinds The kinds to expect.
-     * @return std::optional<token_t> The expected token if it matches, std::nullopt otherwise.
+     * @return std::optional<lexer::token_t> The expected token if it matches, std::nullopt otherwise.
      */
-    template<token_t::kind_e... Kinds>
-    auto expect_token() -> std::optional<token_t>
+    template<lexer::token_t::kind_e... Kinds>
+    auto expect_token() -> std::optional<lexer::token_t>
     {
         auto token = lexer_.peek_token();
         if (token && match<Kinds...>(*token)) {
@@ -79,10 +79,10 @@ private:
      * @param parse_rhs A function that determines how to parse the rhs expression.
      * @param construct_expr A function that determines how to construct the binary expression node from the operator
      * token, lhs expression and rhs expression.
-     * @return expr::expr_t The parsed binary expression.
+     * @return ast::expr::expr_t The parsed binary expression.
      */
-    template<token_t::kind_e... Kinds>
-    auto parse_binary_expr(auto&& parse_lhs, auto&& parse_rhs, auto&& construct_expr) -> expr::expr_t
+    template<lexer::token_t::kind_e... Kinds>
+    auto parse_binary_expr(auto&& parse_lhs, auto&& parse_rhs, auto&& construct_expr) -> ast::expr::expr_t
     {
         auto left     = parse_lhs();
         auto op_token = lexer_.peek_token();
@@ -108,7 +108,7 @@ private:
      * @param parse_element A function that determines how to parse each element.
      * @return std::vector<T> The parsed elements.
      */
-    template<token_t::kind_e end, token_t::kind_e separator, typename T>
+    template<lexer::token_t::kind_e end, lexer::token_t::kind_e separator, typename T>
     auto parse_delimited(auto&& parse_element) -> std::vector<T>
     {
         std::vector<T> elements{};
@@ -143,7 +143,7 @@ private:
      * @param parse_element A function that determines how to parse each subsequent element.
      * @return std::vector<T> The parsed elements including the start node.
      */
-    template<token_t::kind_e end, token_t::kind_e separator, typename T>
+    template<lexer::token_t::kind_e end, lexer::token_t::kind_e separator, typename T>
     auto parse_delimited(T&& start_node, auto&& parse_element) -> std::vector<T>
     {
         std::vector<T> elements{};
@@ -165,65 +165,65 @@ private:
         return elements;
     }
 
-    auto parse_decl_internal() -> decl::decl_t;
-    auto parse_expr_internal() -> expr::expr_t;
-    auto parse_module_internal() -> module::module_t;
-    auto parse_pattern_internal() -> pattern::pattern_t;
-    auto parse_stmt_internal() -> stmt::stmt_t;
-    auto parse_type_internal() -> type::type_t;
+    auto parse_decl_internal() -> ast::decl::decl_t;
+    auto parse_expr_internal() -> ast::expr::expr_t;
+    auto parse_module_internal() -> ast::module::module_t;
+    auto parse_pattern_internal() -> ast::pattern::pattern_t;
+    auto parse_stmt_internal() -> ast::stmt::stmt_t;
+    auto parse_type_internal() -> ast::type::type_t;
 
-    static auto is_decl_start_token(const token_t& token) -> bool;
+    static auto is_decl_start_token(const lexer::token_t& token) -> bool;
 
-    auto fun_decl(token_t fun) -> decl::decl_t;
-    auto item_decl(const token_t& let, decl::variable_t::mut_e mut) -> decl::decl_t;
-    auto type_decl(token_t type) -> decl::decl_t;
+    auto fun_decl(const lexer::token_t& fun) -> ast::decl::decl_t;
+    auto item_decl(const lexer::token_t& let, ast::decl::variable_t::mut_e mut) -> ast::decl::decl_t;
+    auto type_decl(const lexer::token_t& type) -> ast::decl::decl_t;
 
-    auto if_expr(token_t if_tok) -> expr::expr_t;
-    auto else_body() -> expr::expr_t;
-    auto conditional_branch() -> expr::if_t::conditional_branch_t;
+    auto if_expr(const lexer::token_t& if_tok) -> ast::expr::expr_t;
+    auto else_body() -> ast::expr::expr_t;
+    auto conditional_branch() -> ast::expr::if_t::conditional_branch_t;
 
-    auto while_expr(token_t while_tok) -> expr::expr_t;
+    auto while_expr(const lexer::token_t& while_tok) -> ast::expr::expr_t;
 
-    auto block_expr(token_t begin) -> expr::expr_t;
-    auto block_body(token_t begin) -> expr::expr_t;
+    auto block_expr(const lexer::token_t& begin) -> ast::expr::expr_t;
+    auto block_body(const lexer::token_t& begin) -> ast::expr::expr_t;
 
-    auto or_expr() -> expr::expr_t;
-    auto and_expr() -> expr::expr_t;
-    auto equality_expr() -> expr::expr_t;
-    auto comparison_expr() -> expr::expr_t;
-    auto term_expr() -> expr::expr_t;
-    auto factor_expr() -> expr::expr_t;
-    auto is_expr() -> expr::expr_t;
-    auto cast_expr() -> expr::expr_t;
-    auto unary_expr() -> expr::expr_t;
-    auto field_access_expr(expr::expr_t&& base_expr) -> expr::expr_t;
-    auto index_expr(expr::expr_t&& base_expr) -> expr::expr_t;
-    auto positional_args() -> std::vector<expr::expr_t>;
-    auto named_args() -> std::vector<expr::call_t::named_arg_t>;
-    auto call_expr(expr::expr_t&& callee_expr) -> expr::expr_t;
-    auto access_expr() -> expr::expr_t;
-    auto primary_expr() -> expr::expr_t;
-    auto array_expr(const token_t& left_square) -> expr::expr_t;
-    auto record_expr(const token_t& left_brace) -> expr::expr_t;
-    auto tuple_or_grouping_expr(const token_t& left_paren) -> expr::expr_t;
+    auto or_expr() -> ast::expr::expr_t;
+    auto and_expr() -> ast::expr::expr_t;
+    auto equality_expr() -> ast::expr::expr_t;
+    auto comparison_expr() -> ast::expr::expr_t;
+    auto term_expr() -> ast::expr::expr_t;
+    auto factor_expr() -> ast::expr::expr_t;
+    auto is_expr() -> ast::expr::expr_t;
+    auto cast_expr() -> ast::expr::expr_t;
+    auto unary_expr() -> ast::expr::expr_t;
+    auto field_access_expr(ast::expr::expr_t&& base_expr) -> ast::expr::expr_t;
+    auto index_expr(ast::expr::expr_t&& base_expr) -> ast::expr::expr_t;
+    auto positional_args() -> std::vector<ast::expr::expr_t>;
+    auto named_args() -> std::vector<ast::expr::call_t::named_arg_t>;
+    auto call_expr(ast::expr::expr_t&& callee_expr) -> ast::expr::expr_t;
+    auto access_expr() -> ast::expr::expr_t;
+    auto primary_expr() -> ast::expr::expr_t;
+    auto array_expr(const lexer::token_t& left_square) -> ast::expr::expr_t;
+    auto record_expr(const lexer::token_t& left_brace) -> ast::expr::expr_t;
+    auto tuple_or_grouping_expr(const lexer::token_t& left_paren) -> ast::expr::expr_t;
 
-    auto tag_pattern() -> pattern::pattern_t;
-    auto primary_pattern() -> pattern::pattern_t;
+    auto tag_pattern() -> ast::pattern::pattern_t;
+    auto primary_pattern() -> ast::pattern::pattern_t;
 
-    auto expr_or_assign_stmt() -> stmt::stmt_t;
-    auto decl_stmt() -> stmt::stmt_t;
+    auto expr_or_assign_stmt() -> ast::stmt::stmt_t;
+    auto decl_stmt() -> ast::stmt::stmt_t;
 
-    auto fun_type(const token_t& fun) -> type::type_t;
-    auto ref_type(const token_t& let) -> type::type_t;
-    auto mutable_type(const token_t& var) -> type::type_t;
-    auto tagged_type(const token_t& choice) -> type::type_t;
-    auto record_type(const token_t& rec) -> type::type_t;
-    auto array_type() -> type::type_t;
-    auto primary_type() -> type::type_t;
-    auto tuple_or_grouping_type(const token_t& left_paren) -> type::type_t;
+    auto fun_type(const lexer::token_t& fun) -> ast::type::type_t;
+    auto ref_type(const lexer::token_t& let) -> ast::type::type_t;
+    auto mutable_type(const lexer::token_t& var) -> ast::type::type_t;
+    auto tagged_type(const lexer::token_t& choice) -> ast::type::type_t;
+    auto record_type(const lexer::token_t& rec) -> ast::type::type_t;
+    auto array_type() -> ast::type::type_t;
+    auto primary_type() -> ast::type::type_t;
+    auto tuple_or_grouping_type(const lexer::token_t& left_paren) -> ast::type::type_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
-    lexer_t&                 lexer_;
+    lexer::lexer_t&          lexer_;
     std::vector<std::string> diagnostics_;
     bool                     has_error_ = false;
 };

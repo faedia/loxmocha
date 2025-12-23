@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace loxmocha::type {
+namespace loxmocha::ast::type {
 
 array_t::array_t(safe_ptr<type_t>&& element_type, safe_ptr<expr::expr_t>&& size_expr)
     : element_type_(std::move(element_type)), size_expr_(std::move(size_expr))
@@ -30,4 +30,4 @@ function_t::function_t(std::vector<type_t>&& parameters, safe_ptr<type_t>&& retu
 
 mutable_t::mutable_t(safe_ptr<type_t>&& base_type) : base_type_(std::move(base_type)) {}
 
-} // namespace loxmocha::type
+} // namespace loxmocha::ast::type

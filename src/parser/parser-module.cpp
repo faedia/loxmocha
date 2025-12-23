@@ -7,6 +7,10 @@
 #include <vector>
 
 namespace loxmocha::internal {
+
+using namespace lexer;
+using namespace ast;
+
 auto parser_t::parse_module() -> parser_result_t<module::module_t>
 {
     has_error_ = false;

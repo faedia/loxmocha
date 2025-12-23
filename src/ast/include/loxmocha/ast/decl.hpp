@@ -2,7 +2,6 @@
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/expr.hpp"
-#include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/ast/type.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
@@ -10,15 +9,15 @@
 #include <utility>
 #include <vector>
 
-namespace loxmocha::expr {
+namespace loxmocha::ast::expr {
 class expr_t;
 }
 
-namespace loxmocha::type {
+namespace loxmocha::ast::type {
 class type_t;
 }
 
-namespace loxmocha::decl {
+namespace loxmocha::ast::decl {
 
 class decl_t;
 
@@ -49,18 +48,18 @@ public:
      * @param identifier The identifier of the type.
      * @param type The type associated with the identifier.
      */
-    explicit type_t(token_t identifier, safe_ptr<type::type_t>&& type);
+    explicit type_t(lexer::token_t identifier, safe_ptr<type::type_t>&& type);
 
     /**
      * @brief Get the identifier of the type declaration.
-     * @return const token_t& The identifier of the type declaration.
+     * @return const lexer::token_t& The identifier of the type declaration.
      */
-    [[nodiscard]] auto identifier() const -> const token_t& { return identifier_; }
+    [[nodiscard]] auto identifier() const -> const lexer::token_t& { return identifier_; }
     /**
      * @brief Get the identifier of the type declaration.
-     * @return token_t& The identifier of the type declaration.
+     * @return lexer::token_t& The identifier of the type declaration.
      */
-    [[nodiscard]] auto identifier() -> token_t& { return identifier_; }
+    [[nodiscard]] auto identifier() -> lexer::token_t& { return identifier_; }
 
     /**
      * @brief Get the type associated with the type declaration.
@@ -74,7 +73,7 @@ public:
     [[nodiscard]] auto type() -> safe_ptr<type::type_t>& { return type_; }
 
 private:
-    token_t                identifier_;
+    lexer::token_t         identifier_;
     safe_ptr<type::type_t> type_;
 };
 
@@ -104,8 +103,8 @@ public:
      * @brief Struct representing a function parameter.
      */
     struct parameter_t {
-        token_t      name;
-        type::type_t type;
+        lexer::token_t name;
+        type::type_t   type;
     };
 
     /**
@@ -116,21 +115,21 @@ public:
      * @param return_type The return type of the function.
      * @param body The body of the function.
      */
-    explicit function_t(token_t                    identifier,
+    explicit function_t(lexer::token_t             identifier,
                         std::vector<parameter_t>&& parameters,
                         safe_ptr<type::type_t>&&   return_type,
                         safe_ptr<expr::expr_t>&&   body);
 
     /**
      * @brief Get the identifier of the function declaration.
-     * @return const token_t& The identifier of the function declaration.
+     * @return const lexer::token_t& The identifier of the function declaration.
      */
-    [[nodiscard]] auto identifier() const -> const token_t& { return identifier_; }
+    [[nodiscard]] auto identifier() const -> const lexer::token_t& { return identifier_; }
     /**
      * @brief Get the identifier of the function declaration.
-     * @return token_t& The identifier of the function declaration.
+     * @return lexer::token_t& The identifier of the function declaration.
      */
-    [[nodiscard]] auto identifier() -> token_t& { return identifier_; }
+    [[nodiscard]] auto identifier() -> lexer::token_t& { return identifier_; }
 
     /**
      * @brief Get the parameters of the function declaration.
@@ -166,7 +165,7 @@ public:
     [[nodiscard]] auto body() -> safe_ptr<expr::expr_t>& { return body_; }
 
 private:
-    token_t                  identifier_;
+    lexer::token_t           identifier_;
     std::vector<parameter_t> parameters_;
     safe_ptr<type::type_t>   return_type_;
     safe_ptr<expr::expr_t>   body_;
@@ -210,7 +209,7 @@ public:
      * @param initialiser The initialiser expression for the variable.
      */
     explicit variable_t(mut_e                    mut,
-                        token_t                  identifier,
+                        lexer::token_t           identifier,
                         safe_ptr<type::type_t>&& type,
                         safe_ptr<expr::expr_t>&& initialiser);
 
@@ -227,14 +226,14 @@ public:
 
     /**
      * @brief Get the identifier of the variable declaration.
-     * @return const token_t& The identifier of the variable declaration.
+     * @return const lexer::token_t& The identifier of the variable declaration.
      */
-    [[nodiscard]] auto identifier() const -> const token_t& { return identifier_; }
+    [[nodiscard]] auto identifier() const -> const lexer::token_t& { return identifier_; }
     /**
      * @brief Get the identifier of the variable declaration.
-     * @return token_t& The identifier of the variable declaration.
+     * @return lexer::token_t& The identifier of the variable declaration.
      */
-    [[nodiscard]] auto identifier() -> token_t& { return identifier_; }
+    [[nodiscard]] auto identifier() -> lexer::token_t& { return identifier_; }
 
     /**
      * @brief Get the type of the variable declaration.
@@ -260,7 +259,7 @@ public:
 
 private:
     mut_e                  mutability_;
-    token_t                identifier_;
+    lexer::token_t         identifier_;
     safe_ptr<type::type_t> type_;
     safe_ptr<expr::expr_t> initialiser_;
 };
@@ -313,4 +312,4 @@ public:
     using ast_node_t::ast_node_t;
 };
 
-} // namespace loxmocha::decl
+} // namespace loxmocha::ast::decl

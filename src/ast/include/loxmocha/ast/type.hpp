@@ -6,11 +6,11 @@
 
 #include <vector>
 
-namespace loxmocha::expr {
+namespace loxmocha::ast::expr {
 class expr_t;
 }
 
-namespace loxmocha::type {
+namespace loxmocha::ast::type {
 
 class type_t;
 
@@ -40,21 +40,21 @@ public:
      *
      * @param name The name of the identifier.
      */
-    explicit identifier_t(const token_t& name) : name_(name) {}
+    explicit identifier_t(const lexer::token_t& name) : name_(name) {}
 
     /**
      * @brief Get the name of the type.
-     * @return const token_t& The name of the type.
+     * @return const lexer::token_t& The name of the type.
      */
-    [[nodiscard]] auto name() const -> const token_t& { return name_; }
+    [[nodiscard]] auto name() const -> const lexer::token_t& { return name_; }
     /**
      * @brief Get the name of the type.
-     * @return token_t& The name of the type.
+     * @return lexer::token_t& The name of the type.
      */
-    [[nodiscard]] auto name() -> token_t& { return name_; }
+    [[nodiscard]] auto name() -> lexer::token_t& { return name_; }
 
 private:
-    token_t name_;
+    lexer::token_t name_;
 };
 
 /**
@@ -427,13 +427,13 @@ public:
 };
 
 struct record_t::field_t {
-    token_t name;
-    type_t  type;
+    lexer::token_t name;
+    type_t         type;
 };
 
 struct tagged_t::tag_t {
-    token_t name;
-    type_t  type;
+    lexer::token_t name;
+    type_t         type;
 };
 
-} // namespace loxmocha::type
+} // namespace loxmocha::ast::type
