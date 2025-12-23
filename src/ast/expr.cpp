@@ -9,7 +9,9 @@
 #include <utility>
 #include <vector>
 
-namespace loxmocha::expr {
+namespace loxmocha::ast::expr {
+
+using namespace loxmocha::lexer;
 
 binary_t::binary_t(const token_t& op, safe_ptr<expr_t>&& left, safe_ptr<expr_t>&& right)
     : op_(op), left_(std::move(left)), right_(std::move(right))

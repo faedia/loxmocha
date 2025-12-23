@@ -42,8 +42,8 @@ public:
      * @tparam Kinds The kinds to expect.
      * @param token The token to check.
      */
-    template<loxmocha::token_t::kind_e... Kinds>
-    static auto expect_token_kind(const loxmocha::token_t& token) -> void
+    template<loxmocha::lexer::token_t::kind_e... Kinds>
+    static auto expect_token_kind(const loxmocha::lexer::token_t& token) -> void
     {
         EXPECT_TRUE(((token.kind() == Kinds) || ...))
             << "Expected token kind to be one of the specified kinds, but got: " << static_cast<int>(token.kind());
@@ -62,7 +62,7 @@ public:
                << demangle(typeid(expected).name()) << " got type: " << demangle(typeid(actual).name());
     }
 
-    void operator()([[maybe_unused]] const loxmocha::node_base_t& base, const auto& actual, const auto& expected)
+    void operator()([[maybe_unused]] const loxmocha::ast::node_base_t& base, const auto& actual, const auto& expected)
     {
         this->operator()(actual, expected);
     }
@@ -73,10 +73,10 @@ public:
      * @param actual The actual node.
      * @param expected The wrapped up expected node.
      */
-    void operator()(const auto& actual, const loxmocha::decl::decl_t& expected)
+    void operator()(const auto& actual, const loxmocha::ast::decl::decl_t& expected)
     {
-        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
-                                          const auto&                         expected,
+        expected.visit([&visitor = *this]([[maybe_unused]] const ast::node_base_t& base,
+                                          const auto&                              expected,
                                           const auto& actual) -> void { visitor(actual, expected); },
                        actual);
     }
@@ -87,10 +87,10 @@ public:
      * @param actual The actual node.
      * @param expected The wrapped up expected node.
      */
-    void operator()(const auto& actual, const loxmocha::expr::expr_t& expected)
+    void operator()(const auto& actual, const loxmocha::ast::expr::expr_t& expected)
     {
-        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
-                                          const auto&                         expected,
+        expected.visit([&visitor = *this]([[maybe_unused]] const ast::node_base_t& base,
+                                          const auto&                              expected,
                                           const auto& actual) -> void { visitor(actual, expected); },
                        actual);
     }
@@ -101,10 +101,10 @@ public:
      * @param actual The actual node.
      * @param expected The wrapped up expected node.
      */
-    void operator()(const auto& actual, const loxmocha::pattern::pattern_t& expected)
+    void operator()(const auto& actual, const loxmocha::ast::pattern::pattern_t& expected)
     {
-        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
-                                          const auto&                         expected,
+        expected.visit([&visitor = *this]([[maybe_unused]] const ast::node_base_t& base,
+                                          const auto&                              expected,
                                           const auto& actual) -> void { visitor(actual, expected); },
                        actual);
     }
@@ -115,10 +115,10 @@ public:
      * @param actual The actual node.
      * @param expected The wrapped up expected node.
      */
-    void operator()(const auto& actual, const loxmocha::stmt::stmt_t& expected)
+    void operator()(const auto& actual, const loxmocha::ast::stmt::stmt_t& expected)
     {
-        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
-                                          const auto&                         expected,
+        expected.visit([&visitor = *this]([[maybe_unused]] const ast::node_base_t& base,
+                                          const auto&                              expected,
                                           const auto& actual) -> void { visitor(actual, expected); },
                        actual);
     }
@@ -129,10 +129,10 @@ public:
      * @param actual The actual node.
      * @param expected The wrapped up expected node.
      */
-    void operator()(const auto& actual, const loxmocha::type::type_t& expected)
+    void operator()(const auto& actual, const loxmocha::ast::type::type_t& expected)
     {
-        expected.visit([&visitor = *this]([[maybe_unused]] const node_base_t& base,
-                                          const auto&                         expected,
+        expected.visit([&visitor = *this]([[maybe_unused]] const ast::node_base_t& base,
+                                          const auto&                              expected,
                                           const auto& actual) -> void { visitor(actual, expected); },
                        actual);
     }
@@ -143,12 +143,13 @@ public:
      * @param actual The actual type declaration.
      * @param expected The expected type declaration.
      */
-    void operator()(const loxmocha::decl::type_t& actual, const loxmocha::decl::type_t& expected)
+    void operator()(const loxmocha::ast::decl::type_t& actual, const loxmocha::ast::decl::type_t& expected)
     {
         // Confirm that the names are the same and are identifiers.
-        EXPECT_EQ(actual.identifier().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.identifier().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
         EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
+        EXPECT_EQ(actual.identifier().ident_id().id, expected.identifier().ident_id().id);
         // Compare the type expressions of the decl.
         actual.type()->visit(*this, *expected.type());
     }
@@ -159,20 +160,22 @@ public:
      * @param actual The actual function declaration.
      * @param expected The expected function declaration.
      */
-    void operator()(const loxmocha::decl::function_t& actual, const loxmocha::decl::function_t& expected)
+    void operator()(const loxmocha::ast::decl::function_t& actual, const loxmocha::ast::decl::function_t& expected)
     {
         // Confirm that the names are the same and are identifiers.
-        EXPECT_EQ(actual.identifier().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.identifier().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
         EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
+        EXPECT_EQ(actual.identifier().ident_id().id, expected.identifier().ident_id().id);
 
         // Make sure that the parameters are the same size and compare each one.
         ASSERT_EQ(actual.parameters().size(), expected.parameters().size());
         for (const auto& [a_param, e_param] : std::views::zip(actual.parameters(), expected.parameters())) {
             // Confirm that the parameter names are the same and are identifiers.
-            EXPECT_EQ(a_param.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_param.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_param.name.kind(), e_param.name.kind());
             EXPECT_EQ(a_param.name.span(), e_param.name.span());
+            EXPECT_EQ(a_param.name.ident_id().id, e_param.name.ident_id().id);
             a_param.type.visit(*this, e_param.type);
         }
 
@@ -187,13 +190,14 @@ public:
      * @param actual The actual variable declaration.
      * @param expected The expected variable declaration.
      */
-    void operator()(const loxmocha::decl::variable_t& actual, const loxmocha::decl::variable_t& expected)
+    void operator()(const loxmocha::ast::decl::variable_t& actual, const loxmocha::ast::decl::variable_t& expected)
     {
         // Make sure the variable mutibility, identifier, type and initialiser are the same.
         EXPECT_EQ(actual.mutability(), expected.mutability());
-        EXPECT_EQ(actual.identifier().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.identifier().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
         EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
+        EXPECT_EQ(actual.identifier().ident_id().id, expected.identifier().ident_id().id);
         actual.type()->visit(*this, *expected.type());
         actual.initialiser()->visit(*this, *expected.initialiser());
     }
@@ -204,14 +208,14 @@ public:
      * @param actual The actual literal expression.
      * @param expected The expected literal expression.
      */
-    void operator()(const loxmocha::expr::literal_t& actual, const loxmocha::expr::literal_t& expected)
+    void operator()(const loxmocha::ast::expr::literal_t& actual, const loxmocha::ast::expr::literal_t& expected)
     {
         // Make sure the value kinds are literal kinds.
-        expect_token_kind<loxmocha::token_t::kind_e::k_true,
-                          loxmocha::token_t::kind_e::k_false,
-                          loxmocha::token_t::kind_e::l_integer,
-                          loxmocha::token_t::kind_e::l_char,
-                          loxmocha::token_t::kind_e::l_string>(actual.value());
+        expect_token_kind<loxmocha::lexer::token_t::kind_e::k_true,
+                          loxmocha::lexer::token_t::kind_e::k_false,
+                          loxmocha::lexer::token_t::kind_e::l_integer,
+                          loxmocha::lexer::token_t::kind_e::l_char,
+                          loxmocha::lexer::token_t::kind_e::l_string>(actual.value());
 
         // Then make sure the value kinds and spans are the same.
         EXPECT_EQ(actual.value().kind(), expected.value().kind());
@@ -224,13 +228,14 @@ public:
      * @param actual The actual identifier expression.
      * @param expected The expected identifier expression.
      */
-    void operator()(const loxmocha::expr::identifier_t& actual, const loxmocha::expr::identifier_t& expected)
+    void operator()(const loxmocha::ast::expr::identifier_t& actual, const loxmocha::ast::expr::identifier_t& expected)
     {
         // Make sure the name kinds are identifier kinds.
-        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         // Then make sure the name kinds and spans are the same.
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
+        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
     }
 
     /**
@@ -239,7 +244,7 @@ public:
      * @param actual The actual binary expression.
      * @param expected The expected binary expression.
      */
-    void operator()(const loxmocha::expr::binary_t& actual, const loxmocha::expr::binary_t& expected)
+    void operator()(const loxmocha::ast::expr::binary_t& actual, const loxmocha::ast::expr::binary_t& expected)
     {
         // Make sure the operator kinds are the same.
         EXPECT_EQ(actual.op().kind(), expected.op().kind());
@@ -254,7 +259,7 @@ public:
      * @param actual The actual unary expression.
      * @param expected The expected unary expression.
      */
-    void operator()(const loxmocha::expr::unary_t& actual, const loxmocha::expr::unary_t& expected)
+    void operator()(const loxmocha::ast::expr::unary_t& actual, const loxmocha::ast::expr::unary_t& expected)
     {
         // Make sure the operator kinds are the same.
         EXPECT_EQ(actual.op().kind(), expected.op().kind());
@@ -268,7 +273,7 @@ public:
      * @param actual The actual array expression.
      * @param expected The expected array expression.
      */
-    void operator()(const loxmocha::expr::array_t& actual, const loxmocha::expr::array_t& expected)
+    void operator()(const loxmocha::ast::expr::array_t& actual, const loxmocha::ast::expr::array_t& expected)
     {
         // Make sure they have the same number of elements.
         ASSERT_EQ(actual.elements().size(), expected.elements().size());
@@ -285,7 +290,7 @@ public:
      * @param actual The actual is expression.
      * @param expected The expected is expression.
      */
-    void operator()(const loxmocha::expr::is_t& actual, const loxmocha::expr::is_t& expected)
+    void operator()(const loxmocha::ast::expr::is_t& actual, const loxmocha::ast::expr::is_t& expected)
     {
         // Make sure the expression and pattern are the same.
         actual.expr()->visit(*this, *expected.expr());
@@ -298,7 +303,7 @@ public:
      * @param actual The actual cast expression.
      * @param expected The expected cast expression.
      */
-    void operator()(const loxmocha::expr::cast_t& actual, const loxmocha::expr::cast_t& expected)
+    void operator()(const loxmocha::ast::expr::cast_t& actual, const loxmocha::ast::expr::cast_t& expected)
     {
         // Make sure the expression and type are the same.
         actual.expr()->visit(*this, *expected.expr());
@@ -311,7 +316,7 @@ public:
      * @param actual The actual tuple expression.
      * @param expected The expected tuple expression.
      */
-    void operator()(const loxmocha::expr::tuple_t& actual, const loxmocha::expr::tuple_t& expected)
+    void operator()(const loxmocha::ast::expr::tuple_t& actual, const loxmocha::ast::expr::tuple_t& expected)
     {
         // Make sure they have the same number of elements.
         ASSERT_EQ(actual.elements().size(), expected.elements().size());
@@ -328,7 +333,7 @@ public:
      * @param actual The actual record expression.
      * @param expected The expected record expression.
      */
-    void operator()(const loxmocha::expr::record_t& actual, const loxmocha::expr::record_t& expected)
+    void operator()(const loxmocha::ast::expr::record_t& actual, const loxmocha::ast::expr::record_t& expected)
     {
         // Make sure they have the same number of fields.
         ASSERT_EQ(actual.fields().size(), expected.fields().size());
@@ -336,9 +341,10 @@ public:
         // Then make sure each field matches.
         for (const auto& [a_field, e_field] : std::views::zip(actual.fields(), expected.fields())) {
             // Confirm that the field names are the same and are identifiers.
-            EXPECT_EQ(a_field.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_field.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_field.name.kind(), e_field.name.kind());
             EXPECT_EQ(a_field.name.span(), e_field.name.span());
+            EXPECT_EQ(a_field.name.ident_id().id, e_field.name.ident_id().id);
             // Then compare the field values.
             a_field.value.visit(*this, e_field.value);
         }
@@ -350,7 +356,7 @@ public:
      * @param actual The actual index expression.
      * @param expected The expected index expression.
      */
-    void operator()(const loxmocha::expr::index_t& actual, const loxmocha::expr::index_t& expected)
+    void operator()(const loxmocha::ast::expr::index_t& actual, const loxmocha::ast::expr::index_t& expected)
     {
         // Make sure the base and index expressions are the same.
         actual.base()->visit(*this, *expected.base());
@@ -363,12 +369,13 @@ public:
      * @param actual The actual field expression.
      * @param expected The expected field expression.
      */
-    void operator()(const loxmocha::expr::field_t& actual, const loxmocha::expr::field_t& expected)
+    void operator()(const loxmocha::ast::expr::field_t& actual, const loxmocha::ast::expr::field_t& expected)
     {
         // Confirm that the field names are the same and are identifiers.
-        EXPECT_EQ(actual.field_name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.field_name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.field_name().kind(), expected.field_name().kind());
         EXPECT_EQ(actual.field_name().span(), expected.field_name().span());
+        EXPECT_EQ(actual.field_name().ident_id().id, expected.field_name().ident_id().id);
         // Then compare the base expressions.
         actual.base()->visit(*this, *expected.base());
     }
@@ -379,7 +386,7 @@ public:
      * @param actual The actual call expression.
      * @param expected The expected call expression.
      */
-    void operator()(const loxmocha::expr::call_t& actual, const loxmocha::expr::call_t& expected)
+    void operator()(const loxmocha::ast::expr::call_t& actual, const loxmocha::ast::expr::call_t& expected)
     {
         // Make sure the callee exprsessions match
         actual.callee()->visit(*this, *expected.callee());
@@ -396,9 +403,10 @@ public:
         // Then make sure each named arg matches
         for (const auto& [a_arg, e_arg] : std::views::zip(actual.named_args(), expected.named_args())) {
             // Confirm that the argument names are the same and are identifiers.
-            EXPECT_EQ(a_arg.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_arg.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_arg.name.kind(), e_arg.name.kind());
             EXPECT_EQ(a_arg.name.span(), e_arg.name.span());
+            EXPECT_EQ(a_arg.name.ident_id().id, e_arg.name.ident_id().id);
             // Then compare the argument values.
             a_arg.value.visit(*this, e_arg.value);
         }
@@ -410,7 +418,7 @@ public:
      * @param actual The actual if expression.
      * @param expected The expected if expression.
      */
-    void operator()(const loxmocha::expr::if_t& actual, const loxmocha::expr::if_t& expected)
+    void operator()(const loxmocha::ast::expr::if_t& actual, const loxmocha::ast::expr::if_t& expected)
     {
         // Make sure the number of conditional branches match
         ASSERT_EQ(actual.conditional_branches().size(), expected.conditional_branches().size());
@@ -437,7 +445,7 @@ public:
      * @param actual The actual while expression.
      * @param expected The expected while expression.
      */
-    void operator()(const loxmocha::expr::while_t& actual, const loxmocha::expr::while_t& expected)
+    void operator()(const loxmocha::ast::expr::while_t& actual, const loxmocha::ast::expr::while_t& expected)
     {
         actual.condition()->visit(*this, *expected.condition());
         actual.body()->visit(*this, *expected.body());
@@ -449,7 +457,7 @@ public:
      * @param actual The actual block expression.
      * @param expected The expected block expression.
      */
-    void operator()(const loxmocha::expr::block_t& actual, const loxmocha::expr::block_t& expected)
+    void operator()(const loxmocha::ast::expr::block_t& actual, const loxmocha::ast::expr::block_t& expected)
     {
         // Make sure the number of statements match
         ASSERT_EQ(actual.statements().size(), expected.statements().size());
@@ -465,7 +473,7 @@ public:
      * @param actual The actual grouping expression.
      * @param expected The expected grouping expression.
      */
-    void operator()(const loxmocha::expr::grouping_t& actual, const loxmocha::expr::grouping_t& expected)
+    void operator()(const loxmocha::ast::expr::grouping_t& actual, const loxmocha::ast::expr::grouping_t& expected)
     {
         actual.expression()->visit(*this, *expected.expression());
     }
@@ -476,12 +484,14 @@ public:
      * @param actual The actual identifier pattern.
      * @param expected The expected identifier pattern.
      */
-    void operator()(const loxmocha::pattern::identifier_t& actual, const loxmocha::pattern::identifier_t& expected)
+    void operator()(const loxmocha::ast::pattern::identifier_t& actual,
+                    const loxmocha::ast::pattern::identifier_t& expected)
     {
         // Confirm that the names are the same and are identifiers.
-        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
+        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
     }
 
     /**
@@ -490,15 +500,16 @@ public:
      * @param actual The actual tag pattern.
      * @param expected The expected tag pattern.
      */
-    void operator()(const loxmocha::pattern::tag_t& actual, const loxmocha::pattern::tag_t& expected)
+    void operator()(const loxmocha::ast::pattern::tag_t& actual, const loxmocha::ast::pattern::tag_t& expected)
     {
         // Compare the tag type, name and pattern.
         actual.type()->visit(*this, *expected.type());
 
         // Make sure the names of the tag are the same and are identifiers.
-        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
+        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
 
         // Compare the sub patterns of the tag.
         actual.pattern()->visit(*this, *expected.pattern());
@@ -510,7 +521,7 @@ public:
      * @param actual The actual expression statement.
      * @param expected The expected expression statement.
      */
-    void operator()(const loxmocha::stmt::expr_t& actual, const loxmocha::stmt::expr_t& expected)
+    void operator()(const loxmocha::ast::stmt::expr_t& actual, const loxmocha::ast::stmt::expr_t& expected)
     {
         actual.expr()->visit(*this, *expected.expr());
     }
@@ -521,7 +532,7 @@ public:
      * @param actual The actual assignment statement.
      * @param expected The expected assignment statement.
      */
-    void operator()(const loxmocha::stmt::assign_t& actual, const loxmocha::stmt::assign_t& expected)
+    void operator()(const loxmocha::ast::stmt::assign_t& actual, const loxmocha::ast::stmt::assign_t& expected)
     {
         actual.target()->visit(*this, *expected.target());
         actual.value()->visit(*this, *expected.value());
@@ -533,7 +544,7 @@ public:
      * @param actual The actual declaration statement.
      * @param expected The expected declaration statement.
      */
-    void operator()(const loxmocha::stmt::decl_t& actual, const loxmocha::stmt::decl_t& expected)
+    void operator()(const loxmocha::ast::stmt::decl_t& actual, const loxmocha::ast::stmt::decl_t& expected)
     {
         actual.declaration()->visit(*this, *expected.declaration());
     }
@@ -544,12 +555,13 @@ public:
      * @param actual The actual identifier type.
      * @param expected The expected identifier type.
      */
-    void operator()(const loxmocha::type::identifier_t& actual, const loxmocha::type::identifier_t& expected)
+    void operator()(const loxmocha::ast::type::identifier_t& actual, const loxmocha::ast::type::identifier_t& expected)
     {
         // Confirm that the names are the same and are identifiers.
-        EXPECT_EQ(actual.name().kind(), loxmocha::token_t::kind_e::k_identifier);
+        EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
+        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
     }
 
     /**
@@ -558,7 +570,7 @@ public:
      * @param actual The actual array type.
      * @param expected The expected array type.
      */
-    void operator()(const loxmocha::type::array_t& actual, const loxmocha::type::array_t& expected)
+    void operator()(const loxmocha::ast::type::array_t& actual, const loxmocha::ast::type::array_t& expected)
     {
         actual.element_type()->visit(*this, *expected.element_type());
     }
@@ -569,7 +581,7 @@ public:
      * @param actual The actual tuple type.
      * @param expected The expected tuple type.
      */
-    void operator()(const loxmocha::type::tuple_t& actual, const loxmocha::type::tuple_t& expected)
+    void operator()(const loxmocha::ast::type::tuple_t& actual, const loxmocha::ast::type::tuple_t& expected)
     {
         // Make sure they have the same number of element types.
         ASSERT_EQ(actual.element_types().size(), expected.element_types().size());
@@ -585,16 +597,17 @@ public:
      * @param actual The actual record type.
      * @param expected The expected record type.
      */
-    void operator()(const loxmocha::type::record_t& actual, const loxmocha::type::record_t& expected)
+    void operator()(const loxmocha::ast::type::record_t& actual, const loxmocha::ast::type::record_t& expected)
     {
         // Make sure they have the same number of fields.
         ASSERT_EQ(actual.fields().size(), expected.fields().size());
         // Then make sure each field matches.
         for (const auto& [a_field, e_field] : std::views::zip(actual.fields(), expected.fields())) {
             // Confirm that the field names are the same and are identifiers.
-            EXPECT_EQ(a_field.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_field.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_field.name.kind(), e_field.name.kind());
             EXPECT_EQ(a_field.name.span(), e_field.name.span());
+            EXPECT_EQ(a_field.name.ident_id().id, e_field.name.ident_id().id);
             a_field.type.visit(*this, e_field.type);
         }
     }
@@ -605,16 +618,17 @@ public:
      * @param actual The actual tagged type.
      * @param expected The expected tagged type.
      */
-    void operator()(const loxmocha::type::tagged_t& actual, const loxmocha::type::tagged_t& expected)
+    void operator()(const loxmocha::ast::type::tagged_t& actual, const loxmocha::ast::type::tagged_t& expected)
     {
         // Make sure they have the same number of tags.
         ASSERT_EQ(actual.tags().size(), expected.tags().size());
         // Then make sure each tag matches.
         for (const auto& [a_tag, e_tag] : std::views::zip(actual.tags(), expected.tags())) {
             // Confirm that the tag names are the same and are identifiers.
-            EXPECT_EQ(a_tag.name.kind(), loxmocha::token_t::kind_e::k_identifier);
+            EXPECT_EQ(a_tag.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_tag.name.kind(), e_tag.name.kind());
             EXPECT_EQ(a_tag.name.span(), e_tag.name.span());
+            EXPECT_EQ(a_tag.name.ident_id().id, e_tag.name.ident_id().id);
             a_tag.type.visit(*this, e_tag.type);
         }
     }
@@ -625,7 +639,7 @@ public:
      * @param actual The actual reference type.
      * @param expected The expected reference type.
      */
-    void operator()(const loxmocha::type::reference_t& actual, const loxmocha::type::reference_t& expected)
+    void operator()(const loxmocha::ast::type::reference_t& actual, const loxmocha::ast::type::reference_t& expected)
     {
         actual.base_type()->visit(*this, *expected.base_type());
     }
@@ -636,7 +650,7 @@ public:
      * @param actual The actual function type.
      * @param expected The expected function type.
      */
-    void operator()(const loxmocha::type::function_t& actual, const loxmocha::type::function_t& expected)
+    void operator()(const loxmocha::ast::type::function_t& actual, const loxmocha::ast::type::function_t& expected)
     {
         // Make sure they have the same number of parameter types.
         ASSERT_EQ(actual.parameters().size(), expected.parameters().size());
@@ -655,7 +669,7 @@ public:
      * @param actual The actual mutable type.
      * @param expected The expected mutable type.
      */
-    void operator()(const loxmocha::type::mutable_t& actual, const loxmocha::type::mutable_t& expected)
+    void operator()(const loxmocha::ast::type::mutable_t& actual, const loxmocha::ast::type::mutable_t& expected)
     {
         actual.base_type()->visit(*this, *expected.base_type());
     }

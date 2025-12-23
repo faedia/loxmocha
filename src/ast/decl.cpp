@@ -8,7 +8,9 @@
 #include <utility>
 #include <vector>
 
-namespace loxmocha::decl {
+namespace loxmocha::ast::decl {
+
+using namespace loxmocha::lexer;
 
 type_t::type_t(token_t identifier, safe_ptr<type::type_t>&& type) : identifier_(identifier), type_(std::move(type)) {}
 

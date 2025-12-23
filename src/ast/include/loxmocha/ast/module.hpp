@@ -3,7 +3,7 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
 
-namespace loxmocha::module {
+namespace loxmocha::ast::module {
 
 /**
  * @brief Represents a single module.
@@ -73,4 +73,4 @@ private:
     std::vector<decl::decl_t> declarations_;
 };
 
-} // namespace loxmocha::module
+} // namespace loxmocha::ast::module

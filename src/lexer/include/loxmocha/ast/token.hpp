@@ -6,7 +6,11 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace loxmocha {
+namespace loxmocha::lexer {
+
+struct identifier_t {
+    std::size_t id;
+};
 
 /**
  * @class token_t
@@ -36,10 +40,25 @@ public:
      * @return std::string_view The span of the token.
      */
     [[nodiscard]] constexpr auto span() const -> std::string_view { return span_; }
+    /**
+     * @brief Gets the identifier ID of the token, if it is an identifier.
+     *
+     * @return identifier_t The identifier ID of the token.
+     */
+    [[nodiscard]] constexpr auto ident_id() const -> identifier_t { return ident_id_; }
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define LOXMOCHA_TOKEN(name, example, value) \
-    [[nodiscard]] constexpr static auto name(std::string_view span) -> token_t { return token_t{kind_e::name, span}; }
+#define LOXMOCHA_TOKEN(name, example, value)                                   \
+    [[nodiscard]] constexpr static auto name(std::string_view span) -> token_t \
+    {                                                                          \
+        return token_t{kind_e::name, span, identifier_t{0}};                   \
+    }
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LOXMOCHA_IDENT(name, example, value)                                                    \
+    [[nodiscard]] constexpr static auto name(std::string_view span, identifier_t id) -> token_t \
+    {                                                                                           \
+        return token_t{kind_e::name, span, id};                                                 \
+    }
 #include "loxmocha/ast/token.def"
 
     token_t() = delete;
@@ -61,18 +80,17 @@ public:
     }
 
     /**
-     * @brief Get a token representing the input string as a keyword or identifier.
-     *
-     * @param ident The input string to check.
-     * @return token_t A token representing the keyword or identifier.
+     * @breif Make a keyword token from the given span.
+     * @param ident The keyword string.
+     * @return token_t The keyword token.
      */
-    [[nodiscard]] constexpr static auto keyword_or_ident(std::string_view ident) -> token_t
+    [[nodiscard]] constexpr static auto keyword_token(std::string_view ident) -> std::optional<token_t>
     {
         auto iter = keyword_kind.find(ident);
         if (iter != keyword_kind.end()) {
-            return {iter->second, ident};
+            return token_t{iter->second, ident, identifier_t{0}};
         }
-        return {kind_e::k_identifier, ident};
+        return std::nullopt;
     }
 
 private:
@@ -82,10 +100,11 @@ private:
      * @param kind The kind of the token.
      * @param span The span of the token in the input stream.
      */
-    constexpr token_t(kind_e kind, std::string_view span) : kind_{kind}, span_{span} {}
+    constexpr token_t(kind_e kind, std::string_view span, identifier_t id) : kind_{kind}, span_{span}, ident_id_{id} {}
 
-    kind_e           kind_; // The kind of the token.
-    std::string_view span_; // The span of the token in the input stream.
+    kind_e           kind_;     // The kind of the token.
+    std::string_view span_;     // The span of the token in the input stream.
+    identifier_t     ident_id_; // The ID of the identifer, if the token is an identifier.
 
     // NOLINTNEXTLINE(cert-err58-cpp)
     static inline const std::unordered_map<std::string_view, kind_e> keyword_kind = {
@@ -110,11 +129,11 @@ inline auto operator<<(std::ostream& stream, const token_t& token) -> std::ostre
 } // namespace loxmocha
 
 template<>
-struct std::formatter<loxmocha::token_t::kind_e> {
+struct std::formatter<loxmocha::lexer::token_t::kind_e> {
     static constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
 
-    static auto format(loxmocha::token_t::kind_e kind, std::format_context& ctx)
+    static auto format(loxmocha::lexer::token_t::kind_e kind, std::format_context& ctx)
     {
-        return std::format_to(ctx.out(), "{}", loxmocha::token_t::kind_name(kind));
+        return std::format_to(ctx.out(), "{}", loxmocha::lexer::token_t::kind_name(kind));
     }
 };

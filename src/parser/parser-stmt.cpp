@@ -11,6 +11,9 @@
 
 namespace loxmocha::internal {
 
+using namespace lexer;
+using namespace ast;
+
 auto parser_t::parse_stmt() -> parser_result_t<stmt::stmt_t>
 {
     has_error_ = false;

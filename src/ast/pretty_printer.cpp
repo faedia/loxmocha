@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-namespace loxmocha {
+namespace loxmocha::ast {
 
 namespace {
     [[nodiscard]] auto make_indent(const std::vector<bool>& indent_stack) -> std::string
@@ -838,4 +838,4 @@ void pretty_printer_t::operator()(node_base_t                     span,
     indent_stack_.pop_back();
 }
 
-} // namespace loxmocha
+} // namespace loxmocha::ast

@@ -6,11 +6,11 @@
 #include <utility>
 #include <vector>
 
-namespace loxmocha::module {
+namespace loxmocha::ast::module {
 
 module_t::module_t(const node_base_t& base, std::vector<decl::decl_t>&& declarations)
     : base_{base}, declarations_(std::move(declarations))
 {
 }
 
-} // namespace loxmocha::module
+} // namespace loxmocha::ast::module

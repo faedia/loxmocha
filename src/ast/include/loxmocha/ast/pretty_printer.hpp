@@ -11,7 +11,7 @@
 #include <ostream>
 #include <vector>
 
-namespace loxmocha {
+namespace loxmocha::ast {
 
 class pretty_printer_t {
 public:
@@ -195,4 +195,4 @@ private:
     std::vector<bool> indent_stack_;
 };
 
-} // namespace loxmocha
+} // namespace loxmocha::ast

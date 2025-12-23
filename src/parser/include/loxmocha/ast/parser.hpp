@@ -74,7 +74,7 @@ private:
     std::vector<std::string> diagnostics_;
 };
 
-auto parse_module(lexer_t& lexer) -> parser_result_t<module::module_t>;
+auto parse_module(lexer::lexer_t& lexer) -> parser_result_t<ast::module::module_t>;
 
 /**
  * @brief Parse a single declaration from the given lexer.
@@ -88,7 +88,7 @@ auto parse_module(lexer_t& lexer) -> parser_result_t<module::module_t>;
  * @return parser_result_t<decl::decl_t> The result of parsing the declaration.
  *
  */
-auto parse_decl(lexer_t& lexer) -> parser_result_t<decl::decl_t>;
+auto parse_decl(lexer::lexer_t& lexer) -> parser_result_t<ast::decl::decl_t>;
 
 /**
  * @brief Parse a single statement from the given lexer.
@@ -102,7 +102,7 @@ auto parse_decl(lexer_t& lexer) -> parser_result_t<decl::decl_t>;
  * @return parser_result_t<stmt::stmt_t> The result of parsing the statement.
  *
  */
-auto parse_stmt(lexer_t& lexer) -> parser_result_t<stmt::stmt_t>;
+auto parse_stmt(lexer::lexer_t& lexer) -> parser_result_t<ast::stmt::stmt_t>;
 
 /**
  * @brief Parse a single expression from the given lexer.
@@ -116,7 +116,7 @@ auto parse_stmt(lexer_t& lexer) -> parser_result_t<stmt::stmt_t>;
  * @return parser_result_t<expr::expr_t> The result of parsing the expression.
  *
  */
-auto parse_expr(lexer_t& lexer) -> parser_result_t<expr::expr_t>;
+auto parse_expr(lexer::lexer_t& lexer) -> parser_result_t<ast::expr::expr_t>;
 
 /**
  * @brief Parse a single type expression from the given lexer.
@@ -130,7 +130,7 @@ auto parse_expr(lexer_t& lexer) -> parser_result_t<expr::expr_t>;
  * @return parser_result_t<type::type_t> The result of parsing the type expression.
  *
  */
-auto parse_type(lexer_t& lexer) -> parser_result_t<type::type_t>;
+auto parse_type(lexer::lexer_t& lexer) -> parser_result_t<ast::type::type_t>;
 
 /**
  * @brief Parse a single pattern from the given lexer.
@@ -144,6 +144,6 @@ auto parse_type(lexer_t& lexer) -> parser_result_t<type::type_t>;
  * @return parser_result_t<pattern::pattern_t> The result of parsing the pattern.
  *
  */
-auto parse_pattern(lexer_t& lexer) -> parser_result_t<pattern::pattern_t>;
+auto parse_pattern(lexer::lexer_t& lexer) -> parser_result_t<ast::pattern::pattern_t>;
 
 } // namespace loxmocha

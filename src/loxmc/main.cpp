@@ -65,7 +65,7 @@ auto main(int argc, char** argv) -> int
         std::println("Source registration took {} microseconds",
                      std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count());
 
-        loxmocha::lexer_t lexer(source_manager.find_source(source_file).view().content());
+        loxmocha::lexer::lexer_t lexer(source_manager.find_source(source_file).view().content());
         start_time        = std::chrono::high_resolution_clock::now();
         auto parse_result = loxmocha::parse_module(lexer);
         end_time          = std::chrono::high_resolution_clock::now();
@@ -82,7 +82,7 @@ auto main(int argc, char** argv) -> int
 
         std::println("Parsing succeeded.");
         std::println("Printing AST:");
-        parse_result.result().visit(loxmocha::pretty_printer_t{}, source_manager, std::cout);
+        parse_result.result().visit(loxmocha::ast::pretty_printer_t{}, source_manager, std::cout);
 
         if (!dot_file.empty()) {
             std::ofstream dot_stream{dot_file};

@@ -6,7 +6,7 @@
 #include <format>
 #include <ostream>
 
-namespace loxmocha {
+namespace loxmocha::lexer {
 
 /**
  * @class source_location_t
@@ -201,4 +201,4 @@ private:
     [[nodiscard]] auto lex_string(std::string_view input) const -> std::expected<token_t, lex_error_t>;
 };
 
-} // namespace loxmocha
+} // namespace loxmocha::lexer

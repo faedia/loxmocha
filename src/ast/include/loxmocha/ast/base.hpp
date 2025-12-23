@@ -4,7 +4,7 @@
 
 #include <string_view>
 
-namespace loxmocha {
+namespace loxmocha::ast {
 
 using node_base_t = std::string_view;
 
@@ -14,4 +14,4 @@ public:
     using node_t<node_base_t, Kinds...>::node_t;
 };
 
-} // namespace loxmocha
+} // namespace loxmocha::ast

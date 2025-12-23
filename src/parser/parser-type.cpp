@@ -10,6 +10,9 @@
 
 namespace loxmocha::internal {
 
+using namespace lexer;
+using namespace ast;
+
 auto parser_t::parse_type() -> parser_result_t<type::type_t>
 {
     has_error_ = false;
@@ -37,7 +40,7 @@ auto parser_t::fun_type(const token_t& fun) -> type::type_t
     if (!expect_token<token_t::kind_e::p_left_paren>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected '(' after 'fun' in function type");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     // Get the params after the function.
@@ -49,7 +52,7 @@ auto parser_t::fun_type(const token_t& fun) -> type::type_t
     if (!right_paren) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected ')' after function parameter types");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     // If we have a colon then we parse the return type, otherwise we default to the empty tuple.
@@ -86,7 +89,7 @@ auto parser_t::tagged_type(const token_t& choice) -> type::type_t
     if (expect_token<token_t::kind_e::k_end>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Tagged type must have at least one tag");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     auto tags = parse_delimited<token_t::kind_e::k_end, token_t::kind_e::p_comma, type::tagged_t::tag_t>(
@@ -96,7 +99,7 @@ auto parser_t::tagged_type(const token_t& choice) -> type::type_t
             if (!name) {
                 has_error_ = true;
                 diagnostics_.emplace_back("Expected tag name in tagged type");
-                return type::tagged_t::tag_t{.name = token_t::k_identifier("<error>"),
+                return type::tagged_t::tag_t{.name = token_t::k_identifier("<error>", identifier_t{0}),
                                              .type = type::type_t{"", type::tuple_t{{}}}};
             }
 
@@ -114,7 +117,7 @@ auto parser_t::tagged_type(const token_t& choice) -> type::type_t
     if (!end) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected 'end' after tagged type definition");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     const node_base_t span{choice.span().begin(), end->span().end()};
@@ -131,15 +134,15 @@ auto parser_t::record_type(const token_t& rec) -> type::type_t
                 has_error_ = true;
                 diagnostics_.emplace_back("Expected field name in record type");
                 return type::record_t::field_t{
-                    .name = token_t::k_identifier("ErrorField"),
-                    .type = type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}}};
+                    .name = token_t::k_identifier("ErrorField", identifier_t{0}),
+                    .type = type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}}};
             }
             if (!expect_token<token_t::kind_e::p_colon>()) {
                 has_error_ = true;
                 diagnostics_.emplace_back("Expected ':' after field name in record type");
                 return type::record_t::field_t{
                     .name = *name_token,
-                    .type = type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}}};
+                    .type = type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}}};
             }
             return type::record_t::field_t{.name = *name_token, .type = parse_type_internal()};
         });
@@ -149,7 +152,7 @@ auto parser_t::record_type(const token_t& rec) -> type::type_t
     if (!end) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected 'end' after record type definition");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     const node_base_t span{rec.span().begin(), end->span().end()};
@@ -169,7 +172,7 @@ auto parser_t::array_type() -> type::type_t
         if (!right_square) {
             has_error_ = true;
             diagnostics_.emplace_back("Expected ']' after array size expression");
-            return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+            return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
         }
         const node_base_t span{start, right_square->span().end()};
         base_type = type::type_t{span,
@@ -194,7 +197,7 @@ auto parser_t::primary_type() -> type::type_t
 
     has_error_ = true;
     diagnostics_.emplace_back("Expected type expression");
-    return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+    return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
 }
 
 auto parser_t::tuple_or_grouping_type(const token_t& left_paren) -> type::type_t
@@ -215,7 +218,7 @@ auto parser_t::tuple_or_grouping_type(const token_t& left_paren) -> type::type_t
     if (!expect_token<token_t::kind_e::p_comma>()) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected ',' or ')' in grouping type");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     // Now parse the rest of the types.
@@ -228,7 +231,7 @@ auto parser_t::tuple_or_grouping_type(const token_t& left_paren) -> type::type_t
     if (!right_paren) {
         has_error_ = true;
         diagnostics_.emplace_back("Expected ')' after grouping type");
-        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType")}};
+        return type::type_t{"", type::identifier_t{token_t::k_identifier("ErrorType", identifier_t{0})}};
     }
 
     const node_base_t span{left_paren.span().begin(), right_paren->span().end()};

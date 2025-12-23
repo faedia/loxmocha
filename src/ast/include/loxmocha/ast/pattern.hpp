@@ -4,11 +4,11 @@
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 
-namespace loxmocha::type {
+namespace loxmocha::ast::type {
 class type_t;
 }
 
-namespace loxmocha::pattern {
+namespace loxmocha::ast::pattern {
 
 class pattern_t;
 
@@ -38,21 +38,21 @@ public:
      *
      * @param name The name of the identifier.
      */
-    explicit identifier_t(const token_t& name) : name_(name) {}
+    explicit identifier_t(const lexer::token_t& name) : name_(name) {}
 
     /**
      * @brief Get the name of the identifier pattern.
-     * @return const token_t& The name of the identifier pattern.
+     * @return const lexer::token_t& The name of the identifier pattern.
      */
-    [[nodiscard]] auto name() const -> const token_t& { return name_; }
+    [[nodiscard]] auto name() const -> const lexer::token_t& { return name_; }
     /**
      * @brief Get the name of the identifier pattern.
-     * @return token_t& The name of the identifier pattern.
+     * @return lexer::token_t& The name of the identifier pattern.
      */
-    [[nodiscard]] auto name() -> token_t& { return name_; }
+    [[nodiscard]] auto name() -> lexer::token_t& { return name_; }
 
 private:
-    token_t name_;
+    lexer::token_t name_;
 };
 
 /**
@@ -85,7 +85,7 @@ public:
      * @param name The name of the tag.
      * @param pattern The sub-pattern of the tag.
      */
-    tag_t(safe_ptr<type::type_t>&& type, const token_t& name, safe_ptr<pattern_t>&& pattern);
+    tag_t(safe_ptr<type::type_t>&& type, const lexer::token_t& name, safe_ptr<pattern_t>&& pattern);
 
     /**
      * @brief Get the type of the tag pattern.
@@ -100,14 +100,14 @@ public:
 
     /**
      * @brief Get the name of the tag pattern.
-     * @return const token_t& The name of the tag pattern.
+     * @return const lexer::token_t& The name of the tag pattern.
      */
-    [[nodiscard]] auto name() const -> const token_t& { return name_; }
+    [[nodiscard]] auto name() const -> const lexer::token_t& { return name_; }
     /**
      * @brief Get the name of the tag pattern.
-     * @return token_t& The name of the tag pattern.
+     * @return lexer::token_t& The name of the tag pattern.
      */
-    [[nodiscard]] auto name() -> token_t& { return name_; }
+    [[nodiscard]] auto name() -> lexer::token_t& { return name_; }
 
     /**
      * @brief Get the sub-pattern of the tag pattern.
@@ -122,7 +122,7 @@ public:
 
 private:
     safe_ptr<type::type_t> type_;
-    token_t                name_;
+    lexer::token_t         name_;
     safe_ptr<pattern_t>    pattern_;
 };
 
@@ -153,4 +153,4 @@ public:
     auto operator=(pattern_t&&) noexcept -> pattern_t& = default;
 };
 
-} // namespace loxmocha::pattern
+} // namespace loxmocha::ast::pattern

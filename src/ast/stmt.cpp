@@ -6,7 +6,7 @@
 
 #include <utility>
 
-namespace loxmocha::stmt {
+namespace loxmocha::ast::stmt {
 
 expr_t::expr_t(safe_ptr<expr::expr_t>&& expr) : expr_(std::move(expr)) {}
 expr_t::~expr_t() = default;
@@ -20,4 +20,4 @@ assign_t::~assign_t() = default;
 decl_t::decl_t(safe_ptr<decl::decl_t>&& declaration) : declaration_(std::move(declaration)) {}
 decl_t::~decl_t() = default;
 
-} // namespace loxmocha::stmt
+} // namespace loxmocha::ast::stmt
