@@ -53,17 +53,14 @@ public:
      * @param ident The identifier string.
      * @return ident_t The corresponding identifier.
      */
-    [[nodiscard]] auto insert(const std::string& ident) -> ident_t
+    [[nodiscard]] auto emplace(std::string&& ident) -> ident_t
     {
-        // If the identifier already exists then return existing ID.
-        auto iter = ident_to_id_.find(ident);
-        if (iter != ident_to_id_.end()) {
-            return iter->second;
+        auto [iter, inserted] = ident_to_id_.emplace(std::move(ident), ident_t{id_to_ident_.size()});
+        // If we just added it then add the string view to the vector.
+        if (inserted) {
+            id_to_ident_.emplace_back(iter->first);
         }
-        const ident_t id{id_to_ident_.size()};
-        const auto [it, _] = ident_to_id_.emplace(ident, id);
-        id_to_ident_.emplace_back(it->first);
-        return it->second;
+        return iter->second;
     }
 
 private:

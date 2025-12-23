@@ -18,9 +18,9 @@ namespace loxmocha::test::helpers {
 
 class ident_generator_t {
 public:
-    [[nodiscard]] auto ident(const std::string& name) -> lexer::token_t
+    [[nodiscard]] auto ident(std::string_view name) -> lexer::token_t
     {
-        return lexer::token_t::k_identifier(name, ident_map_.insert(name));
+        return lexer::token_t::k_identifier(name, ident_map_.emplace({name.begin(), name.end()}));
     }
 
     auto map() const -> const lexer::ident_map_t& { return ident_map_; }

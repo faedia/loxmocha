@@ -270,7 +270,7 @@ auto lexer_t::lex_ident(std::string_view input) const -> std::expected<token_t, 
     }
 
     // Otherwise we have an identifier.
-    return token_t::k_identifier({token_begin, iter}, ident_map_.insert({token_begin, iter}));
+    return token_t::k_identifier({token_begin, iter}, ident_map_.emplace({token_begin, iter}));
 }
 
 auto lexer_t::lex_char(std::string_view input) const -> std::expected<token_t, lex_error_t>
