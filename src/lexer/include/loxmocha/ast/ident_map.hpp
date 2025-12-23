@@ -60,7 +60,7 @@ public:
         if (iter != ident_to_id_.end()) {
             return iter->second;
         }
-        ident_t id{id_to_ident_.size()};
+        const ident_t id{id_to_ident_.size()};
         const auto [it, _] = ident_to_id_.emplace(ident, id);
         id_to_ident_.emplace_back(it->first);
         return it->second;
