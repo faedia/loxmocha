@@ -2,6 +2,7 @@
 
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/ident_map.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
 #include "loxmocha/ast/type.hpp"
@@ -149,7 +150,7 @@ public:
         EXPECT_EQ(actual.identifier().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
         EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
-        EXPECT_EQ(actual.identifier().ident_id().id, expected.identifier().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.identifier().ident_id()], expected_idents_[expected.identifier().ident_id()]);
         // Compare the type expressions of the decl.
         actual.type()->visit(*this, *expected.type());
     }
@@ -166,7 +167,7 @@ public:
         EXPECT_EQ(actual.identifier().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
         EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
-        EXPECT_EQ(actual.identifier().ident_id().id, expected.identifier().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.identifier().ident_id()], expected_idents_[expected.identifier().ident_id()]);
 
         // Make sure that the parameters are the same size and compare each one.
         ASSERT_EQ(actual.parameters().size(), expected.parameters().size());
@@ -175,7 +176,7 @@ public:
             EXPECT_EQ(a_param.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_param.name.kind(), e_param.name.kind());
             EXPECT_EQ(a_param.name.span(), e_param.name.span());
-            EXPECT_EQ(a_param.name.ident_id().id, e_param.name.ident_id().id);
+            EXPECT_EQ(actual_idents_[a_param.name.ident_id()], expected_idents_[e_param.name.ident_id()]);
             a_param.type.visit(*this, e_param.type);
         }
 
@@ -197,7 +198,7 @@ public:
         EXPECT_EQ(actual.identifier().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.identifier().kind(), expected.identifier().kind());
         EXPECT_EQ(actual.identifier().span(), expected.identifier().span());
-        EXPECT_EQ(actual.identifier().ident_id().id, expected.identifier().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.identifier().ident_id()], expected_idents_[expected.identifier().ident_id()]);
         actual.type()->visit(*this, *expected.type());
         actual.initialiser()->visit(*this, *expected.initialiser());
     }
@@ -235,7 +236,7 @@ public:
         // Then make sure the name kinds and spans are the same.
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
-        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.name().ident_id()], expected_idents_[expected.name().ident_id()]);
     }
 
     /**
@@ -344,7 +345,7 @@ public:
             EXPECT_EQ(a_field.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_field.name.kind(), e_field.name.kind());
             EXPECT_EQ(a_field.name.span(), e_field.name.span());
-            EXPECT_EQ(a_field.name.ident_id().id, e_field.name.ident_id().id);
+            EXPECT_EQ(actual_idents_[a_field.name.ident_id()], expected_idents_[e_field.name.ident_id()]);
             // Then compare the field values.
             a_field.value.visit(*this, e_field.value);
         }
@@ -375,7 +376,7 @@ public:
         EXPECT_EQ(actual.field_name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.field_name().kind(), expected.field_name().kind());
         EXPECT_EQ(actual.field_name().span(), expected.field_name().span());
-        EXPECT_EQ(actual.field_name().ident_id().id, expected.field_name().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.field_name().ident_id()], expected_idents_[expected.field_name().ident_id()]);
         // Then compare the base expressions.
         actual.base()->visit(*this, *expected.base());
     }
@@ -406,7 +407,7 @@ public:
             EXPECT_EQ(a_arg.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_arg.name.kind(), e_arg.name.kind());
             EXPECT_EQ(a_arg.name.span(), e_arg.name.span());
-            EXPECT_EQ(a_arg.name.ident_id().id, e_arg.name.ident_id().id);
+            EXPECT_EQ(actual_idents_[a_arg.name.ident_id()], expected_idents_[e_arg.name.ident_id()]);
             // Then compare the argument values.
             a_arg.value.visit(*this, e_arg.value);
         }
@@ -491,7 +492,7 @@ public:
         EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
-        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.name().ident_id()], expected_idents_[expected.name().ident_id()]);
     }
 
     /**
@@ -509,7 +510,7 @@ public:
         EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
-        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.name().ident_id()], expected_idents_[expected.name().ident_id()]);
 
         // Compare the sub patterns of the tag.
         actual.pattern()->visit(*this, *expected.pattern());
@@ -561,7 +562,7 @@ public:
         EXPECT_EQ(actual.name().kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
         EXPECT_EQ(actual.name().kind(), expected.name().kind());
         EXPECT_EQ(actual.name().span(), expected.name().span());
-        EXPECT_EQ(actual.name().ident_id().id, expected.name().ident_id().id);
+        EXPECT_EQ(actual_idents_[actual.name().ident_id()], expected_idents_[expected.name().ident_id()]);
     }
 
     /**
@@ -607,7 +608,7 @@ public:
             EXPECT_EQ(a_field.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_field.name.kind(), e_field.name.kind());
             EXPECT_EQ(a_field.name.span(), e_field.name.span());
-            EXPECT_EQ(a_field.name.ident_id().id, e_field.name.ident_id().id);
+            EXPECT_EQ(actual_idents_[a_field.name.ident_id()], expected_idents_[e_field.name.ident_id()]);
             a_field.type.visit(*this, e_field.type);
         }
     }
@@ -628,7 +629,7 @@ public:
             EXPECT_EQ(a_tag.name.kind(), loxmocha::lexer::token_t::kind_e::k_identifier);
             EXPECT_EQ(a_tag.name.kind(), e_tag.name.kind());
             EXPECT_EQ(a_tag.name.span(), e_tag.name.span());
-            EXPECT_EQ(a_tag.name.ident_id().id, e_tag.name.ident_id().id);
+            EXPECT_EQ(actual_idents_[a_tag.name.ident_id()], expected_idents_[e_tag.name.ident_id()]);
             a_tag.type.visit(*this, e_tag.type);
         }
     }
@@ -673,6 +674,17 @@ public:
     {
         actual.base_type()->visit(*this, *expected.base_type());
     }
+
+    assert_visitor(const lexer::ident_map_t& actual_idents, const lexer::ident_map_t& expected_idents)
+        : actual_idents_(actual_idents), expected_idents_(expected_idents)
+    {
+    }
+
+private:
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const lexer::ident_map_t& actual_idents_;
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const lexer::ident_map_t& expected_idents_;
 };
 
 } // namespace loxmocha::test

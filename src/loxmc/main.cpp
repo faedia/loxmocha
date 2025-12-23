@@ -1,4 +1,5 @@
 #include "loxmocha/ast/diagram_export.hpp"
+#include "loxmocha/ast/ident_map.hpp"
 #include "loxmocha/ast/lexer.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pretty_printer.hpp"
@@ -65,7 +66,8 @@ auto main(int argc, char** argv) -> int
         std::println("Source registration took {} microseconds",
                      std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count());
 
-        loxmocha::lexer::lexer_t lexer(source_manager.find_source(source_file).view().content());
+        loxmocha::lexer::ident_map_t ident_map{};
+        loxmocha::lexer::lexer_t     lexer(source_manager.find_source(source_file).view().content(), ident_map);
         start_time        = std::chrono::high_resolution_clock::now();
         auto parse_result = loxmocha::parse_module(lexer);
         end_time          = std::chrono::high_resolution_clock::now();

@@ -1,5 +1,6 @@
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/expr.hpp"
+#include "loxmocha/ast/ident_map.hpp"
 #include "loxmocha/ast/parser.hpp"
 #include "loxmocha/ast/pattern.hpp"
 #include "loxmocha/ast/stmt.hpp"
@@ -504,7 +505,7 @@ auto parser_t::record_expr(const token_t& left_brace) -> expr::expr_t
             if (!name) {
                 diagnostics_.emplace_back("Expected identifier for record field name");
                 has_error_ = true;
-                return expr::record_t::field_t{.name  = token_t::k_identifier("<error>", identifier_t{0}),
+                return expr::record_t::field_t{.name  = token_t::k_identifier("<error>", ident_t{0}),
                                                .value = expr::expr_t{"", expr::error_t{}}};
             }
 

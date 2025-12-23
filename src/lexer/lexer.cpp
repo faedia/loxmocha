@@ -270,8 +270,7 @@ auto lexer_t::lex_ident(std::string_view input) const -> std::expected<token_t, 
     }
 
     // Otherwise we have an identifier.
-    // TODO: Register the identifier and get its ID.
-    return token_t::k_identifier({token_begin, iter}, identifier_t{0});
+    return token_t::k_identifier({token_begin, iter}, ident_map_.insert({token_begin, iter}));
 }
 
 auto lexer_t::lex_char(std::string_view input) const -> std::expected<token_t, lex_error_t>
@@ -338,4 +337,4 @@ auto lexer_t::lex_string(std::string_view input) const -> std::expected<token_t,
         lex_error_t{lex_error_t::reason_e::eof_error, {token_begin, iter}, source_location(token_begin)});
 }
 
-} // namespace loxmocha
+} // namespace loxmocha::lexer

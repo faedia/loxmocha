@@ -1,5 +1,7 @@
 #pragma once
 
+#include "loxmocha/ast/ident_map.hpp"
+
 #include <cstdint>
 #include <format>
 #include <ostream>
@@ -7,10 +9,6 @@
 #include <unordered_map>
 
 namespace loxmocha::lexer {
-
-struct identifier_t {
-    std::size_t id;
-};
 
 /**
  * @class token_t
@@ -45,19 +43,19 @@ public:
      *
      * @return identifier_t The identifier ID of the token.
      */
-    [[nodiscard]] constexpr auto ident_id() const -> identifier_t { return ident_id_; }
+    [[nodiscard]] constexpr auto ident_id() const -> ident_t { return ident_id_; }
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define LOXMOCHA_TOKEN(name, example, value)                                   \
     [[nodiscard]] constexpr static auto name(std::string_view span) -> token_t \
     {                                                                          \
-        return token_t{kind_e::name, span, identifier_t{0}};                   \
+        return token_t{kind_e::name, span, ident_t{}};                         \
     }
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define LOXMOCHA_IDENT(name, example, value)                                                    \
-    [[nodiscard]] constexpr static auto name(std::string_view span, identifier_t id) -> token_t \
-    {                                                                                           \
-        return token_t{kind_e::name, span, id};                                                 \
+#define LOXMOCHA_IDENT(name, example, value)                                               \
+    [[nodiscard]] constexpr static auto name(std::string_view span, ident_t id) -> token_t \
+    {                                                                                      \
+        return token_t{kind_e::name, span, id};                                            \
     }
 #include "loxmocha/ast/token.def"
 
@@ -88,7 +86,7 @@ public:
     {
         auto iter = keyword_kind.find(ident);
         if (iter != keyword_kind.end()) {
-            return token_t{iter->second, ident, identifier_t{0}};
+            return token_t{iter->second, ident, ident_t{0}};
         }
         return std::nullopt;
     }
@@ -100,11 +98,11 @@ private:
      * @param kind The kind of the token.
      * @param span The span of the token in the input stream.
      */
-    constexpr token_t(kind_e kind, std::string_view span, identifier_t id) : kind_{kind}, span_{span}, ident_id_{id} {}
+    constexpr token_t(kind_e kind, std::string_view span, ident_t id) : kind_{kind}, span_{span}, ident_id_{id} {}
 
     kind_e           kind_;     // The kind of the token.
     std::string_view span_;     // The span of the token in the input stream.
-    identifier_t     ident_id_; // The ID of the identifer, if the token is an identifier.
+    ident_t          ident_id_; // The ID of the identifer, if the token is an identifier.
 
     // NOLINTNEXTLINE(cert-err58-cpp)
     static inline const std::unordered_map<std::string_view, kind_e> keyword_kind = {
@@ -126,7 +124,7 @@ inline auto operator<<(std::ostream& stream, const token_t& token) -> std::ostre
     return stream;
 }
 
-} // namespace loxmocha
+} // namespace loxmocha::lexer
 
 template<>
 struct std::formatter<loxmocha::lexer::token_t::kind_e> {

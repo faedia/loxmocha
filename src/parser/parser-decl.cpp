@@ -4,6 +4,7 @@
 #include "loxmocha/ast/token.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
 #include "parser-internal.hpp"
+#include "loxmocha/ast/ident_map.hpp"
 
 #include <utility>
 
@@ -69,9 +70,9 @@ auto parser_t::fun_decl(const token_t& fun) -> decl::decl_t
                     has_error_ = true;
                     diagnostics_.emplace_back("Expected parameter name in function declaration");
                     return decl::function_t::parameter_t{
-                        .name = token_t::k_identifier("<error>", identifier_t{0}),
+                        .name = token_t::k_identifier("<error>", ident_t{0}),
                         .type =
-                            type::type_t{"", type::identifier_t{token_t::k_identifier("<error>", identifier_t{0})}}};
+                            type::type_t{"", type::identifier_t{token_t::k_identifier("<error>", ident_t{0})}}};
                 }
                 if (!expect_token<token_t::kind_e::p_colon>()) {
                     has_error_ = true;
@@ -79,7 +80,7 @@ auto parser_t::fun_decl(const token_t& fun) -> decl::decl_t
                     return decl::function_t::parameter_t{
                         .name = *param_name,
                         .type =
-                            type::type_t{"", type::identifier_t{token_t::k_identifier("<error>", identifier_t{0})}}};
+                            type::type_t{"", type::identifier_t{token_t::k_identifier("<error>", ident_t{0})}}};
                 }
                 return decl::function_t::parameter_t{.name = *param_name, .type = parse_type_internal()};
             });
