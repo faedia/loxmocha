@@ -2,9 +2,9 @@
 
 #include <compare>
 #include <cstddef>
+#include <deque>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace loxmocha::lexer {
 
@@ -44,7 +44,7 @@ public:
      * @param id The identifier.
      * @return const std::string_view& The identifier string.
      */
-    [[nodiscard]] auto operator[](const ident_t& id) const -> const std::string_view& { return id_to_ident_[id.id()]; }
+    [[nodiscard]] auto operator[](const ident_t& id) const -> const std::string& { return id_to_ident_[id.id()]; }
 
     /**
      * @brief Insert an identifier string into the map and get its corresponding identifier.
@@ -55,17 +55,19 @@ public:
      */
     [[nodiscard]] auto emplace(std::string&& ident) -> ident_t
     {
-        auto [iter, inserted] = ident_to_id_.emplace(std::move(ident), ident_t{id_to_ident_.size()});
-        // If we just added it then add the string view to the vector.
-        if (inserted) {
-            id_to_ident_.emplace_back(iter->first);
+        const ident_t next_id{id_to_ident_.size()};
+        const auto&   iter      = id_to_ident_.emplace_back(std::move(ident));
+        auto [result, inserted] = ident_to_id_.emplace(iter, next_id);
+        if (!inserted) {
+            // If it already existed, remove the duplicate we just added.
+            id_to_ident_.pop_back();
         }
-        return iter->second;
+        return result->second;
     }
 
 private:
-    std::vector<std::string_view>            id_to_ident_;
-    std::unordered_map<std::string, ident_t> ident_to_id_;
+    std::deque<std::string>                       id_to_ident_;
+    std::unordered_map<std::string_view, ident_t> ident_to_id_;
 };
 
 } // namespace loxmocha::lexer
