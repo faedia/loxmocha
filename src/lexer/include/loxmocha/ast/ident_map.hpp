@@ -42,7 +42,7 @@ public:
      * @brief Get the identifier string corresponding to the given identifier.
      *
      * @param id The identifier.
-     * @return const std::string_view& The identifier string.
+     * @return const std::string& The identifier string.
      */
     [[nodiscard]] auto operator[](const ident_t& id) const -> const std::string& { return id_to_ident_[id.id()]; }
 
@@ -55,17 +55,19 @@ public:
      */
     [[nodiscard]] auto emplace(std::string&& ident) -> ident_t
     {
-        const ident_t next_id{id_to_ident_.size()};
-        const auto&   iter      = id_to_ident_.emplace_back(std::move(ident));
-        auto [result, inserted] = ident_to_id_.emplace(iter, next_id);
-        if (!inserted) {
-            // If it already existed, remove the duplicate we just added.
-            id_to_ident_.pop_back();
+        if (const auto iter = ident_to_id_.find(ident); iter != ident_to_id_.end()) {
+            return iter->second;
         }
-        return result->second;
+
+        const ident_t next_id{id_to_ident_.size()};
+        const auto&   iter = id_to_ident_.emplace_back(std::move(ident));
+        return ident_to_id_.emplace(iter, next_id).first->second;
     }
 
 private:
+    // Note: the unordered_map uses string_view's of the strings stored in the deque.
+    // This is because we only ever add new strings to the deque, however if we need to remove
+    // them we will need to revisit this.
     std::deque<std::string>                       id_to_ident_;
     std::unordered_map<std::string_view, ident_t> ident_to_id_;
 };
