@@ -9,6 +9,9 @@ project(
 
 set(loxmocha_CXX_STANDARD 23 CACHE STRING "C++ standard for LoxMocha Language")
 
+set(loxmocha_ENABLE_CLANG_TIDY OFF CACHE BOOL "Enable clang-tidy analysis")
+set(loxmocha_ENABLE_CPPCHECK OFF CACHE BOOL "Enable cppcheck analysis")
+
 include(FetchContent)
 
 include(cmake/loxmocha-targets.cmake)

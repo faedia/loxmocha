@@ -18,6 +18,14 @@
             }
         },
         {
+            "name": "static-analysis-checks",
+            "hidden": true,
+            "cacheVariables": {
+                "loxmocha_ENABLE_CLANG_TIDY": "ON",
+                "loxmocha_ENABLE_CPPCHECK": "ON"
+            }
+        },
+        {
             "name": "linux-gcc-debug",
             "displayName": "Linux GCC Debug",
             "description": "Targets Linux with gcc building with debug",
@@ -59,6 +67,18 @@
                 "loxmocha_COVERAGE_COMPILE_FLAGS": "-fprofile-instr-generate;-fcoverage-mapping",
                 "loxmocha_COVERAGE_LINKER_FLAGS": "-fprofile-instr-generate"
             }
+        },
+        {
+            "name": "linux-gcc-debug-static-analysis",
+            "displayName": "Linux GCC Debug with Static Analysis",
+            "description": "Targets Linux with gcc building with debug and static analysis checks",
+            "inherits": [ "linux-gcc-debug", "static-analysis-checks" ]
+        },
+        {
+            "name": "linux-gcc-release-static-analysis",
+            "displayName": "Linux GCC Release with Static Analysis",
+            "description": "Targets Linux with gcc building with release and static analysis checks",
+            "inherits": [ "linux-gcc-release", "static-analysis-checks" ]
         }
     ],
     "buildPresets": [
@@ -73,6 +93,14 @@
         {
             "name": "linux-clang-debug-coverage",
             "configurePreset": "linux-clang-debug-coverage"
+        },
+        {
+            "name": "linux-gcc-debug-static-analysis",
+            "configurePreset": "linux-gcc-debug-static-analysis"
+        },
+        {
+            "name": "linux-gcc-release-static-analysis",
+            "configurePreset": "linux-gcc-release-static-analysis"
         }
     ],
     "testPresets": [
@@ -93,6 +121,20 @@
         {
             "name": "linux-clang-debug-coverage",
             "configurePreset": "linux-clang-debug-coverage",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-gcc-debug-static-analysis",
+            "configurePreset": "linux-gcc-debug-static-analysis",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-gcc-release-static-analysis",
+            "configurePreset": "linux-gcc-release-static-analysis",
             "output": {
                 "outputOnFailure": true
             }

@@ -27,8 +27,8 @@ jobs:
     strategy:
       matrix:
         preset:
-          - linux-gcc-debug
-          - linux-gcc-release
+          - linux-gcc-debug-static-analysis
+          - linux-gcc-release-static-analysis
 
     steps:
     - uses: actions/checkout@v4
