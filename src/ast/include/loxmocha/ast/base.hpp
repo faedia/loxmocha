@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_BASE_HPP
+#define LM_AST_BASE_HPP
 
 #include "loxmocha/node.hpp"
 
@@ -15,3 +16,5 @@ public:
 };
 
 } // namespace loxmocha::ast
+
+#endif // LM_AST_BASE_HPP

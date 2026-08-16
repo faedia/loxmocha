@@ -61,7 +61,7 @@ namespace {
 
         const auto* token_begin = input.begin();
         const auto* token_end =
-            std::ranges::find_if_not(token_begin, input.end(), [](char chr) { return std::isdigit(chr) != 0; });
+            std::ranges::find_if_not(token_begin, input.end(), [](char chr) -> bool { return std::isdigit(chr) != 0; });
         return token_t::l_integer({token_begin, token_end});
     }
 
@@ -132,9 +132,11 @@ void lexer_t::reset_token(const token_t& token)
 
 auto lexer_t::source_location(std::string_view::iterator iter) const -> source_location_t
 {
+    using diff_type           = std::iterator_traits<std::string_view::const_iterator>::difference_type;
     auto        last_new_line = std::string_view{input_.begin(), iter}.find_last_of('\n');
-    const auto* start_of_line =
-        last_new_line == std::string_view::npos ? input_.begin() : input_.begin() + last_new_line + 1;
+    const auto* start_of_line = last_new_line == std::string_view::npos
+                                    ? input_.begin()
+                                    : std::next(input_.begin(), static_cast<diff_type>(last_new_line) + 1);
 
     const size_t line   = std::count(input_.begin(), iter, '\n') + 1;
     const size_t column = std::distance(start_of_line, iter) + 1;

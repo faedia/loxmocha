@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_PRETTY_PRINTER_HPP
+#define LM_AST_PRETTY_PRINTER_HPP
 
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
@@ -196,3 +197,5 @@ private:
 };
 
 } // namespace loxmocha::ast
+
+#endif // LM_AST_PRETTY_PRINTER_HPP

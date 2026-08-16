@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_LEXER_TOKEN_HPP
+#define LM_LEXER_TOKEN_HPP
 
 #include "loxmocha/ast/ident_map.hpp"
 
@@ -104,7 +105,7 @@ private:
     std::string_view span_;     // The span of the token in the input stream.
     ident_t          ident_id_; // The ID of the identifer, if the token is an identifier.
 
-    // NOLINTNEXTLINE(cert-err58-cpp)
+    // NOLINTNEXTLINE(cert-err58-cpp, bugprone-throwing-static-initialization)
     static inline const std::unordered_map<std::string_view, kind_e> keyword_kind = {
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define LOXMOCHA_KEYWORD(name, example, value) {example, kind_e::name},
@@ -135,3 +136,5 @@ struct std::formatter<loxmocha::lexer::token_t::kind_e> {
         return std::format_to(ctx.out(), "{}", loxmocha::lexer::token_t::kind_name(kind));
     }
 };
+
+#endif // LM_LEXER_TOKEN_HPP

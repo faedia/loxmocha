@@ -16,6 +16,7 @@ Checks: >
     -readability-function-cognitive-complexity,
     -readability-identifier-length,
     -misc-no-recursion,
+    -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
 
 FormatStyle: none
 WarningsAsErrors: ''

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_TEST_HELPERS_HELPERS_HPP
+#define LM_TEST_HELPERS_HELPERS_HPP
 
 #include "assert_visitor.hpp"
 #include "loxmocha/ast/expr.hpp"
@@ -131,3 +132,5 @@ template<typename... Args>
 }
 
 } // namespace loxmocha::test::helpers
+
+#endif // LM_TEST_HELPERS_HELPERS_HPP

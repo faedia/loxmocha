@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_LEXER_LEXER_HPP
+#define LM_LEXER_LEXER_HPP
 
 #include "loxmocha/ast/ident_map.hpp"
 #include "token.hpp"
@@ -207,3 +208,5 @@ private:
 };
 
 } // namespace loxmocha::lexer
+
+#endif // LM_LEXER_LEXER_HPP

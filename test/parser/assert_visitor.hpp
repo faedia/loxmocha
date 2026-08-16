@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_TEST_ASSERT_VISITOR_HPP
+#define LM_TEST_ASSERT_VISITOR_HPP
 
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
@@ -688,3 +689,5 @@ private:
 };
 
 } // namespace loxmocha::test
+
+#endif // LM_TEST_ASSERT_VISITOR_HPP

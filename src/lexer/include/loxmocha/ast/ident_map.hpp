@@ -1,10 +1,11 @@
-#pragma once
+#ifndef LM_LEXER_IDENT_MAP_HPP
+#define LM_LEXER_IDENT_MAP_HPP
 
 #include <compare>
 #include <cstddef>
-#include <deque>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace loxmocha::lexer {
 
@@ -68,8 +69,11 @@ private:
     // Note: the unordered_map uses string_view's of the strings stored in the deque.
     // This is because we only ever add new strings to the deque, however if we need to remove
     // them we will need to revisit this.
-    std::deque<std::string>                       id_to_ident_;
+    // I can only assume I used a vector here to avoid long reallocations?
+    std::vector<std::string>                      id_to_ident_;
     std::unordered_map<std::string_view, ident_t> ident_to_id_;
 };
 
 } // namespace loxmocha::lexer
+
+#endif // LM_LEXER_IDENT_MAP_HPP

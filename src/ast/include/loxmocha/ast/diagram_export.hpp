@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_DIAGRAM_DIAGRAM_EXPORT_HPP
+#define LM_DIAGRAM_DIAGRAM_EXPORT_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
@@ -698,3 +699,5 @@ public:
 using d2_exporter_t = diagram_exporter_t<d2_exporter_helpers>;
 
 } // namespace loxmocha::diagram
+
+#endif // LM_DIAGRAM_DIAGRAM_EXPORT_HPP

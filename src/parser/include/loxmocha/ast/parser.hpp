@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_PARSER_HPP
+#define LM_PARSER_HPP
 
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
@@ -147,3 +148,5 @@ auto parse_type(lexer::lexer_t& lexer) -> parser_result_t<ast::type::type_t>;
 auto parse_pattern(lexer::lexer_t& lexer) -> parser_result_t<ast::pattern::pattern_t>;
 
 } // namespace loxmocha
+
+#endif // LM_PARSER_HPP

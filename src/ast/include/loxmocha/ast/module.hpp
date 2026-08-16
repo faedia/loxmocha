@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_MODULE_HPP
+#define LM_AST_MODULE_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/decl.hpp"
@@ -74,3 +75,5 @@ private:
 };
 
 } // namespace loxmocha::ast::module
+
+#endif // LM_AST_MODULE_HPP
