@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_EXPR_HPP
+#define LM_AST_EXPR_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/token.hpp"
@@ -997,3 +998,5 @@ struct if_t::conditional_branch_t {
 };
 
 } // namespace loxmocha::ast::expr
+
+#endif // LM_AST_EXPR_HPP

@@ -11,8 +11,10 @@
 using namespace loxmocha;
 using namespace loxmocha::lexer;
 
+namespace {
 class LexerTest
     : public testing::TestWithParam<std::tuple<std::string_view, token_t::kind_e, std::string, std::string>> {};
+} // namespace
 
 TEST_P(LexerTest, SingleTokenTest)
 {
@@ -39,7 +41,7 @@ TEST_P(LexerTest, SingleTokenTest)
 }
 
 namespace {
-// NOLINTNEXTLINE(cert-err58-cpp)
+// NOLINTNEXTLINE(cert-err58-cpp, bugprone-throwing-static-initialization)
 const std::vector<std::tuple<std::string_view, token_t::kind_e, std::string, std::string>> simpleTokenTests = {
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define LOXMOCHA_TOKEN(name, example, value) std::make_tuple(example, token_t::kind_e::name, example, #name "_basic"),
@@ -81,9 +83,11 @@ INSTANTIATE_TEST_SUITE_P(SingleTokenTest,
                              return std::get<3>(info.param);
                          });
 
+namespace {
 class LexerErrorTest
     : public testing::TestWithParam<
           std::tuple<std::string_view, lex_error_t::reason_e, source_location_t, std::string, std::string>> {};
+} // namespace
 
 TEST_P(LexerErrorTest, LexErrorTest)
 {
@@ -113,7 +117,7 @@ TEST_P(LexerErrorTest, LexErrorTest)
 
 namespace {
 const std::vector<std::tuple<std::string_view, lex_error_t::reason_e, source_location_t, std::string, std::string>>
-    // NOLINTNEXTLINE(cert-err58-cpp)
+    // NOLINTNEXTLINE(cert-err58-cpp, bugprone-throwing-static-initialization)
     simpleErrorTests = {
         // Unknown token error
         std::make_tuple("?",
@@ -179,8 +183,10 @@ INSTANTIATE_TEST_SUITE_P(SingleTokenErrorTest,
                              return std::get<4>(info.param);
                          });
 
+namespace {
 class LexerMultiTokenTest
     : public ::testing::TestWithParam<std::tuple<std::string_view, std::vector<token_t>, std::string>> {};
+} // namespace
 
 TEST_P(LexerMultiTokenTest, MultiTokenTest)
 {
@@ -201,7 +207,7 @@ TEST_P(LexerMultiTokenTest, MultiTokenTest)
     }
 
     EXPECT_THAT(tokens,
-                ::testing::Pointwise(::testing::Truly([](const auto& pair) {
+                ::testing::Pointwise(::testing::Truly([](const auto& pair) -> bool {
                                          return std::get<0>(pair).kind() == std::get<1>(pair).kind()
                                                 && std::get<0>(pair).span() == std::get<1>(pair).span();
                                      }),

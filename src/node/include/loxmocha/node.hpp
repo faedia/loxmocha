@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_NODE_HPP
+#define LM_AST_NODE_HPP
 
 #include <utility>
 #include <variant>
@@ -105,3 +106,5 @@ private:
     Base                   base_;
     std::variant<Kinds...> node_;
 };
+
+#endif // LM_AST_NODE_HPP

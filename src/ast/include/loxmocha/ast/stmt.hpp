@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_STMT_HPP
+#define LM_AST_STMT_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/memory/safe_pointer.hpp"
@@ -172,3 +173,5 @@ public:
 };
 
 } // namespace loxmocha::ast::stmt
+
+#endif // LM_AST_STMT_HPP

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_PATTERN_HPP
+#define LM_AST_PATTERN_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/token.hpp"
@@ -154,3 +155,5 @@ public:
 };
 
 } // namespace loxmocha::ast::pattern
+
+#endif // LM_AST_PATTERN_HPP

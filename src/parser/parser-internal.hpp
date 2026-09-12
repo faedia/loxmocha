@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_INTERNAL_PARSER_INTERNAL_HPP
+#define LM_INTERNAL_PARSER_INTERNAL_HPP
 
 #include "loxmocha/ast/decl.hpp"
 #include "loxmocha/ast/expr.hpp"
@@ -43,7 +44,7 @@ private:
      * @return true if the token matches any of the specified kinds, false otherwise.
      */
     template<lexer::token_t::kind_e... Kinds>
-    auto match(const lexer::token_t& token) -> bool
+    static auto match(const lexer::token_t& token) -> bool
     {
         static_assert(sizeof...(Kinds) > 0, "At least one kind must be provided");
         // cppcheck-suppress internalAstError
@@ -229,3 +230,5 @@ private:
 };
 
 } // namespace loxmocha::internal
+
+#endif // LM_INTERNAL_PARSER_INTERNAL_HPP

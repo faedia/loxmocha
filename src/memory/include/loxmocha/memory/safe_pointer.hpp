@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_SAFE_POINTER_HPP
+#define LM_SAFE_POINTER_HPP
 
 #include <exception>
 #include <memory>
@@ -95,3 +96,5 @@ private:
 };
 
 } // namespace loxmocha
+
+#endif // LM_SAFE_POINTER_HPP

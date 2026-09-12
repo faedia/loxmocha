@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_DECL_HPP
+#define LM_AST_DECL_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/expr.hpp"
@@ -313,3 +314,5 @@ public:
 };
 
 } // namespace loxmocha::ast::decl
+
+#endif // LM_AST_DECL_HPP

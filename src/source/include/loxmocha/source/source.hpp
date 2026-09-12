@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_SOURCE_SOURCE_HPP
+#define LM_SOURCE_SOURCE_HPP
 
 #include "loxmocha/memory/safe_pointer.hpp"
 
@@ -16,8 +17,8 @@ namespace loxmocha::source {
 
 struct source_location_t {
     std::string_view line_span;
-    std::size_t      line;
-    std::size_t      column;
+    std::size_t      line{};
+    std::size_t      column{};
 };
 
 /**
@@ -249,3 +250,5 @@ private:
 };
 
 } // namespace loxmocha::source
+
+#endif // LM_SOURCE_SOURCE_HPP

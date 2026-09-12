@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LM_AST_TYPE_HPP
+#define LM_AST_TYPE_HPP
 
 #include "loxmocha/ast/base.hpp"
 #include "loxmocha/ast/token.hpp"
@@ -437,3 +438,5 @@ struct tagged_t::tag_t {
 };
 
 } // namespace loxmocha::ast::type
+
+#endif // LM_AST_TYPE_HPP
