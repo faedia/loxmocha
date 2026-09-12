@@ -18,22 +18,22 @@ namespace {
 
 auto trim(std::string_view line) -> std::string_view
 {
-    std::size_t begin = 0;
-    while (is_horizontal_space(line[begin])) {
-        ++begin;
+    constexpr std::string_view horizontal_space = " \t\r";
+
+    const std::size_t begin = line.find_first_not_of(horizontal_space);
+    if (begin == std::string_view::npos) {
+        return {};
     }
 
-    std::size_t end = line.size();
-    while (is_horizontal_space(line[end - 1])) {
-        --end;
-    }
-
-    return line.substr(begin, end - begin);
+    const std::size_t end = line.find_last_not_of(horizontal_space);
+    return line.substr(begin, end - begin + 1);
 }
 
-auto caret_marker(std::size_t column) -> std::string_view
+auto caret_marker(std::size_t column) -> std::string
 {
-    std::string marker(column - 1, ' ');
+    const std::size_t padding = column > 0 ? column - 1 : 0;
+
+    std::string marker(padding, ' ');
     marker.push_back('^');
     return marker;
 }

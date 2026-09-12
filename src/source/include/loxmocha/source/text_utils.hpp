@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 #include <string_view>
 
 namespace loxmocha::source {
@@ -14,10 +15,11 @@ namespace loxmocha::source {
 
 /**
  * @brief Builds a caret marker line pointing at a column, for diagnostic output.
- * @param column The 1-based column the caret should point at.
+ * @param column The 1-based column the caret should point at. A column of 0 is
+ * treated as column 1.
  * @return A string of the form "   ^" with @p column - 1 leading spaces.
  */
-[[nodiscard]] auto caret_marker(std::size_t column) -> std::string_view;
+[[nodiscard]] auto caret_marker(std::size_t column) -> std::string;
 
 /**
  * @brief Returns the first @p count characters of a line, for truncated output.
@@ -25,5 +27,13 @@ namespace loxmocha::source {
  * @param count The number of characters to keep.
  */
 [[nodiscard]] auto prefix(std::string_view line, std::size_t count) -> std::string_view;
+
+/**
+ * @brief Extracts the half-open span [@p begin, @p end) of a source line.
+ * @param line The line to slice.
+ * @param begin The index of the first character of the span.
+ * @param end The index one past the last character of the span.
+ */
+[[nodiscard]] auto line_slice(std::string_view line, std::size_t begin, std::size_t end) -> std::string_view;
 
 } // namespace loxmocha::source
