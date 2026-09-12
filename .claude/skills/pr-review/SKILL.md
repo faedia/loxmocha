@@ -112,13 +112,16 @@ On an incremental round, and on a fallback full review, additionally:
    maintainer pushed back, or you now judge you were wrong). Check the code to
    decide — commits landing is not evidence that your finding was addressed.
 3. Do not re-post a still-open finding as a new inline comment. It goes in the
-   summary under "Still open". Post a new inline comment only if the new commits
-   made that problem materially worse or different. This holds on a fallback
-   review too: your earlier inline comments are still on the PR even though the
-   commit they were made against is gone.
-4. If the new commits broke something you previously reviewed as correct, say so
-   explicitly — regressions between rounds are the thing this process exists to
-   catch.
+   summary under "Still open". Post a new inline comment only if the problem has
+   become materially worse or different — which on an incremental round you can
+   see from the new commits, and on a fallback round only if the current code
+   plainly shows it. Either way your earlier inline comments are still on the
+   PR, even when the commit they were made against is gone.
+4. If something you previously reviewed as correct is now broken, say so
+   explicitly — regressions between rounds are what this process exists to
+   catch. On an incremental round, attribute it to the commits that introduced
+   it. On a fallback round you cannot know which commit did, so report the
+   problem as it now stands and attribute it to nothing.
 
 ## Step 4 — post the review
 
