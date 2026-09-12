@@ -16,9 +16,13 @@ on:
         required: true
         type: number
 
-# One review at a time per PR. A new push supersedes an in-flight review.
+# One review at a time per PR: a new push supersedes an in-flight review.
+# Bot-triggered events get their own group. Claude posting inline comments makes
+# GitHub emit pull_request_review events attributed to claude[bot], and in a
+# shared group those cancel the very run that is posting them. The job's `if`
+# cannot prevent that — concurrency cancellation happens before it is evaluated.
 concurrency:
-  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number || inputs.pr_number }}
+  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number || inputs.pr_number }}-${{ github.event.sender.type == 'Bot' && 'bot' || 'human' }}
   cancel-in-progress: true
 
 permissions: {}
