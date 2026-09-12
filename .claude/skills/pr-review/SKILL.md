@@ -87,6 +87,14 @@ will review code the author never wrote.
 `HEAD`. The branch was force-pushed or rebased away. Note this in your summary
 and do a full review of `gh pr diff "$PR"`.
 
+`PREV` is gone, so you **cannot** see what the previous round reviewed. Never
+state or imply what did or did not change since then — not "the code is
+unchanged", not "the diff is the same as last round", not "nothing new was
+added". You have no basis for any of it, and a force-push is precisely where a
+real change can hide. Say plainly that the previously reviewed commit is no
+longer available, review the current code on its own merits, and settle earlier
+findings by reading the code as it now stands rather than by comparing.
+
 ## Step 3 — review
 
 Apply the guidelines file. Read the surrounding code before judging a hunk; a
@@ -95,16 +103,19 @@ diff on its own is routinely misleading about what a change does.
 `gh pr checks "$PR"` shows whether CI is passing — consult it, and let the
 guidelines decide what to do with a failing check.
 
-On an incremental round, additionally:
+On an incremental round, and on a fallback full review, additionally:
 
-1. Review the new commits on their own merits.
+1. Review the new commits on their own merits — on a fallback review, the whole
+   PR diff, since you cannot tell which commits are new.
 2. Take every finding you raised in an earlier round and classify it against the
    **current** code as **resolved**, **still open**, or **withdrawn** (the
    maintainer pushed back, or you now judge you were wrong). Check the code to
    decide — commits landing is not evidence that your finding was addressed.
 3. Do not re-post a still-open finding as a new inline comment. It goes in the
    summary under "Still open". Post a new inline comment only if the new commits
-   made that problem materially worse or different.
+   made that problem materially worse or different. This holds on a fallback
+   review too: your earlier inline comments are still on the PR even though the
+   commit they were made against is gone.
 4. If the new commits broke something you previously reviewed as correct, say so
    explicitly — regressions between rounds are the thing this process exists to
    catch.
